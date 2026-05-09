@@ -24,6 +24,8 @@ import { Route as AuthenticatedManageRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedGroupsRouteImport } from './routes/_authenticated/groups'
 import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated/events'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedManageIndexRouteImport } from './routes/_authenticated/manage.index'
+import { Route as AuthenticatedManageSettingsRouteImport } from './routes/_authenticated/manage.settings'
 import { Route as AuthenticatedManageMembersRouteImport } from './routes/_authenticated/manage.members'
 import { Route as AuthenticatedManageDashboardRouteImport } from './routes/_authenticated/manage.dashboard'
 import { Route as AuthenticatedGroupsGroupIdRouteImport } from './routes/_authenticated/groups.$groupId'
@@ -105,6 +107,18 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedManageIndexRoute =
+  AuthenticatedManageIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedManageRoute,
+  } as any)
+const AuthenticatedManageSettingsRoute =
+  AuthenticatedManageSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedManageRoute,
+  } as any)
 const AuthenticatedManageMembersRoute =
   AuthenticatedManageMembersRouteImport.update({
     id: '/members',
@@ -155,6 +169,8 @@ export interface FileRoutesByFullPath {
   '/groups/$groupId': typeof AuthenticatedGroupsGroupIdRoute
   '/manage/dashboard': typeof AuthenticatedManageDashboardRoute
   '/manage/members': typeof AuthenticatedManageMembersRoute
+  '/manage/settings': typeof AuthenticatedManageSettingsRoute
+  '/manage/': typeof AuthenticatedManageIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -165,7 +181,6 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
   '/groups': typeof AuthenticatedGroupsRouteWithChildren
-  '/manage': typeof AuthenticatedManageRouteWithChildren
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -176,6 +191,8 @@ export interface FileRoutesByTo {
   '/groups/$groupId': typeof AuthenticatedGroupsGroupIdRoute
   '/manage/dashboard': typeof AuthenticatedManageDashboardRoute
   '/manage/members': typeof AuthenticatedManageMembersRoute
+  '/manage/settings': typeof AuthenticatedManageSettingsRoute
+  '/manage': typeof AuthenticatedManageIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -199,6 +216,8 @@ export interface FileRoutesById {
   '/_authenticated/groups/$groupId': typeof AuthenticatedGroupsGroupIdRoute
   '/_authenticated/manage/dashboard': typeof AuthenticatedManageDashboardRoute
   '/_authenticated/manage/members': typeof AuthenticatedManageMembersRoute
+  '/_authenticated/manage/settings': typeof AuthenticatedManageSettingsRoute
+  '/_authenticated/manage/': typeof AuthenticatedManageIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -222,6 +241,8 @@ export interface FileRouteTypes {
     | '/groups/$groupId'
     | '/manage/dashboard'
     | '/manage/members'
+    | '/manage/settings'
+    | '/manage/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -232,7 +253,6 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/events'
     | '/groups'
-    | '/manage'
     | '/messages'
     | '/notifications'
     | '/profile'
@@ -243,6 +263,8 @@ export interface FileRouteTypes {
     | '/groups/$groupId'
     | '/manage/dashboard'
     | '/manage/members'
+    | '/manage/settings'
+    | '/manage'
   id:
     | '__root__'
     | '/'
@@ -265,6 +287,8 @@ export interface FileRouteTypes {
     | '/_authenticated/groups/$groupId'
     | '/_authenticated/manage/dashboard'
     | '/_authenticated/manage/members'
+    | '/_authenticated/manage/settings'
+    | '/_authenticated/manage/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -383,6 +407,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/manage/': {
+      id: '/_authenticated/manage/'
+      path: '/'
+      fullPath: '/manage/'
+      preLoaderRoute: typeof AuthenticatedManageIndexRouteImport
+      parentRoute: typeof AuthenticatedManageRoute
+    }
+    '/_authenticated/manage/settings': {
+      id: '/_authenticated/manage/settings'
+      path: '/settings'
+      fullPath: '/manage/settings'
+      preLoaderRoute: typeof AuthenticatedManageSettingsRouteImport
+      parentRoute: typeof AuthenticatedManageRoute
+    }
     '/_authenticated/manage/members': {
       id: '/_authenticated/manage/members'
       path: '/members'
@@ -448,11 +486,15 @@ const AuthenticatedGroupsRouteWithChildren =
 interface AuthenticatedManageRouteChildren {
   AuthenticatedManageDashboardRoute: typeof AuthenticatedManageDashboardRoute
   AuthenticatedManageMembersRoute: typeof AuthenticatedManageMembersRoute
+  AuthenticatedManageSettingsRoute: typeof AuthenticatedManageSettingsRoute
+  AuthenticatedManageIndexRoute: typeof AuthenticatedManageIndexRoute
 }
 
 const AuthenticatedManageRouteChildren: AuthenticatedManageRouteChildren = {
   AuthenticatedManageDashboardRoute: AuthenticatedManageDashboardRoute,
   AuthenticatedManageMembersRoute: AuthenticatedManageMembersRoute,
+  AuthenticatedManageSettingsRoute: AuthenticatedManageSettingsRoute,
+  AuthenticatedManageIndexRoute: AuthenticatedManageIndexRoute,
 }
 
 const AuthenticatedManageRouteWithChildren =
@@ -497,3 +539,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
