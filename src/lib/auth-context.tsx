@@ -19,6 +19,8 @@ type AuthCtx = {
   profile: Profile | null;
   roles: string[];
   loading: boolean;
+  isStaff: boolean;
+  isAdmin: boolean;
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 };
@@ -29,6 +31,8 @@ const Ctx = createContext<AuthCtx>({
   profile: null,
   roles: [],
   loading: true,
+  isStaff: false,
+  isAdmin: false,
   signOut: async () => {},
   refresh: async () => {},
 });
@@ -77,7 +81,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <Ctx.Provider value={{ user, session, profile, roles, loading, signOut, refresh }}>
+    <Ctx.Provider value={{
+      user, session, profile, roles, loading,
+      isStaff: roles.includes("manager") || roles.includes("admin"),
+      isAdmin: roles.includes("admin"),
+      signOut, refresh,
+    }}>
       {children}
     </Ctx.Provider>
   );
