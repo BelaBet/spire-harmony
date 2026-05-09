@@ -60,9 +60,8 @@ function ManagerDashboard() {
       }
       setDonationSeries(series);
 
-      const att = (eventsAttRes.data ?? []).map((e) => ({
-        event: (e.title as string).slice(0, 16),
-        // @ts-expect-error supabase nested count
+      const att = (eventsAttRes.data ?? []).map((e: { title: string; tickets?: { count: number }[] }) => ({
+        event: e.title.slice(0, 16),
         count: e.tickets?.[0]?.count ?? 0,
       }));
       setAttendance(att);
