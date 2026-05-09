@@ -13,28 +13,28 @@ type Profile = {
   lgpd_consent: boolean;
 };
 
+export type PlatformRole = "super_admin" | "support" | "finance" | "operator";
+
 type AuthCtx = {
   user: User | null;
   session: Session | null;
   profile: Profile | null;
-  roles: string[];
+  roles: string[];                  // tenant roles (admin/manager/member)
+  platformRoles: PlatformRole[];    // global platform roles
   loading: boolean;
   isStaff: boolean;
   isAdmin: boolean;
+  isPlatformAdmin: boolean;         // any platform role
+  isSuperAdmin: boolean;            // strict super_admin
   signOut: () => Promise<void>;
   refresh: () => Promise<void>;
 };
 
 const Ctx = createContext<AuthCtx>({
-  user: null,
-  session: null,
-  profile: null,
-  roles: [],
-  loading: true,
-  isStaff: false,
-  isAdmin: false,
-  signOut: async () => {},
-  refresh: async () => {},
+  user: null, session: null, profile: null, roles: [], platformRoles: [],
+  loading: true, isStaff: false, isAdmin: false,
+  isPlatformAdmin: false, isSuperAdmin: false,
+  signOut: async () => {}, refresh: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -42,15 +42,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [roles, setRoles] = useState<string[]>([]);
+  const [platformRoles, setPlatformRoles] = useState<PlatformRole[]>([]);
   const [loading, setLoading] = useState(true);
 
   const loadProfile = async (uid: string) => {
-    const [{ data: prof }, { data: r }] = await Promise.all([
+    const [{ data: prof }, { data: r }, { data: pr }] = await Promise.all([
       supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
       supabase.from("user_roles").select("role").eq("user_id", uid),
+      supabase.from("platform_roles").select("role").eq("user_id", uid),
     ]);
     setProfile(prof as Profile | null);
     setRoles((r ?? []).map((x: { role: string }) => x.role));
+    setPlatformRoles((pr ?? []).map((x: { role: PlatformRole }) => x.role));
+
+    // Audit login event
+    if (prof) {
+      await supabase.from("audit_logs").insert({
+        tenant_id: (prof as Profile).tenant_id,
+        user_id: uid,
+        action: "auth:login",
+        entity: "session",
+        metadata: { at: new Date().toISOString() },
+      }).then(() => {}, () => {});
+    }
   };
 
   useEffect(() => {
@@ -60,8 +74,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (s?.user) {
         setTimeout(() => loadProfile(s.user.id), 0);
       } else {
-        setProfile(null);
-        setRoles([]);
+        setProfile(null); setRoles([]); setPlatformRoles([]);
       }
     });
     supabase.auth.getSession().then(({ data: { session: s } }) => {
@@ -74,17 +87,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = async () => {
+    if (user && profile) {
+      await supabase.from("audit_logs").insert({
+        tenant_id: profile.tenant_id,
+        user_id: user.id,
+        action: "auth:logout",
+        entity: "session",
+      }).then(() => {}, () => {});
+    }
     await supabase.auth.signOut();
   };
-  const refresh = async () => {
-    if (user) await loadProfile(user.id);
-  };
+  const refresh = async () => { if (user) await loadProfile(user.id); };
 
   return (
     <Ctx.Provider value={{
-      user, session, profile, roles, loading,
+      user, session, profile, roles, platformRoles, loading,
       isStaff: roles.includes("manager") || roles.includes("admin"),
       isAdmin: roles.includes("admin"),
+      isPlatformAdmin: platformRoles.length > 0,
+      isSuperAdmin: platformRoles.includes("super_admin"),
       signOut, refresh,
     }}>
       {children}
