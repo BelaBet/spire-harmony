@@ -32,7 +32,7 @@ function ProfilePage() {
   };
 
   const exportData = async () => {
-    const tables = ["profiles", "tickets", "payments", "donations", "notifications"];
+    const tables = ["profiles", "tickets", "payments", "donations", "notifications"] as const;
     const out: Record<string, unknown> = {};
     for (const t of tables) {
       const { data } = await supabase.from(t).select("*");
