@@ -50,8 +50,8 @@ export function ChurchThemeProvider({
     let cancelled = false;
     (async () => {
       const [logoPalette, coverPalette] = await Promise.all([
-        source?.logoUrl ? extractPalette(source.logoUrl) : Promise.resolve({}),
-        source?.coverUrl ? extractPalette(source.coverUrl) : Promise.resolve({}),
+        source?.logoUrl ? extractPalette(source.logoUrl) : Promise.resolve({} as Awaited<ReturnType<typeof extractPalette>>),
+        source?.coverUrl ? extractPalette(source.coverUrl) : Promise.resolve({} as Awaited<ReturnType<typeof extractPalette>>),
       ]);
       if (cancelled) return;
       setExtracted({
