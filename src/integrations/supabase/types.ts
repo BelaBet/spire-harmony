@@ -492,37 +492,49 @@ export type Database = {
       }
       tenants: {
         Row: {
+          accent_color: string | null
           active: boolean
+          cover_photo_url: string | null
           created_at: string
           custom_domain: string | null
           id: string
           logo_url: string | null
           name: string
+          pix_key: string | null
           primary_color: string | null
           secondary_color: string | null
           slug: string
+          tagline: string | null
         }
         Insert: {
+          accent_color?: string | null
           active?: boolean
+          cover_photo_url?: string | null
           created_at?: string
           custom_domain?: string | null
           id?: string
           logo_url?: string | null
           name: string
+          pix_key?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           slug: string
+          tagline?: string | null
         }
         Update: {
+          accent_color?: string | null
           active?: boolean
+          cover_photo_url?: string | null
           created_at?: string
           custom_domain?: string | null
           id?: string
           logo_url?: string | null
           name?: string
+          pix_key?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           slug?: string
+          tagline?: string | null
         }
         Relationships: []
       }
