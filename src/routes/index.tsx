@@ -128,6 +128,155 @@ function QRCodeSVG({ size = 180, primary }: { size?: number; primary: string }) 
   );
 }
 
+// ── Payment Method Card (hover/animation matches EventCard) ─────────────────
+function PaymentMethodCard({
+  children,
+  accent,
+  primary,
+  featured = false,
+}: {
+  children: React.ReactNode;
+  accent: string;
+  primary: string;
+  featured?: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+  void accent;
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: "relative",
+        borderRadius: 16,
+        overflow: "hidden",
+        background: "#fff",
+        padding: 24,
+        paddingTop: featured ? 28 : 24,
+        boxShadow: hovered ? "0 20px 60px rgba(0,0,0,0.18)" : "0 4px 24px rgba(0,0,0,0.08)",
+        transform: hovered ? "translateY(-6px)" : "translateY(0)",
+        transition: "all 0.35s cubic-bezier(0.34,1.56,0.64,1)",
+        display: "flex",
+        flexDirection: "column",
+        border: featured ? `1px solid ${primary}15` : "1px solid #f0f0f0",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function PaymentHeader({
+  primary,
+  title,
+  subtitle,
+  icon,
+}: {
+  primary: string;
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+      <div
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 12,
+          background: `${primary}11`,
+          color: primary,
+          display: "grid",
+          placeItems: "center",
+        }}
+      >
+        {icon}
+      </div>
+      <div>
+        <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: primary, margin: 0 }}>
+          {title}
+        </h3>
+        <p style={{ fontSize: 12, color: "#888", margin: "2px 0 0" }}>{subtitle}</p>
+      </div>
+    </div>
+  );
+}
+
+function PlaceholderBody({
+  primary,
+  accent,
+  label,
+  status,
+  muted = false,
+}: {
+  primary: string;
+  accent: string;
+  label: string;
+  status: string;
+  muted?: boolean;
+}) {
+  return (
+    <>
+      <div
+        style={{
+          flex: 1,
+          minHeight: 150,
+          borderRadius: 14,
+          background: muted
+            ? "repeating-linear-gradient(135deg, #f7f7f2, #f7f7f2 10px, #fafaf7 10px, #fafaf7 20px)"
+            : `linear-gradient(135deg, ${primary}08, ${accent}10)`,
+          border: `1px dashed ${muted ? "#ddd" : primary + "22"}`,
+          display: "grid",
+          placeItems: "center",
+          marginBottom: 16,
+          color: muted ? "#999" : primary,
+          fontSize: 13,
+          fontWeight: 500,
+          letterSpacing: 0.3,
+          textAlign: "center",
+          padding: 16,
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 11, letterSpacing: 2, color: muted ? "#bbb" : accent, marginBottom: 6, fontWeight: 600 }}>
+            {status.toUpperCase()}
+          </div>
+          {label}
+        </div>
+      </div>
+      <button
+        type="button"
+        disabled={muted}
+        style={{
+          width: "100%",
+          padding: "12px 16px",
+          borderRadius: 10,
+          border: muted ? "1px solid #e5e5e5" : `2px solid ${primary}`,
+          background: muted ? "#f5f5f0" : "transparent",
+          color: muted ? "#aaa" : primary,
+          fontWeight: 600,
+          fontSize: 14,
+          cursor: muted ? "not-allowed" : "pointer",
+          transition: "all .2s",
+          marginTop: "auto",
+        }}
+        onMouseEnter={(e) => {
+          if (muted) return;
+          (e.currentTarget as HTMLButtonElement).style.background = primary;
+          (e.currentTarget as HTMLButtonElement).style.color = "#fff";
+        }}
+        onMouseLeave={(e) => {
+          if (muted) return;
+          (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+          (e.currentTarget as HTMLButtonElement).style.color = primary;
+        }}
+      >
+        {muted ? "Em breve" : "Continuar →"}
+      </button>
+    </>
+  );
+}
+
 // ── Event Card ────────────────────────────────────────────────────────────────
 function EventCard({ event, accent, primary }: { event: EventItem; accent: string; primary: string }) {
   const [hovered, setHovered] = useState(false);
@@ -425,10 +574,10 @@ function ChurchPage() {
         </div>
       </section>
 
-      {/* ── DONATION / QR CODE SECTION ─────────────────────────────────── */}
-      <section style={{ padding: "80px 24px", maxWidth: 720, margin: "0 auto" }}>
+      {/* ── PAYMENTS HUB SECTION ───────────────────────────────────────── */}
+      <section style={{ padding: "80px 24px", maxWidth: 1200, margin: "0 auto" }}>
         {/* Section Title */}
-        <div className="fade-up" style={{ textAlign: "center", marginBottom: 40 }}>
+        <div className="fade-up" style={{ textAlign: "center", marginBottom: 48 }}>
           <span style={{ fontSize: 12, letterSpacing: 3, color: accent, fontWeight: 600 }}>
             ✦ CONTRIBUA COM A OBRA
           </span>
@@ -440,133 +589,234 @@ function ChurchPage() {
               color: primary,
             }}
           >
-            Faça sua doação via PIX
+            Escolha como deseja contribuir
           </h2>
-          <p style={{ color: "#666", margin: 0 }}>
-            Escaneie o QR Code ou copie a chave abaixo.
-            <br />
-            Toda doação é recebida com gratidão e fé.
+          <p style={{ color: "#666", margin: "0 auto", maxWidth: 620 }}>
+            Oferecemos múltiplas formas de pagamento para facilitar sua contribuição
+            com segurança e praticidade.
           </p>
         </div>
 
-        {/* QR Code Card */}
+        {/* Payments Grid */}
         <div
           className="fade-up-2"
           style={{
-            background: "#fff",
-            borderRadius: 24,
-            padding: "40px 32px",
-            boxShadow: "0 10px 40px rgba(0,0,0,0.08)",
-            position: "relative",
-            overflow: "hidden",
+            display: "grid",
+            gap: 24,
+            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+            alignItems: "stretch",
           }}
         >
-          {/* Subtle top bar */}
-          <div
-            style={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              height: 4,
-              background: `linear-gradient(90deg, ${primary}, ${accent})`,
-            }}
-          />
+          {/* ─── PIX CARD (featured / active) ─────────────────────────── */}
+          <PaymentMethodCard accent={accent} primary={primary} featured>
+            {/* Featured top bar */}
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 4,
+                background: `linear-gradient(90deg, ${primary}, ${accent})`,
+              }}
+            />
 
-          {/* Live indicator */}
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginBottom: 24 }}>
-            <span style={{ position: "relative", display: "inline-flex" }}>
-              <span
-                style={{
-                  position: "absolute",
-                  inset: 0,
-                  borderRadius: 999,
-                  background: "#22c55e",
-                  animation: "pulse-ring 1.6s ease-out infinite",
-                }}
-              />
-              <span style={{ width: 8, height: 8, borderRadius: 999, background: "#22c55e", display: "inline-block" }} />
-            </span>
-            <span style={{ fontSize: 12, color: "#666", fontWeight: 500 }}>Chave PIX ativa</span>
-          </div>
-
-          {/* QR Code */}
-          <div style={{ display: "grid", placeItems: "center", marginBottom: 24 }}>
-            <div style={{ padding: 16, background: "#fff", border: `2px solid ${primary}11`, borderRadius: 16 }}>
-              <QRCodeSVG primary={primary} />
-            </div>
-          </div>
-
-          {/* Church name below QR */}
-          <div style={{ textAlign: "center", marginBottom: 24 }}>
-            <p style={{ fontSize: 11, letterSpacing: 2, color: "#999", margin: "0 0 4px" }}>BENEFICIÁRIO</p>
-            <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: primary, margin: 0 }}>
-              {CHURCH.name}
-            </p>
-          </div>
-
-          {/* Divider */}
-          <div style={{ height: 1, background: "#eee", margin: "24px 0" }} />
-
-          {/* PIX Key copy */}
-          <div>
-            <p style={{ fontSize: 12, color: "#999", textTransform: "uppercase", letterSpacing: 1, margin: "0 0 8px" }}>
-              Chave PIX (CNPJ)
-            </p>
-            <div style={{ display: "flex", gap: 8, alignItems: "stretch" }}>
-              <div
-                style={{
-                  flex: 1,
-                  padding: "12px 16px",
-                  background: "#f5f5f0",
-                  borderRadius: 10,
-                  fontFamily: "monospace",
-                  fontSize: 14,
-                  display: "flex",
-                  alignItems: "center",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {PIX_KEY}
+            {/* Header */}
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                <div
+                  style={{
+                    width: 44,
+                    height: 44,
+                    borderRadius: 12,
+                    background: `${primary}11`,
+                    color: primary,
+                    display: "grid",
+                    placeItems: "center",
+                  }}
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" />
+                    <line x1="12" y1="22" x2="12" y2="15.5" />
+                    <polyline points="22 8.5 12 15.5 2 8.5" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: primary, margin: 0 }}>
+                    PIX
+                  </h3>
+                  <p style={{ fontSize: 12, color: "#888", margin: "2px 0 0" }}>Instantâneo · 24h</p>
+                </div>
               </div>
-              <button
-                onClick={copyPix}
-                className="copy-btn"
-                style={{
-                  padding: "0 18px",
-                  border: `2px solid ${primary}`,
-                  background: copied ? primary : "transparent",
-                  color: copied ? "#fff" : primary,
-                  borderRadius: 10,
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  transition: "all .2s",
-                }}
-              >
-                {copied ? "✓ Copiado!" : "Copiar"}
-              </button>
+              {/* Live indicator */}
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <span style={{ position: "relative", display: "inline-flex" }}>
+                  <span
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      borderRadius: 999,
+                      background: "#22c55e",
+                      animation: "pulse-ring 1.6s ease-out infinite",
+                    }}
+                  />
+                  <span style={{ width: 8, height: 8, borderRadius: 999, background: "#22c55e", display: "inline-block" }} />
+                </span>
+                <span style={{ fontSize: 11, color: "#22c55e", fontWeight: 600, letterSpacing: 0.5 }}>ATIVO</span>
+              </div>
             </div>
-          </div>
 
-          {/* Info note */}
-          <div
-            style={{
-              marginTop: 24,
-              padding: 16,
-              background: `${accent}11`,
-              borderRadius: 12,
-              display: "flex",
-              gap: 12,
-              alignItems: "flex-start",
-            }}
-          >
-            <span style={{ fontSize: 20 }}>🙏</span>
-            <p style={{ margin: 0, fontSize: 13, color: "#555", lineHeight: 1.5 }}>
-              Após sua doação, você receberá uma confirmação no WhatsApp ou SMS cadastrado.
-            </p>
-          </div>
+            {/* QR Code */}
+            <div style={{ display: "grid", placeItems: "center", marginBottom: 16 }}>
+              <div style={{ padding: 12, background: "#fff", border: `2px solid ${primary}11`, borderRadius: 14 }}>
+                <QRCodeSVG size={150} primary={primary} />
+              </div>
+            </div>
+
+            {/* Beneficiary */}
+            <div style={{ textAlign: "center", marginBottom: 16 }}>
+              <p style={{ fontSize: 10, letterSpacing: 2, color: "#999", margin: "0 0 2px" }}>BENEFICIÁRIO</p>
+              <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 14, color: primary, margin: 0 }}>
+                {CHURCH.name}
+              </p>
+            </div>
+
+            {/* PIX Key + copy */}
+            <div style={{ marginTop: "auto" }}>
+              <p style={{ fontSize: 11, color: "#999", textTransform: "uppercase", letterSpacing: 1, margin: "0 0 6px" }}>
+                Chave PIX (CNPJ)
+              </p>
+              <div style={{ display: "flex", gap: 6, alignItems: "stretch" }}>
+                <div
+                  style={{
+                    flex: 1,
+                    padding: "10px 12px",
+                    background: "#f5f5f0",
+                    borderRadius: 10,
+                    fontFamily: "monospace",
+                    fontSize: 12,
+                    display: "flex",
+                    alignItems: "center",
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {PIX_KEY}
+                </div>
+                <button
+                  onClick={copyPix}
+                  className="copy-btn"
+                  style={{
+                    padding: "0 14px",
+                    border: `2px solid ${primary}`,
+                    background: copied ? primary : "transparent",
+                    color: copied ? "#fff" : primary,
+                    borderRadius: 10,
+                    fontWeight: 600,
+                    fontSize: 13,
+                    cursor: "pointer",
+                    transition: "all .2s",
+                  }}
+                >
+                  {copied ? "✓" : "Copiar"}
+                </button>
+              </div>
+            </div>
+          </PaymentMethodCard>
+
+          {/* ─── CARTÃO DE CRÉDITO ────────────────────────────────────── */}
+          <PaymentMethodCard accent={accent} primary={primary}>
+            <PaymentHeader
+              primary={primary}
+              title="Cartão de Crédito"
+              subtitle="Parcele em até 12x"
+              icon={
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="5" width="20" height="14" rx="2" />
+                  <line x1="2" y1="10" x2="22" y2="10" />
+                </svg>
+              }
+            />
+            <PlaceholderBody primary={primary} accent={accent} label="Clique para prosseguir" status="Disponível" />
+          </PaymentMethodCard>
+
+          {/* ─── CARTÃO DE DÉBITO ─────────────────────────────────────── */}
+          <PaymentMethodCard accent={accent} primary={primary}>
+            <PaymentHeader
+              primary={primary}
+              title="Cartão de Débito"
+              subtitle="Débito à vista"
+              icon={
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="5" width="20" height="14" rx="2" />
+                  <line x1="2" y1="10" x2="22" y2="10" />
+                  <line x1="6" y1="15" x2="10" y2="15" />
+                </svg>
+              }
+            />
+            <PlaceholderBody primary={primary} accent={accent} label="Clique para prosseguir" status="Disponível" />
+          </PaymentMethodCard>
+
+          {/* ─── TRANSFERÊNCIA BANCÁRIA ───────────────────────────────── */}
+          <PaymentMethodCard accent={accent} primary={primary}>
+            <PaymentHeader
+              primary={primary}
+              title="Transferência Bancária"
+              subtitle="TED · DOC"
+              icon={
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 21h18" />
+                  <path d="M5 21V10l7-5 7 5v11" />
+                  <path d="M9 21v-6h6v6" />
+                </svg>
+              }
+            />
+            <PlaceholderBody primary={primary} accent={accent} label="Em breve disponível" status="Em breve" muted />
+          </PaymentMethodCard>
+
+          {/* ─── BOLETO BANCÁRIO ──────────────────────────────────────── */}
+          <PaymentMethodCard accent={accent} primary={primary}>
+            <PaymentHeader
+              primary={primary}
+              title="Boleto Bancário"
+              subtitle="Compensação em até 3 dias"
+              icon={
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="4" y1="4" x2="4" y2="20" />
+                  <line x1="7" y1="4" x2="7" y2="20" />
+                  <line x1="10" y1="4" x2="10" y2="20" />
+                  <line x1="14" y1="4" x2="14" y2="20" />
+                  <line x1="17" y1="4" x2="17" y2="20" />
+                  <line x1="20" y1="4" x2="20" y2="20" />
+                </svg>
+              }
+            />
+            <PlaceholderBody primary={primary} accent={accent} label="Em breve disponível" status="Em breve" muted />
+          </PaymentMethodCard>
+        </div>
+
+        {/* Reassurance footnote */}
+        <div
+          className="fade-up-3"
+          style={{
+            marginTop: 32,
+            padding: 16,
+            background: `${accent}11`,
+            borderRadius: 12,
+            display: "flex",
+            gap: 12,
+            alignItems: "flex-start",
+            maxWidth: 720,
+            marginLeft: "auto",
+            marginRight: "auto",
+          }}
+        >
+          <span style={{ fontSize: 20 }}>🔒</span>
+          <p style={{ margin: 0, fontSize: 13, color: "#555", lineHeight: 1.5 }}>
+            Todas as transações são processadas com criptografia e segurança bancária.
+            Após sua doação, você receberá uma confirmação no WhatsApp ou SMS cadastrado.
+          </p>
         </div>
       </section>
 
