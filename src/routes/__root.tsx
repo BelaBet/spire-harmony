@@ -10,6 +10,7 @@ import {
 
 import appCss from "../styles.css?url";
 import { TenantProvider } from "@/lib/tenant-context";
+import { TenantThemeBridge } from "@/lib/theme/TenantThemeBridge";
 import { AuthProvider } from "@/lib/auth-context";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -88,10 +89,12 @@ function RootComponent() {
   return (
     <QueryClientProvider client={queryClient}>
       <TenantProvider>
-        <AuthProvider>
-          <Outlet />
-          <Toaster />
-        </AuthProvider>
+        <TenantThemeBridge>
+          <AuthProvider>
+            <Outlet />
+            <Toaster />
+          </AuthProvider>
+        </TenantThemeBridge>
       </TenantProvider>
     </QueryClientProvider>
   );
