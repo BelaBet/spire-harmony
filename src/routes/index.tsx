@@ -128,6 +128,155 @@ function QRCodeSVG({ size = 180, primary }: { size?: number; primary: string }) 
   );
 }
 
+// ── Payment Method Card (hover/animation matches EventCard) ─────────────────
+function PaymentMethodCard({
+  children,
+  accent,
+  primary,
+  featured = false,
+}: {
+  children: React.ReactNode;
+  accent: string;
+  primary: string;
+  featured?: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+  void accent;
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        position: "relative",
+        borderRadius: 16,
+        overflow: "hidden",
+        background: "#fff",
+        padding: 24,
+        paddingTop: featured ? 28 : 24,
+        boxShadow: hovered ? "0 20px 60px rgba(0,0,0,0.18)" : "0 4px 24px rgba(0,0,0,0.08)",
+        transform: hovered ? "translateY(-6px)" : "translateY(0)",
+        transition: "all 0.35s cubic-bezier(0.34,1.56,0.64,1)",
+        display: "flex",
+        flexDirection: "column",
+        border: featured ? `1px solid ${primary}15` : "1px solid #f0f0f0",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function PaymentHeader({
+  primary,
+  title,
+  subtitle,
+  icon,
+}: {
+  primary: string;
+  title: string;
+  subtitle: string;
+  icon: React.ReactNode;
+}) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
+      <div
+        style={{
+          width: 44,
+          height: 44,
+          borderRadius: 12,
+          background: `${primary}11`,
+          color: primary,
+          display: "grid",
+          placeItems: "center",
+        }}
+      >
+        {icon}
+      </div>
+      <div>
+        <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: primary, margin: 0 }}>
+          {title}
+        </h3>
+        <p style={{ fontSize: 12, color: "#888", margin: "2px 0 0" }}>{subtitle}</p>
+      </div>
+    </div>
+  );
+}
+
+function PlaceholderBody({
+  primary,
+  accent,
+  label,
+  status,
+  muted = false,
+}: {
+  primary: string;
+  accent: string;
+  label: string;
+  status: string;
+  muted?: boolean;
+}) {
+  return (
+    <>
+      <div
+        style={{
+          flex: 1,
+          minHeight: 150,
+          borderRadius: 14,
+          background: muted
+            ? "repeating-linear-gradient(135deg, #f7f7f2, #f7f7f2 10px, #fafaf7 10px, #fafaf7 20px)"
+            : `linear-gradient(135deg, ${primary}08, ${accent}10)`,
+          border: `1px dashed ${muted ? "#ddd" : primary + "22"}`,
+          display: "grid",
+          placeItems: "center",
+          marginBottom: 16,
+          color: muted ? "#999" : primary,
+          fontSize: 13,
+          fontWeight: 500,
+          letterSpacing: 0.3,
+          textAlign: "center",
+          padding: 16,
+        }}
+      >
+        <div>
+          <div style={{ fontSize: 11, letterSpacing: 2, color: muted ? "#bbb" : accent, marginBottom: 6, fontWeight: 600 }}>
+            {status.toUpperCase()}
+          </div>
+          {label}
+        </div>
+      </div>
+      <button
+        type="button"
+        disabled={muted}
+        style={{
+          width: "100%",
+          padding: "12px 16px",
+          borderRadius: 10,
+          border: muted ? "1px solid #e5e5e5" : `2px solid ${primary}`,
+          background: muted ? "#f5f5f0" : "transparent",
+          color: muted ? "#aaa" : primary,
+          fontWeight: 600,
+          fontSize: 14,
+          cursor: muted ? "not-allowed" : "pointer",
+          transition: "all .2s",
+          marginTop: "auto",
+        }}
+        onMouseEnter={(e) => {
+          if (muted) return;
+          (e.currentTarget as HTMLButtonElement).style.background = primary;
+          (e.currentTarget as HTMLButtonElement).style.color = "#fff";
+        }}
+        onMouseLeave={(e) => {
+          if (muted) return;
+          (e.currentTarget as HTMLButtonElement).style.background = "transparent";
+          (e.currentTarget as HTMLButtonElement).style.color = primary;
+        }}
+      >
+        {muted ? "Em breve" : "Continuar →"}
+      </button>
+    </>
+  );
+}
+
 // ── Event Card ────────────────────────────────────────────────────────────────
 function EventCard({ event, accent, primary }: { event: EventItem; accent: string; primary: string }) {
   const [hovered, setHovered] = useState(false);
