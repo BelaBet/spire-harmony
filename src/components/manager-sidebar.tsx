@@ -3,13 +3,12 @@ import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Users, Calendar, Megaphone, Settings, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Users, Megaphone, Settings, ArrowLeft } from "lucide-react";
 import { useTenant } from "@/lib/tenant-context";
 
 const items = [
   { title: "Dashboard", url: "/manage/dashboard", icon: LayoutDashboard },
   { title: "Membros", url: "/manage/members", icon: Users },
-  { title: "Eventos", url: "/events", icon: Calendar },
   { title: "Mensagens", url: "/messages", icon: Megaphone },
   { title: "Configurações", url: "/manage/settings", icon: Settings },
 ];

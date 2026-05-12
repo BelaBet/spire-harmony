@@ -38,7 +38,6 @@ function TicketsPage() {
           <div className="rounded-2xl border border-dashed bg-card p-10 text-center">
             <Ticket className="mx-auto h-8 w-8 text-muted-foreground" />
             <p className="mt-3 text-sm text-muted-foreground">Você ainda não tem ingressos.</p>
-            <Link to="/events" className="mt-4 inline-block text-sm text-primary hover:underline">Ver eventos →</Link>
           </div>
         ) : (
           <ul className="grid gap-4 md:grid-cols-2">
