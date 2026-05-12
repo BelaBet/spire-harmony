@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
+import { KpiCard } from "@/components/kpi-card";
 import { Users, UserCheck, DollarSign, Calendar, Ticket, Activity } from "lucide-react";
 import {
   ResponsiveContainer, LineChart, Line, XAxis, YAxis, Tooltip, BarChart, Bar, CartesianGrid,
@@ -11,6 +12,7 @@ import { ptBR } from "date-fns/locale";
 
 export const Route = createFileRoute("/_authenticated/manage/dashboard")({
   component: ManagerDashboard,
+  head: () => ({ meta: [{ title: "Painel — Visão geral" }] }),
 });
 
 type Kpis = { total: number; active: number; pending: number; donationsMonth: number; eventsMonth: number; ticketsMonth: number };
@@ -77,15 +79,15 @@ function ManagerDashboard() {
     <div className="space-y-6">
       <div>
         <h1 className="font-display text-3xl">Dashboard analítico</h1>
-        <p className="text-sm text-muted-foreground">Visão geral da sua comunidade</p>
+        <p className="text-sm text-muted-foreground">Visão geral da sua igreja</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Kpi icon={Users} label="Membros totais" value={kpis.total} loading={loading} />
-        <Kpi icon={UserCheck} label="Membros ativos" value={kpis.active} loading={loading} hint={`${kpis.pending} pendentes`} />
-        <Kpi icon={DollarSign} label="Doações no mês" value={fmtBRL(kpis.donationsMonth)} loading={loading} />
-        <Kpi icon={Calendar} label="Eventos no mês" value={kpis.eventsMonth} loading={loading} />
-        <Kpi icon={Ticket} label="Ingressos no mês" value={kpis.ticketsMonth} loading={loading} />
+        <KpiCard icon={Users} label="Membros totais" value={kpis.total} loading={loading} />
+        <KpiCard icon={UserCheck} label="Membros ativos" value={kpis.active} loading={loading} hint={`${kpis.pending} pendentes`} />
+        <KpiCard icon={DollarSign} label="Doações no mês" value={fmtBRL(kpis.donationsMonth)} loading={loading} />
+        <KpiCard icon={Calendar} label="Eventos no mês" value={kpis.eventsMonth} loading={loading} />
+        <KpiCard icon={Ticket} label="Ingressos no mês" value={kpis.ticketsMonth} loading={loading} />
       </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
@@ -135,19 +137,4 @@ function ManagerDashboard() {
   );
 }
 
-function Kpi({ icon: Icon, label, value, loading, hint }: { icon: typeof Users; label: string; value: string | number; loading: boolean; hint?: string }) {
-  return (
-    <Card className="p-4">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-xs text-muted-foreground uppercase tracking-wide">{label}</p>
-          <p className="mt-1 text-2xl font-semibold">{loading ? "..." : value}</p>
-          {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
-        </div>
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary">
-          <Icon className="h-4 w-4" />
-        </div>
-      </div>
-    </Card>
-  );
 }
