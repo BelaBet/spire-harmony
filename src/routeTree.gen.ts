@@ -22,7 +22,6 @@ import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
 import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticated/messages'
 import { Route as AuthenticatedManageRouteImport } from './routes/_authenticated/manage'
-import { Route as AuthenticatedGroupsRouteImport } from './routes/_authenticated/groups'
 import { Route as AuthenticatedEventsRouteImport } from './routes/_authenticated/events'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
@@ -31,7 +30,6 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedManageSettingsRouteImport } from './routes/_authenticated/manage.settings'
 import { Route as AuthenticatedManageMembersRouteImport } from './routes/_authenticated/manage.members'
 import { Route as AuthenticatedManageDashboardRouteImport } from './routes/_authenticated/manage.dashboard'
-import { Route as AuthenticatedGroupsGroupIdRouteImport } from './routes/_authenticated/groups.$groupId'
 import { Route as AuthenticatedEventsNewRouteImport } from './routes/_authenticated/events.new'
 import { Route as AuthenticatedEventsEventIdRouteImport } from './routes/_authenticated/events.$eventId'
 import { Route as AuthenticatedAdminTenantsRouteImport } from './routes/_authenticated/admin.tenants'
@@ -105,11 +103,6 @@ const AuthenticatedManageRoute = AuthenticatedManageRouteImport.update({
   path: '/manage',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedGroupsRoute = AuthenticatedGroupsRouteImport.update({
-  id: '/groups',
-  path: '/groups',
-  getParentRoute: () => AuthenticatedRoute,
-} as any)
 const AuthenticatedEventsRoute = AuthenticatedEventsRouteImport.update({
   id: '/events',
   path: '/events',
@@ -153,12 +146,6 @@ const AuthenticatedManageDashboardRoute =
     id: '/dashboard',
     path: '/dashboard',
     getParentRoute: () => AuthenticatedManageRoute,
-  } as any)
-const AuthenticatedGroupsGroupIdRoute =
-  AuthenticatedGroupsGroupIdRouteImport.update({
-    id: '/$groupId',
-    path: '/$groupId',
-    getParentRoute: () => AuthenticatedGroupsRoute,
   } as any)
 const AuthenticatedEventsNewRoute = AuthenticatedEventsNewRouteImport.update({
   id: '/new',
@@ -211,7 +198,6 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AuthenticatedAdminRouteWithChildren
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
-  '/groups': typeof AuthenticatedGroupsRouteWithChildren
   '/manage': typeof AuthenticatedManageRouteWithChildren
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
@@ -225,7 +211,6 @@ export interface FileRoutesByFullPath {
   '/admin/tenants': typeof AuthenticatedAdminTenantsRoute
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/events/new': typeof AuthenticatedEventsNewRoute
-  '/groups/$groupId': typeof AuthenticatedGroupsGroupIdRoute
   '/manage/dashboard': typeof AuthenticatedManageDashboardRoute
   '/manage/members': typeof AuthenticatedManageMembersRoute
   '/manage/settings': typeof AuthenticatedManageSettingsRoute
@@ -241,7 +226,6 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/events': typeof AuthenticatedEventsRouteWithChildren
-  '/groups': typeof AuthenticatedGroupsRouteWithChildren
   '/messages': typeof AuthenticatedMessagesRoute
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
@@ -254,7 +238,6 @@ export interface FileRoutesByTo {
   '/admin/tenants': typeof AuthenticatedAdminTenantsRoute
   '/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/events/new': typeof AuthenticatedEventsNewRoute
-  '/groups/$groupId': typeof AuthenticatedGroupsGroupIdRoute
   '/manage/dashboard': typeof AuthenticatedManageDashboardRoute
   '/manage/members': typeof AuthenticatedManageMembersRoute
   '/manage/settings': typeof AuthenticatedManageSettingsRoute
@@ -273,7 +256,6 @@ export interface FileRoutesById {
   '/_authenticated/admin': typeof AuthenticatedAdminRouteWithChildren
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/events': typeof AuthenticatedEventsRouteWithChildren
-  '/_authenticated/groups': typeof AuthenticatedGroupsRouteWithChildren
   '/_authenticated/manage': typeof AuthenticatedManageRouteWithChildren
   '/_authenticated/messages': typeof AuthenticatedMessagesRoute
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
@@ -287,7 +269,6 @@ export interface FileRoutesById {
   '/_authenticated/admin/tenants': typeof AuthenticatedAdminTenantsRoute
   '/_authenticated/events/$eventId': typeof AuthenticatedEventsEventIdRoute
   '/_authenticated/events/new': typeof AuthenticatedEventsNewRoute
-  '/_authenticated/groups/$groupId': typeof AuthenticatedGroupsGroupIdRoute
   '/_authenticated/manage/dashboard': typeof AuthenticatedManageDashboardRoute
   '/_authenticated/manage/members': typeof AuthenticatedManageMembersRoute
   '/_authenticated/manage/settings': typeof AuthenticatedManageSettingsRoute
@@ -306,7 +287,6 @@ export interface FileRouteTypes {
     | '/admin'
     | '/dashboard'
     | '/events'
-    | '/groups'
     | '/manage'
     | '/messages'
     | '/notifications'
@@ -320,7 +300,6 @@ export interface FileRouteTypes {
     | '/admin/tenants'
     | '/events/$eventId'
     | '/events/new'
-    | '/groups/$groupId'
     | '/manage/dashboard'
     | '/manage/members'
     | '/manage/settings'
@@ -336,7 +315,6 @@ export interface FileRouteTypes {
     | '/signup'
     | '/dashboard'
     | '/events'
-    | '/groups'
     | '/messages'
     | '/notifications'
     | '/profile'
@@ -349,7 +327,6 @@ export interface FileRouteTypes {
     | '/admin/tenants'
     | '/events/$eventId'
     | '/events/new'
-    | '/groups/$groupId'
     | '/manage/dashboard'
     | '/manage/members'
     | '/manage/settings'
@@ -367,7 +344,6 @@ export interface FileRouteTypes {
     | '/_authenticated/admin'
     | '/_authenticated/dashboard'
     | '/_authenticated/events'
-    | '/_authenticated/groups'
     | '/_authenticated/manage'
     | '/_authenticated/messages'
     | '/_authenticated/notifications'
@@ -381,7 +357,6 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/tenants'
     | '/_authenticated/events/$eventId'
     | '/_authenticated/events/new'
-    | '/_authenticated/groups/$groupId'
     | '/_authenticated/manage/dashboard'
     | '/_authenticated/manage/members'
     | '/_authenticated/manage/settings'
@@ -492,13 +467,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedManageRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/groups': {
-      id: '/_authenticated/groups'
-      path: '/groups'
-      fullPath: '/groups'
-      preLoaderRoute: typeof AuthenticatedGroupsRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/events': {
       id: '/_authenticated/events'
       path: '/events'
@@ -554,13 +522,6 @@ declare module '@tanstack/react-router' {
       fullPath: '/manage/dashboard'
       preLoaderRoute: typeof AuthenticatedManageDashboardRouteImport
       parentRoute: typeof AuthenticatedManageRoute
-    }
-    '/_authenticated/groups/$groupId': {
-      id: '/_authenticated/groups/$groupId'
-      path: '/$groupId'
-      fullPath: '/groups/$groupId'
-      preLoaderRoute: typeof AuthenticatedGroupsGroupIdRouteImport
-      parentRoute: typeof AuthenticatedGroupsRoute
     }
     '/_authenticated/events/new': {
       id: '/_authenticated/events/new'
@@ -648,17 +609,6 @@ const AuthenticatedEventsRouteChildren: AuthenticatedEventsRouteChildren = {
 const AuthenticatedEventsRouteWithChildren =
   AuthenticatedEventsRoute._addFileChildren(AuthenticatedEventsRouteChildren)
 
-interface AuthenticatedGroupsRouteChildren {
-  AuthenticatedGroupsGroupIdRoute: typeof AuthenticatedGroupsGroupIdRoute
-}
-
-const AuthenticatedGroupsRouteChildren: AuthenticatedGroupsRouteChildren = {
-  AuthenticatedGroupsGroupIdRoute: AuthenticatedGroupsGroupIdRoute,
-}
-
-const AuthenticatedGroupsRouteWithChildren =
-  AuthenticatedGroupsRoute._addFileChildren(AuthenticatedGroupsRouteChildren)
-
 interface AuthenticatedManageRouteChildren {
   AuthenticatedManageDashboardRoute: typeof AuthenticatedManageDashboardRoute
   AuthenticatedManageMembersRoute: typeof AuthenticatedManageMembersRoute
@@ -680,7 +630,6 @@ interface AuthenticatedRouteChildren {
   AuthenticatedAdminRoute: typeof AuthenticatedAdminRouteWithChildren
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedEventsRoute: typeof AuthenticatedEventsRouteWithChildren
-  AuthenticatedGroupsRoute: typeof AuthenticatedGroupsRouteWithChildren
   AuthenticatedManageRoute: typeof AuthenticatedManageRouteWithChildren
   AuthenticatedMessagesRoute: typeof AuthenticatedMessagesRoute
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
@@ -693,7 +642,6 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedAdminRoute: AuthenticatedAdminRouteWithChildren,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedEventsRoute: AuthenticatedEventsRouteWithChildren,
-  AuthenticatedGroupsRoute: AuthenticatedGroupsRouteWithChildren,
   AuthenticatedManageRoute: AuthenticatedManageRouteWithChildren,
   AuthenticatedMessagesRoute: AuthenticatedMessagesRoute,
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
@@ -718,3 +666,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
