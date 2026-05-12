@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 
 export const Route = createFileRoute("/_authenticated/admin/audit")({
   component: AuditPage,
-  head: () => ({ meta: [{ title: "ERP — Auditoria" }] }),
+  head: () => ({ meta: [{ title: "Painel — Auditoria" }] }),
 });
 
 function AuditPage() {
@@ -47,7 +47,7 @@ function AuditPage() {
     <div className="space-y-4">
       <div>
         <h1 className="font-display text-3xl">Auditoria Global</h1>
-        <p className="text-sm text-muted-foreground">Ações, alterações financeiras, login/logout, impersonação, mudanças de plano.</p>
+        <p className="text-sm text-muted-foreground">Histórico de ações e alterações em todas as igrejas.</p>
       </div>
 
       <Card className="p-4 grid gap-3 sm:grid-cols-3">

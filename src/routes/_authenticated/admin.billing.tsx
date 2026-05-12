@@ -8,8 +8,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/_authenticated/admin/billing")({
   component: BillingPage,
-  head: () => ({ meta: [{ title: "ERP — Billing SaaS" }] }),
+  head: () => ({ meta: [{ title: "Painel — Billing" }] }),
 });
+
+const SUB_STATUS: Record<string, string> = {
+  trialing: "Em teste", active: "Ativa", past_due: "Em atraso",
+  canceled: "Cancelada", paused: "Pausada", incomplete: "Incompleta",
+};
+const INV_STATUS: Record<string, string> = {
+  pending: "Pendente", paid: "Paga", overdue: "Em atraso",
+  canceled: "Cancelada", refunded: "Reembolsada",
+};
 
 const fmtBRL = (n: number) => n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -53,8 +62,8 @@ function BillingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="font-display text-3xl">Billing SaaS</h1>
-        <p className="text-sm text-muted-foreground">Planos, assinaturas e faturas das igrejas. Separado das doações.</p>
+        <h1 className="font-display text-3xl">Billing</h1>
+        <p className="text-sm text-muted-foreground">Planos, assinaturas e faturas das igrejas.</p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
