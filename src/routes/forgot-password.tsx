@@ -19,8 +19,18 @@ function ForgotPasswordPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    // Force the app origin (never the Lovable editor / iframe parent)
+    const host = window.location.hostname;
+    const isEditor =
+      host.includes("lovable.dev") ||
+      host.includes("lovableproject.com") ||
+      host === "localhost";
+    const appOrigin = isEditor
+      ? "https://spire-harmony.lovable.app"
+      : window.location.origin;
+
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/redefinir-senha`,
+      redirectTo: `${appOrigin}/redefinir-senha`,
     });
     setLoading(false);
     if (error) return toast.error(error.message);
