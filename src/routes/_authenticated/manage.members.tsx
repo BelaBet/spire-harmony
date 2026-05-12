@@ -13,8 +13,10 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator,
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { EmptyRow, LoadingRow } from "@/components/empty-row";
 import { MoreVertical, Search, UserCheck, UserX, Send, Eye } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -93,11 +95,14 @@ function MembersPage() {
   const sendBulkMessage = async () => {
     if (!bulkMsg.trim() || !me?.tenant_id || selected.size === 0) return;
     const ids = Array.from(selected);
-    const { error: mErr } = await supabase.from("messages").insert({
-      tenant_id: me.tenant_id, sender_id: me.id, channel: "in_app",
-      target_type: "individual", target_id: null,
-      content: bulkMsg, status: "sent", sent_at: new Date().toISOString(),
-    });
+    const sentAt = new Date().toISOString();
+    const { error: mErr } = await supabase.from("messages").insert(
+      ids.map((pid) => ({
+        tenant_id: me.tenant_id, sender_id: me.id, channel: "in_app" as const,
+        target_type: "individual" as const, target_id: pid,
+        content: bulkMsg, status: "sent" as const, sent_at: sentAt,
+      }))
+    );
     if (mErr) return toast.error(mErr.message);
     const { error: nErr } = await supabase.from("notifications").insert(
       ids.map((pid) => ({
@@ -126,12 +131,15 @@ function MembersPage() {
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input className="pl-8" placeholder="Buscar nome, email, telefone" value={search} onChange={(e) => setSearch(e.target.value)} />
           </div>
-          <select className="rounded-md border bg-background px-3 py-2 text-sm" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-            <option value="all">Todos os status</option>
-            <option value="pending">Pendente</option>
-            <option value="approved">Aprovado</option>
-            <option value="blocked">Bloqueado</option>
-          </select>
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-[180px]"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os status</SelectItem>
+              <SelectItem value="pending">Pendente</SelectItem>
+              <SelectItem value="approved">Aprovado</SelectItem>
+              <SelectItem value="blocked">Bloqueado</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {selected.size > 0 && (
@@ -167,9 +175,9 @@ function MembersPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Carregando...</TableCell></TableRow>
+                <LoadingRow colSpan={8} />
               ) : filtered.length === 0 ? (
-                <TableRow><TableCell colSpan={8} className="text-center text-muted-foreground py-8">Nenhum membro encontrado</TableCell></TableRow>
+                <EmptyRow colSpan={8} message="Nenhum membro encontrado." />
               ) : filtered.map((m) => (
                 <TableRow key={m.id}>
                   <TableCell><Checkbox checked={selected.has(m.id)} onCheckedChange={(v) => toggleOne(m.id, v === true)} /></TableCell>
