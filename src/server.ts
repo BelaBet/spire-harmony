@@ -69,6 +69,26 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
+      // Force HTTPS — redirect any http:// request to https:// (skip localhost for dev).
+      const url = new URL(request.url);
+      const forwardedProto = request.headers.get("x-forwarded-proto");
+      const isInsecure =
+        url.protocol === "http:" || (forwardedProto && forwardedProto !== "https");
+      const isLocal =
+        url.hostname === "localhost" ||
+        url.hostname === "127.0.0.1" ||
+        url.hostname.endsWith(".local");
+      if (isInsecure && !isLocal) {
+        url.protocol = "https:";
+        return new Response(null, {
+          status: 301,
+          headers: {
+            location: url.toString(),
+            "strict-transport-security": "max-age=31536000; includeSubDomains",
+          },
+        });
+      }
+
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
       return await normalizeCatastrophicSsrResponse(response);
