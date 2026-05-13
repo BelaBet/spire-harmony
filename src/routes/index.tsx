@@ -486,6 +486,39 @@ function ChurchPage() {
           <span style={{ fontWeight: 600, color: scrolled ? "#1a1a1a" : "transparent", transition: "color .3s" }}>
             {CHURCH.name}
           </span>
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+            <a
+              href="/login"
+              style={{
+                padding: "8px 16px",
+                borderRadius: 999,
+                fontSize: 13,
+                fontWeight: 600,
+                textDecoration: "none",
+                background: scrolled ? primary : "rgba(255,255,255,0.95)",
+                color: scrolled ? "#fff" : primary,
+                transition: "all .3s ease",
+                boxShadow: scrolled ? "none" : "0 2px 12px rgba(0,0,0,0.12)",
+              }}
+            >
+              Entrar
+            </a>
+            <a
+              href="/signup"
+              style={{
+                padding: "8px 16px",
+                borderRadius: 999,
+                fontSize: 13,
+                fontWeight: 600,
+                textDecoration: "none",
+                border: `1.5px solid ${scrolled ? primary : "rgba(255,255,255,0.7)"}`,
+                color: scrolled ? primary : "#fff",
+                transition: "all .3s ease",
+              }}
+            >
+              Cadastrar
+            </a>
+          </div>
         </div>
       </div>
 
