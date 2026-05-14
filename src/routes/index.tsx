@@ -912,7 +912,7 @@ function ChurchPage() {
             className="donate-link"
             style={{ color: accent, fontWeight: 600, textDecoration: "none" }}
           >
-            Ankor Tech
+            TK2 Prosperidade
           </a>
         </p>
       </footer>
