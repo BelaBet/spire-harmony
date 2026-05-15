@@ -632,10 +632,9 @@ function ChurchPage() {
         </div>
       </section>
 
-      {/* ── PAYMENTS HUB SECTION ───────────────────────────────────────── */}
-      <section style={{ padding: "80px 24px", maxWidth: 1200, margin: "0 auto" }}>
-        {/* Section Title */}
-        <div className="fade-up" style={{ textAlign: "center", marginBottom: 48 }}>
+      {/* ── PAYMENTS HUB SECTION (fintech quick actions) ───────────────── */}
+      <section style={{ padding: "80px 24px", maxWidth: 1100, margin: "0 auto" }}>
+        <div className="fade-up" style={{ textAlign: "center", marginBottom: 36 }}>
           <span style={{ fontSize: 12, letterSpacing: 3, color: accent, fontWeight: 600 }}>
             ✦ CONTRIBUA COM A OBRA
           </span>
@@ -650,211 +649,14 @@ function ChurchPage() {
             Escolha como deseja contribuir
           </h2>
           <p style={{ color: "#666", margin: "0 auto", maxWidth: 620 }}>
-            Oferecemos múltiplas formas de pagamento para facilitar sua contribuição
-            com segurança e praticidade.
+            Pagamentos rápidos, seguros e sem complicação.
           </p>
         </div>
 
-        {/* Payments Grid */}
-        <div
-          className="fade-up-2"
-          style={{
-            display: "grid",
-            gap: 24,
-            gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-            alignItems: "stretch",
-          }}
-        >
-          {/* ─── PIX CARD (featured / active) ─────────────────────────── */}
-          <PaymentMethodCard accent={accent} primary={primary} featured>
-            {/* Featured top bar */}
-            <div
-              style={{
-                position: "absolute",
-                top: 0,
-                left: 0,
-                right: 0,
-                height: 4,
-                background: `linear-gradient(90deg, ${primary}, ${accent})`,
-              }}
-            />
-
-            {/* Header */}
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 20 }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div
-                  style={{
-                    width: 44,
-                    height: 44,
-                    borderRadius: 12,
-                    background: `${primary}11`,
-                    color: primary,
-                    display: "grid",
-                    placeItems: "center",
-                  }}
-                >
-                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2" />
-                    <line x1="12" y1="22" x2="12" y2="15.5" />
-                    <polyline points="22 8.5 12 15.5 2 8.5" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 style={{ fontFamily: "'Playfair Display', serif", fontSize: 18, color: primary, margin: 0 }}>
-                    PIX
-                  </h3>
-                  <p style={{ fontSize: 12, color: "#888", margin: "2px 0 0" }}>Instantâneo · 24h</p>
-                </div>
-              </div>
-              {/* Live indicator */}
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <span style={{ position: "relative", display: "inline-flex" }}>
-                  <span
-                    style={{
-                      position: "absolute",
-                      inset: 0,
-                      borderRadius: 999,
-                      background: "#22c55e",
-                      animation: "pulse-ring 1.6s ease-out infinite",
-                    }}
-                  />
-                  <span style={{ width: 8, height: 8, borderRadius: 999, background: "#22c55e", display: "inline-block" }} />
-                </span>
-                <span style={{ fontSize: 11, color: "#22c55e", fontWeight: 600, letterSpacing: 0.5 }}>ATIVO</span>
-              </div>
-            </div>
-
-            {/* QR Code */}
-            <div style={{ display: "grid", placeItems: "center", marginBottom: 16 }}>
-              <div style={{ padding: 12, background: "#fff", border: `2px solid ${primary}11`, borderRadius: 14 }}>
-                <QRCodeSVG size={150} primary={primary} />
-              </div>
-            </div>
-
-            {/* Beneficiary */}
-            <div style={{ textAlign: "center", marginBottom: 16 }}>
-              <p style={{ fontSize: 10, letterSpacing: 2, color: "#999", margin: "0 0 2px" }}>BENEFICIÁRIO</p>
-              <p style={{ fontFamily: "'Playfair Display', serif", fontSize: 14, color: primary, margin: 0 }}>
-                {CHURCH.name}
-              </p>
-            </div>
-
-            {/* PIX Key + copy */}
-            <div style={{ marginTop: "auto" }}>
-              <p style={{ fontSize: 11, color: "#999", textTransform: "uppercase", letterSpacing: 1, margin: "0 0 6px" }}>
-                Chave PIX (CNPJ)
-              </p>
-              <div style={{ display: "flex", gap: 6, alignItems: "stretch" }}>
-                <div
-                  style={{
-                    flex: 1,
-                    padding: "10px 12px",
-                    background: "#f5f5f0",
-                    borderRadius: 10,
-                    fontFamily: "monospace",
-                    fontSize: 12,
-                    display: "flex",
-                    alignItems: "center",
-                    overflow: "hidden",
-                    textOverflow: "ellipsis",
-                    whiteSpace: "nowrap",
-                  }}
-                >
-                  {PIX_KEY}
-                </div>
-                <button
-                  onClick={copyPix}
-                  className="copy-btn"
-                  style={{
-                    padding: "0 14px",
-                    border: `2px solid ${primary}`,
-                    background: copied ? primary : "transparent",
-                    color: copied ? "#fff" : primary,
-                    borderRadius: 10,
-                    fontWeight: 600,
-                    fontSize: 13,
-                    cursor: "pointer",
-                    transition: "all .2s",
-                  }}
-                >
-                  {copied ? "✓" : "Copiar"}
-                </button>
-              </div>
-            </div>
-          </PaymentMethodCard>
-
-          {/* ─── CARTÃO DE CRÉDITO ────────────────────────────────────── */}
-          <PaymentMethodCard accent={accent} primary={primary}>
-            <PaymentHeader
-              primary={primary}
-              title="Cartão de Crédito"
-              subtitle="Parcele em até 12x"
-              icon={
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="5" width="20" height="14" rx="2" />
-                  <line x1="2" y1="10" x2="22" y2="10" />
-                </svg>
-              }
-            />
-            <PlaceholderBody primary={primary} accent={accent} label="Clique para prosseguir" status="Disponível" />
-          </PaymentMethodCard>
-
-          {/* ─── CARTÃO DE DÉBITO ─────────────────────────────────────── */}
-          <PaymentMethodCard accent={accent} primary={primary}>
-            <PaymentHeader
-              primary={primary}
-              title="Cartão de Débito"
-              subtitle="Débito à vista"
-              icon={
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="2" y="5" width="20" height="14" rx="2" />
-                  <line x1="2" y1="10" x2="22" y2="10" />
-                  <line x1="6" y1="15" x2="10" y2="15" />
-                </svg>
-              }
-            />
-            <PlaceholderBody primary={primary} accent={accent} label="Clique para prosseguir" status="Disponível" />
-          </PaymentMethodCard>
-
-          {/* ─── TRANSFERÊNCIA BANCÁRIA ───────────────────────────────── */}
-          <PaymentMethodCard accent={accent} primary={primary}>
-            <PaymentHeader
-              primary={primary}
-              title="Transferência Bancária"
-              subtitle="TED · DOC"
-              icon={
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 21h18" />
-                  <path d="M5 21V10l7-5 7 5v11" />
-                  <path d="M9 21v-6h6v6" />
-                </svg>
-              }
-            />
-            <PlaceholderBody primary={primary} accent={accent} label="Em breve disponível" status="Em breve" muted />
-          </PaymentMethodCard>
-
-          {/* ─── BOLETO BANCÁRIO ──────────────────────────────────────── */}
-          <PaymentMethodCard accent={accent} primary={primary}>
-            <PaymentHeader
-              primary={primary}
-              title="Boleto Bancário"
-              subtitle="Compensação em até 3 dias"
-              icon={
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="4" y1="4" x2="4" y2="20" />
-                  <line x1="7" y1="4" x2="7" y2="20" />
-                  <line x1="10" y1="4" x2="10" y2="20" />
-                  <line x1="14" y1="4" x2="14" y2="20" />
-                  <line x1="17" y1="4" x2="17" y2="20" />
-                  <line x1="20" y1="4" x2="20" y2="20" />
-                </svg>
-              }
-            />
-            <PlaceholderBody primary={primary} accent={accent} label="Em breve disponível" status="Em breve" muted />
-          </PaymentMethodCard>
+        <div className="fade-up-2">
+          <PaymentsQuickActions primary={primary} accent={accent} pixKey={PIX_KEY} />
         </div>
 
-        {/* Reassurance footnote */}
         <div
           className="fade-up-3"
           style={{
