@@ -431,6 +431,197 @@ function EventCard({ event, accent, primary }: { event: EventItem; accent: strin
   );
 }
 
+// ── PAYMENTS QUICK ACTIONS (fintech-style) ───────────────────────────────────
+type ActionKey = "pix" | "boleto" | "fatura" | "mais";
+
+const QUICK_ACTIONS: { key: ActionKey; label: string; icon: ComponentType<{ className?: string }>; tint: string }[] = [
+  { key: "pix",    label: "Pix",          icon: QrCode,         tint: "bg-emerald-100 text-emerald-700" },
+  { key: "boleto", label: "Pagamento",    icon: Barcode,        tint: "bg-sky-100 text-sky-700" },
+  { key: "fatura", label: "Pagar fatura", icon: CreditCard,     tint: "bg-violet-100 text-violet-700" },
+  { key: "mais",   label: "Mais opções",  icon: MoreHorizontal, tint: "bg-amber-100 text-amber-700" },
+];
+
+function PaymentsQuickActions({ primary, accent, pixKey }: { primary: string; accent: string; pixKey: string }) {
+  const [open, setOpen] = useState<ActionKey | null>(null);
+  return (
+    <>
+      <div className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6" style={{ borderColor: `${primary}1a` }}>
+        <div className="grid grid-cols-4 gap-3 sm:gap-6">
+          {QUICK_ACTIONS.map((a) => {
+            const Icon = a.icon;
+            return (
+              <button
+                key={a.key}
+                type="button"
+                onClick={() => setOpen(a.key)}
+                className="group flex flex-col items-center gap-2 rounded-xl p-1 text-center outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                style={{ ['--tw-ring-color' as string]: accent }}
+              >
+                <span
+                  className={cn(
+                    "flex h-[72px] w-[72px] items-center justify-center rounded-full shadow-sm transition-all duration-200",
+                    "group-hover:scale-105 group-hover:shadow-md group-active:scale-95 sm:h-24 sm:w-24",
+                    a.tint,
+                  )}
+                >
+                  <Icon className="!h-7 !w-7 sm:!h-8 sm:!w-8" />
+                </span>
+                <span className="text-xs font-medium sm:text-sm" style={{ color: primary }}>{a.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      <PixDialog open={open === "pix"} onClose={() => setOpen(null)} pixKey={pixKey} primary={primary} />
+      <BoletoDialog open={open === "boleto"} onClose={() => setOpen(null)} primary={primary} />
+      <FaturaDialog open={open === "fatura"} onClose={() => setOpen(null)} primary={primary} />
+      <MaisDialog open={open === "mais"} onClose={() => setOpen(null)} onPick={(k) => setOpen(k)} />
+    </>
+  );
+}
+
+function PaymentDialogShell({ open, onClose, title, description, children }: { open: boolean; onClose: () => void; title: string; description?: string; children: ReactNode }) {
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="w-[calc(100%-2rem)] max-w-md rounded-2xl p-6 backdrop-blur-md sm:rounded-2xl">
+        <DialogHeader>
+          <DialogTitle className="text-xl" style={{ fontFamily: "'Playfair Display', serif" }}>{title}</DialogTitle>
+          {description && <DialogDescription>{description}</DialogDescription>}
+        </DialogHeader>
+        <div className="mt-2 space-y-4">{children}</div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function PixDialog({ open, onClose, pixKey, primary }: { open: boolean; onClose: () => void; pixKey: string; primary: string }) {
+  const [key, setKey] = useState(pixKey);
+  const [amount, setAmount] = useState("");
+  const [copied, setCopied] = useState(false);
+  const copy = async () => {
+    await navigator.clipboard.writeText(key);
+    setCopied(true);
+    toast.success("Chave copiada");
+    setTimeout(() => setCopied(false), 1500);
+  };
+  return (
+    <PaymentDialogShell open={open} onClose={onClose} title="Transferência Pix" description="Envie em segundos para qualquer chave.">
+      <div className="space-y-2">
+        <Label htmlFor="pix-key">Chave Pix</Label>
+        <div className="flex gap-2">
+          <Input id="pix-key" value={key} onChange={(e) => setKey(e.target.value)} placeholder="CPF, e-mail, telefone ou aleatória" />
+          <Button type="button" variant="outline" size="icon" onClick={copy} aria-label="Copiar chave">
+            {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+          </Button>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="pix-amount">Valor</Label>
+        <Input id="pix-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="R$ 0,00" />
+      </div>
+      <Button className="w-full text-white" size="lg" style={{ background: primary }} onClick={() => { toast.success("Pagamento iniciado"); onClose(); }}>
+        Continuar
+      </Button>
+    </PaymentDialogShell>
+  );
+}
+
+function BoletoDialog({ open, onClose, primary }: { open: boolean; onClose: () => void; primary: string }) {
+  const [code, setCode] = useState("");
+  const [amount, setAmount] = useState("");
+  const [fileName, setFileName] = useState<string | null>(null);
+  return (
+    <PaymentDialogShell open={open} onClose={onClose} title="Pagamento de boleto" description="Digite o código ou envie o arquivo.">
+      <div className="space-y-2">
+        <Label htmlFor="boleto-code">Código de barras</Label>
+        <Input id="boleto-code" inputMode="numeric" value={code} onChange={(e) => setCode(e.target.value)} placeholder="00000.00000 00000.000000 00000.000000 0 00000000000000" />
+      </div>
+      <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-dashed bg-muted/40 p-4 text-sm transition-colors hover:bg-muted">
+        <span className="flex items-center gap-3">
+          <Upload className="h-5 w-5 text-muted-foreground" />
+          <span className="text-muted-foreground">{fileName ?? "Enviar arquivo do boleto (PDF/JPG)"}</span>
+        </span>
+        <input type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => setFileName(e.target.files?.[0]?.name ?? null)} />
+      </label>
+      <div className="space-y-2">
+        <Label htmlFor="boleto-amount">Valor</Label>
+        <Input id="boleto-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="R$ 0,00" />
+      </div>
+      <Button className="w-full text-white" size="lg" style={{ background: primary }} onClick={() => { toast.success("Boleto enviado para pagamento"); onClose(); }}>
+        Pagar
+      </Button>
+    </PaymentDialogShell>
+  );
+}
+
+function FaturaDialog({ open, onClose, primary }: { open: boolean; onClose: () => void; primary: string }) {
+  const [method, setMethod] = useState<"total" | "minimo" | "outro">("total");
+  const [custom, setCustom] = useState("");
+  const opts = [
+    { id: "total" as const, label: "Pagar valor total", hint: "R$ 1.284,90" },
+    { id: "minimo" as const, label: "Pagamento mínimo", hint: "R$ 192,73" },
+    { id: "outro" as const, label: "Outro valor", hint: "Você escolhe" },
+  ];
+  return (
+    <PaymentDialogShell open={open} onClose={onClose} title="Fatura do cartão" description="Escolha como deseja pagar.">
+      <div className="rounded-xl bg-muted/50 p-4">
+        <p className="text-xs text-muted-foreground">Total da fatura</p>
+        <p className="text-2xl" style={{ fontFamily: "'Playfair Display', serif" }}>R$ 1.284,90</p>
+        <p className="mt-1 text-xs text-muted-foreground">Vencimento em 25/05</p>
+      </div>
+      <div className="grid gap-2">
+        {opts.map((opt) => (
+          <button
+            key={opt.id}
+            type="button"
+            onClick={() => setMethod(opt.id)}
+            className={cn(
+              "flex items-center justify-between rounded-xl border p-3 text-left transition-colors",
+              method === opt.id ? "bg-primary/5" : "hover:bg-muted/50",
+            )}
+            style={method === opt.id ? { borderColor: primary } : undefined}
+          >
+            <span className="text-sm font-medium">{opt.label}</span>
+            <span className="text-xs text-muted-foreground">{opt.hint}</span>
+          </button>
+        ))}
+      </div>
+      {method === "outro" && (
+        <Input inputMode="decimal" value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="R$ 0,00" />
+      )}
+      <Button className="w-full text-white" size="lg" style={{ background: primary }} onClick={() => { toast.success("Pagamento confirmado"); onClose(); }}>
+        Confirmar pagamento
+      </Button>
+    </PaymentDialogShell>
+  );
+}
+
+function MaisDialog({ open, onClose, onPick }: { open: boolean; onClose: () => void; onPick: (k: ActionKey) => void }) {
+  const items: { icon: ComponentType<{ className?: string }>; label: string; onClick: () => void }[] = [
+    { icon: Smartphone,     label: "Recarga de celular",          onClick: () => toast.info("Em breve") },
+    { icon: Receipt,        label: "Contas e impostos",           onClick: () => onPick("boleto") },
+    { icon: ArrowLeftRight, label: "Transferência entre contas",  onClick: () => toast.info("Em breve") },
+    { icon: PiggyBank,      label: "Investir",                    onClick: () => toast.info("Em breve") },
+  ];
+  return (
+    <PaymentDialogShell open={open} onClose={onClose} title="Mais opções" description="Outras ações disponíveis.">
+      <ul className="divide-y rounded-xl border">
+        {items.map(({ icon: Icon, label, onClick }) => (
+          <li key={label}>
+            <button type="button" onClick={onClick} className="flex w-full items-center gap-3 p-4 text-left transition-colors hover:bg-muted/50">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-foreground/80">
+                <Icon className="h-5 w-5" />
+              </span>
+              <span className="text-sm font-medium">{label}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </PaymentDialogShell>
+  );
+}
+
 // ── MAIN PAGE ─────────────────────────────────────────────────────────────────
 function ChurchPage() {
   const [copied, setCopied] = useState(false);
