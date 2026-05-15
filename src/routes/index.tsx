@@ -1,5 +1,30 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, type ComponentType, type ReactNode } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  QrCode,
+  Barcode,
+  CreditCard,
+  MoreHorizontal,
+  Copy,
+  Check,
+  Upload,
+  Smartphone,
+  Receipt,
+  ArrowLeftRight,
+  PiggyBank,
+} from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   component: ChurchPage,
