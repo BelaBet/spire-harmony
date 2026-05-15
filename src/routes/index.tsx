@@ -563,42 +563,61 @@ function BoletoDialog({ open, onClose, primary }: { open: boolean; onClose: () =
 }
 
 function FaturaDialog({ open, onClose, primary }: { open: boolean; onClose: () => void; primary: string }) {
-  const [method, setMethod] = useState<"total" | "minimo" | "outro">("total");
-  const [custom, setCustom] = useState("");
-  const opts = [
-    { id: "total" as const, label: "Pagar valor total", hint: "R$ 1.284,90" },
-    { id: "minimo" as const, label: "Pagamento mínimo", hint: "R$ 192,73" },
-    { id: "outro" as const, label: "Outro valor", hint: "Você escolhe" },
-  ];
+  const [name, setName] = useState("");
+  const [number, setNumber] = useState("");
+  const [expiry, setExpiry] = useState("");
+  const [cvv, setCvv] = useState("");
+  const [amount, setAmount] = useState("");
+  const [installments, setInstallments] = useState("1");
+
+  const formatNumber = (v: string) =>
+    v.replace(/\D/g, "").slice(0, 16).replace(/(\d{4})(?=\d)/g, "$1 ").trim();
+  const formatExpiry = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 4);
+    return d.length <= 2 ? d : `${d.slice(0, 2)}/${d.slice(2)}`;
+  };
+
   return (
-    <PaymentDialogShell open={open} onClose={onClose} title="Fatura do cartão" description="Escolha como deseja pagar.">
-      <div className="rounded-xl bg-muted/50 p-4">
-        <p className="text-xs text-muted-foreground">Total da fatura</p>
-        <p className="text-2xl" style={{ fontFamily: "'Playfair Display', serif" }}>R$ 1.284,90</p>
-        <p className="mt-1 text-xs text-muted-foreground">Vencimento em 25/05</p>
+    <PaymentDialogShell open={open} onClose={onClose} title="Pagar com cartão de crédito" description="Preencha os dados do cartão para concluir o pagamento.">
+      <div className="space-y-2">
+        <Label htmlFor="cc-number">Número do cartão</Label>
+        <Input id="cc-number" inputMode="numeric" autoComplete="cc-number" value={number} onChange={(e) => setNumber(formatNumber(e.target.value))} placeholder="0000 0000 0000 0000" />
       </div>
-      <div className="grid gap-2">
-        {opts.map((opt) => (
-          <button
-            key={opt.id}
-            type="button"
-            onClick={() => setMethod(opt.id)}
-            className={cn(
-              "flex items-center justify-between rounded-xl border p-3 text-left transition-colors",
-              method === opt.id ? "bg-primary/5" : "hover:bg-muted/50",
-            )}
-            style={method === opt.id ? { borderColor: primary } : undefined}
+      <div className="space-y-2">
+        <Label htmlFor="cc-name">Nome impresso no cartão</Label>
+        <Input id="cc-name" autoComplete="cc-name" value={name} onChange={(e) => setName(e.target.value.toUpperCase())} placeholder="COMO ESTÁ NO CARTÃO" />
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label htmlFor="cc-exp">Validade</Label>
+          <Input id="cc-exp" inputMode="numeric" autoComplete="cc-exp" value={expiry} onChange={(e) => setExpiry(formatExpiry(e.target.value))} placeholder="MM/AA" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="cc-cvv">CVV</Label>
+          <Input id="cc-cvv" inputMode="numeric" autoComplete="cc-csc" maxLength={4} value={cvv} onChange={(e) => setCvv(e.target.value.replace(/\D/g, ""))} placeholder="123" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label htmlFor="cc-amount">Valor</Label>
+          <Input id="cc-amount" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="R$ 0,00" />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="cc-inst">Parcelas</Label>
+          <select
+            id="cc-inst"
+            value={installments}
+            onChange={(e) => setInstallments(e.target.value)}
+            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           >
-            <span className="text-sm font-medium">{opt.label}</span>
-            <span className="text-xs text-muted-foreground">{opt.hint}</span>
-          </button>
-        ))}
+            {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
+              <option key={n} value={n}>{n}x</option>
+            ))}
+          </select>
+        </div>
       </div>
-      {method === "outro" && (
-        <Input inputMode="decimal" value={custom} onChange={(e) => setCustom(e.target.value)} placeholder="R$ 0,00" />
-      )}
-      <Button className="w-full text-white" size="lg" style={{ background: primary }} onClick={() => { toast.success("Pagamento confirmado"); onClose(); }}>
-        Confirmar pagamento
+      <Button className="w-full text-white" size="lg" style={{ background: primary }} onClick={() => { toast.success("Pagamento aprovado"); onClose(); }}>
+        Pagar agora
       </Button>
     </PaymentDialogShell>
   );
