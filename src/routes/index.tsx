@@ -740,54 +740,39 @@ function ChurchPage() {
 
       {/* ── HERO / HEADER ──────────────────────────────────────────────── */}
       <section
-        className="px-6 pt-10 pb-12 sm:px-6 sm:pt-20 sm:pb-24"
+        className="relative overflow-hidden px-6 pt-5 pb-6 text-center sm:px-6 sm:pt-20 sm:pb-24 max-h-[65vh] sm:max-h-none"
         style={{
-          position: "relative",
-          textAlign: "center",
           background: `linear-gradient(135deg, ${primary} 0%, ${primary}dd 100%)`,
           color: "#fff",
-          overflow: "hidden",
         }}
       >
         {/* Decorative circles */}
         <div
-          className="w-48 h-48 sm:w-80 sm:h-80"
-          style={{
-            position: "absolute",
-            top: -120,
-            right: -120,
-            borderRadius: "50%",
-            background: `${accent}22`,
-          }}
+          className="absolute -top-16 -right-16 w-36 h-36 sm:w-80 sm:h-80 sm:-top-30 sm:-right-30 rounded-full"
+          style={{ background: `${accent}22` }}
         />
         <div
-          className="w-56 h-56 sm:w-96 sm:h-96"
-          style={{
-            position: "absolute",
-            bottom: -160,
-            left: -160,
-            borderRadius: "50%",
-            background: `${accent}18`,
-          }}
+          className="absolute -bottom-20 -left-20 w-44 h-44 sm:w-96 sm:h-96 sm:-bottom-40 sm:-left-40 rounded-full"
+          style={{ background: `${accent}18` }}
         />
 
-        <div className="fade-up relative mx-auto max-w-3xl">
+        <div className="fade-up relative mx-auto max-w-3xl flex flex-col items-center">
           {/* Logo */}
-          <div className="mb-3 sm:mb-6">
+          <div className="mb-1 sm:mb-6">
             {CHURCH.logo ? (
               <img
                 src={CHURCH.logo}
                 alt={CHURCH.name}
-                className="mx-auto rounded-full object-cover w-16 h-16 sm:w-24 sm:h-24"
-                style={{ border: `3px solid ${accent}` }}
+                className="mx-auto rounded-full object-cover w-11 h-11 sm:w-24 sm:h-24"
+                style={{ border: `2px solid ${accent}` }}
               />
             ) : (
               <div
-                className="mx-auto grid place-items-center rounded-full w-16 h-16 sm:w-24 sm:h-24 text-xl sm:text-3xl font-extrabold"
+                className="mx-auto grid place-items-center rounded-full w-11 h-11 sm:w-24 sm:h-24 text-sm sm:text-3xl font-extrabold"
                 style={{
                   background: "#fff",
                   color: primary,
-                  border: `3px solid ${accent}`,
+                  border: `2px solid ${accent}`,
                 }}
               >
                 {initials(CHURCH.name)}
@@ -797,24 +782,24 @@ function ChurchPage() {
 
           {/* Church Name */}
           <h1
-            className="mb-2 sm:mb-4"
+            className="sm:mb-4 leading-tight"
             style={{
               fontFamily: "'Playfair Display', Georgia, serif",
-              fontSize: "clamp(1.6rem, 5.5vw, 3.6rem)",
-              lineHeight: 1.1,
+              fontSize: "clamp(1.15rem, 5vw, 3.6rem)",
+              lineHeight: 1.05,
               margin: 0,
             }}
           >
             {CHURCH.name}
           </h1>
-          <p className="m-0 font-light" style={{ fontSize: "clamp(0.9rem, 2.5vw, 1.25rem)", opacity: 0.9 }}>
+          <p className="font-light" style={{ fontSize: "clamp(0.72rem, 2.2vw, 1.25rem)", opacity: 0.9, margin: "4px 0 0" }}>
             {CHURCH.tagline}
           </p>
 
           {/* Divider */}
           <div
-            className="mx-auto mt-4 sm:mt-8"
-            style={{ width: 60, height: 3, background: accent, borderRadius: 2 }}
+            className="mt-3 sm:mt-8"
+            style={{ width: 40, height: 2, background: accent, borderRadius: 2 }}
           />
         </div>
       </section>
