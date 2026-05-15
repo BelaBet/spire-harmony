@@ -740,9 +740,9 @@ function ChurchPage() {
 
       {/* ── HERO / HEADER ──────────────────────────────────────────────── */}
       <section
+        className="px-6 pt-10 pb-12 sm:px-6 sm:pt-20 sm:pb-24"
         style={{
           position: "relative",
-          padding: "80px 24px 100px",
           textAlign: "center",
           background: `linear-gradient(135deg, ${primary} 0%, ${primary}dd 100%)`,
           color: "#fff",
@@ -751,50 +751,42 @@ function ChurchPage() {
       >
         {/* Decorative circles */}
         <div
+          className="w-48 h-48 sm:w-80 sm:h-80"
           style={{
             position: "absolute",
             top: -120,
             right: -120,
-            width: 320,
-            height: 320,
             borderRadius: "50%",
             background: `${accent}22`,
           }}
         />
         <div
+          className="w-56 h-56 sm:w-96 sm:h-96"
           style={{
             position: "absolute",
             bottom: -160,
             left: -160,
-            width: 400,
-            height: 400,
             borderRadius: "50%",
             background: `${accent}18`,
           }}
         />
 
-        <div className="fade-up" style={{ position: "relative", maxWidth: 800, margin: "0 auto" }}>
+        <div className="fade-up relative mx-auto max-w-3xl">
           {/* Logo */}
-          <div style={{ marginBottom: 24 }}>
+          <div className="mb-3 sm:mb-6">
             {CHURCH.logo ? (
               <img
                 src={CHURCH.logo}
                 alt={CHURCH.name}
-                style={{ width: 96, height: 96, borderRadius: 999, objectFit: "cover", margin: "0 auto", border: `3px solid ${accent}` }}
+                className="mx-auto rounded-full object-cover w-16 h-16 sm:w-24 sm:h-24"
+                style={{ border: `3px solid ${accent}` }}
               />
             ) : (
               <div
+                className="mx-auto grid place-items-center rounded-full w-16 h-16 sm:w-24 sm:h-24 text-xl sm:text-3xl font-extrabold"
                 style={{
-                  width: 96,
-                  height: 96,
-                  borderRadius: 999,
                   background: "#fff",
                   color: primary,
-                  display: "grid",
-                  placeItems: "center",
-                  fontSize: 32,
-                  fontWeight: 800,
-                  margin: "0 auto",
                   border: `3px solid ${accent}`,
                 }}
               >
@@ -805,21 +797,25 @@ function ChurchPage() {
 
           {/* Church Name */}
           <h1
+            className="mb-2 sm:mb-4"
             style={{
               fontFamily: "'Playfair Display', Georgia, serif",
-              fontSize: "clamp(2.2rem, 6vw, 3.6rem)",
+              fontSize: "clamp(1.6rem, 5.5vw, 3.6rem)",
               lineHeight: 1.1,
-              margin: "0 0 16px",
+              margin: 0,
             }}
           >
             {CHURCH.name}
           </h1>
-          <p style={{ fontSize: "clamp(1rem, 2.5vw, 1.25rem)", opacity: 0.9, margin: 0, fontWeight: 300 }}>
+          <p className="m-0 font-light" style={{ fontSize: "clamp(0.9rem, 2.5vw, 1.25rem)", opacity: 0.9 }}>
             {CHURCH.tagline}
           </p>
 
           {/* Divider */}
-          <div style={{ width: 60, height: 3, background: accent, margin: "32px auto 0", borderRadius: 2 }} />
+          <div
+            className="mx-auto mt-4 sm:mt-8"
+            style={{ width: 60, height: 3, background: accent, borderRadius: 2 }}
+          />
         </div>
       </section>
 
