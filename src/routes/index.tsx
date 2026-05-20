@@ -443,7 +443,12 @@ const QUICK_ACTIONS: { key: ActionKey; label: string; icon: ComponentType<{ clas
 ];
 
 function PaymentsQuickActions({ primary, accent, pixKey }: { primary: string; accent: string; pixKey: string }) {
-  const [open, setOpen] = useState<ActionKey | null>(null);
+  // contribKey = método cujo modal de valor está aberto
+  // methodOpen = método cujo dialog específico (Pix/Boleto/...) está aberto, após confirmar o valor
+  const [contribKey, setContribKey] = useState<ActionKey | null>(null);
+  const [methodOpen, setMethodOpen] = useState<ActionKey | null>(null);
+  const contribLabel = QUICK_ACTIONS.find((a) => a.key === contribKey)?.label ?? "";
+
   return (
     <>
       <div className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6" style={{ borderColor: `${primary}1a` }}>
@@ -454,7 +459,7 @@ function PaymentsQuickActions({ primary, accent, pixKey }: { primary: string; ac
               <button
                 key={a.key}
                 type="button"
-                onClick={() => setOpen(a.key)}
+                onClick={() => setContribKey(a.key)}
                 className="group flex flex-col items-center gap-2 rounded-xl p-1 text-center outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
                 style={{ ['--tw-ring-color' as string]: accent }}
               >
@@ -474,10 +479,25 @@ function PaymentsQuickActions({ primary, accent, pixKey }: { primary: string; ac
         </div>
       </div>
 
-      <PixDialog open={open === "pix"} onClose={() => setOpen(null)} pixKey={pixKey} primary={primary} />
-      <BoletoDialog open={open === "boleto"} onClose={() => setOpen(null)} primary={primary} />
-      <FaturaDialog open={open === "fatura"} onClose={() => setOpen(null)} primary={primary} />
-      <MaisDialog open={open === "mais"} onClose={() => setOpen(null)} onPick={(k) => setOpen(k)} />
+      {/* Modal de seleção de valor — personalizado por método */}
+      <ContribuicaoModal
+        isOpen={contribKey !== null}
+        onClose={() => setContribKey(null)}
+        method={contribKey ? { key: contribKey, label: contribLabel } : undefined}
+        onConfirm={(valor) => {
+          const k = contribKey;
+          setContribKey(null);
+          if (k) {
+            toast.success(`Valor selecionado: R$${valor}`);
+            setMethodOpen(k);
+          }
+        }}
+      />
+
+      <PixDialog open={methodOpen === "pix"} onClose={() => setMethodOpen(null)} pixKey={pixKey} primary={primary} />
+      <BoletoDialog open={methodOpen === "boleto"} onClose={() => setMethodOpen(null)} primary={primary} />
+      <FaturaDialog open={methodOpen === "fatura"} onClose={() => setMethodOpen(null)} primary={primary} />
+      <MaisDialog open={methodOpen === "mais"} onClose={() => setMethodOpen(null)} onPick={(k) => setMethodOpen(k)} />
     </>
   );
 }
