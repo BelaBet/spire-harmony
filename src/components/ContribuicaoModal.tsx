@@ -1,18 +1,33 @@
 import { useEffect, useRef, useState } from "react";
 import { Lock, Star, X } from "lucide-react";
 
+export type ContribMethod = {
+  key: "pix" | "boleto" | "fatura" | "mais" | "custom";
+  label: string;
+};
+
 type Props = {
   isOpen: boolean;
   onClose: () => void;
   onConfirm?: (valor: number) => void;
+  method?: ContribMethod;
 };
 
 const PRESETS = [10, 25, 50, 100, 200];
 
-export function ContribuicaoModal({ isOpen, onClose, onConfirm }: Props) {
+const METHOD_COPY: Record<ContribMethod["key"], { title: string; subtitle: string; cta: string }> = {
+  pix:    { title: "Contribuir via Pix",          subtitle: "Qual valor você quer contribuir via Pix?",         cta: "Gerar Pix" },
+  boleto: { title: "Contribuir via Boleto",       subtitle: "Qual valor você quer contribuir via Boleto?",      cta: "Gerar Boleto" },
+  fatura: { title: "Contribuir com Cartão",       subtitle: "Qual valor você quer contribuir no cartão?",       cta: "Continuar no cartão" },
+  mais:   { title: "Escolher forma de pagamento", subtitle: "Qual valor você quer contribuir?",                 cta: "Continuar" },
+  custom: { title: "Contribuir",                  subtitle: "Qual valor você quer contribuir?",                 cta: "Continuar" },
+};
+
+export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props) {
   const [selected, setSelected] = useState<number | "custom">(25);
   const [value, setValue] = useState<string>("25");
   const inputRef = useRef<HTMLInputElement>(null);
+  const copy = METHOD_COPY[method?.key ?? "custom"];
 
   useEffect(() => {
     if (isOpen) {
@@ -71,10 +86,10 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm }: Props) {
         </div>
 
         <h2 className="mt-4 text-[28px] font-bold leading-tight text-[#111827]">
-          Contribuir
+          {copy.title}
         </h2>
         <p className="mt-1 text-sm text-[#6B7280]">
-          Qual valor você quer contribuir?
+          {copy.subtitle}
         </p>
 
         <div className="mt-5 flex items-center rounded-xl border-2 border-[#7C3AED] px-4 py-3">
@@ -133,7 +148,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm }: Props) {
           className="mt-4 h-[52px] w-full rounded-full bg-[#7C3AED] text-base font-semibold text-white transition hover:bg-[#6D28D9] disabled:opacity-50"
           disabled={!Number(value)}
         >
-          Continuar
+          {copy.cta}
         </button>
       </div>
     </div>
