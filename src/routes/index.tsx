@@ -25,6 +25,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { ContribuicaoModal } from "@/components/ContribuicaoModal";
 
 export const Route = createFileRoute("/")({
   component: ChurchPage,
@@ -651,6 +652,7 @@ function MaisDialog({ open, onClose, onPick }: { open: boolean; onClose: () => v
 // ── MAIN PAGE ─────────────────────────────────────────────────────────────────
 function ChurchPage() {
   const [copied, setCopied] = useState(false);
+  const [contribOpen, setContribOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const primary = CHURCH.primaryColor;
   const accent = CHURCH.accentColor;
@@ -871,6 +873,22 @@ function ChurchPage() {
         <div className="fade-up-2">
           <PaymentsQuickActions primary={primary} accent={accent} pixKey={PIX_KEY} />
         </div>
+
+        <div className="fade-up-2 mt-4 flex justify-center">
+          <button
+            onClick={() => setContribOpen(true)}
+            className="rounded-full px-6 py-3 text-sm font-semibold text-white shadow-md transition hover:opacity-90"
+            style={{ background: "#7C3AED" }}
+          >
+            Contribuir com valor personalizado
+          </button>
+        </div>
+
+        <ContribuicaoModal
+          isOpen={contribOpen}
+          onClose={() => setContribOpen(false)}
+          onConfirm={(v) => toast.success(`Contribuição de R$${v} iniciada`)}
+        />
 
         <div
           className="fade-up-3 mx-auto mt-4 sm:mt-8 flex items-start gap-3 rounded-xl p-3 sm:p-4 max-w-[720px]"
