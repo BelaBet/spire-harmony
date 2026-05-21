@@ -893,18 +893,6 @@ function ChurchPage() {
         <div className="fade-up-2">
           <PaymentsQuickActions primary={primary} accent={accent} pixKey={PIX_KEY} />
         </div>
-
-
-        <div
-          className="fade-up-3 mx-auto mt-4 sm:mt-8 flex items-start gap-3 rounded-xl p-3 sm:p-4 max-w-[720px]"
-          style={{ background: `${accent}11` }}
-        >
-          <span style={{ fontSize: 18 }}>🔒</span>
-          <p style={{ margin: 0, fontSize: 12, color: "#555", lineHeight: 1.45 }}>
-            Todas as transações são processadas com criptografia e segurança bancária.
-            Após sua doação, você receberá uma confirmação no WhatsApp ou SMS cadastrado.
-          </p>
-        </div>
       </section>
 
       {/* ── EVENTS SECTION ─────────────────────────────────────────────── */}
