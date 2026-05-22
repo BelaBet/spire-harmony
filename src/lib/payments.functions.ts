@@ -183,14 +183,8 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
     const amountCents = Math.round(data.amount * 100);
 
     const json = await pagarmeFetch("/orders", {
-      items: [{ amount: amountCents, description: "Contribuição", quantity: 1 }],
-      customer: {
-        name: data.customerName,
-        email: data.customerEmail,
-        type: "individual",
-        document: data.customerDocument.replace(/\D/g, ""),
-        document_type: "CPF",
-      },
+      items: buildItems(amountCents),
+      customer: buildCustomer(data),
       payments: [
         {
           payment_method: "credit_card",
