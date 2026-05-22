@@ -253,7 +253,7 @@ export const pollPixCharge = createServerFn({ method: "POST" })
       const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       await supabaseAdmin
         .from("payments")
-        .update({ status: mapped })
+        .update({ status: mapped as any })
         .eq("gateway_id", data.gatewayId);
     }
 
