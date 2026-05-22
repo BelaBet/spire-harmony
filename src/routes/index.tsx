@@ -452,6 +452,7 @@ function PaymentsQuickActions({ primary, accent, pixKey }: { primary: string; ac
   return (
     <>
       <div className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6" style={{ borderColor: `${primary}1a` }}>
+        <div className="grid grid-cols-3 gap-3 sm:gap-6">
         <div className="grid grid-cols-4 gap-3 sm:gap-6">
           {QUICK_ACTIONS.map((a) => {
             const Icon = a.icon;
