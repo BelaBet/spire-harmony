@@ -102,7 +102,7 @@ export type Database = {
           deleted_by: string | null
           id: string
           payment_id: string | null
-          profile_id: string
+          profile_id: string | null
           receipt_url: string | null
           tenant_id: string
         }
@@ -114,7 +114,7 @@ export type Database = {
           deleted_by?: string | null
           id?: string
           payment_id?: string | null
-          profile_id: string
+          profile_id?: string | null
           receipt_url?: string | null
           tenant_id: string
         }
@@ -126,7 +126,7 @@ export type Database = {
           deleted_by?: string | null
           id?: string
           payment_id?: string | null
-          profile_id?: string
+          profile_id?: string | null
           receipt_url?: string | null
           tenant_id?: string
         }
@@ -433,7 +433,7 @@ export type Database = {
           gateway_id: string | null
           id: string
           method: Database["public"]["Enums"]["payment_method"]
-          profile_id: string
+          profile_id: string | null
           reference_id: string | null
           reference_type: Database["public"]["Enums"]["payment_ref_type"] | null
           status: Database["public"]["Enums"]["payment_status"]
@@ -447,7 +447,7 @@ export type Database = {
           gateway_id?: string | null
           id?: string
           method: Database["public"]["Enums"]["payment_method"]
-          profile_id: string
+          profile_id?: string | null
           reference_id?: string | null
           reference_type?:
             | Database["public"]["Enums"]["payment_ref_type"]
@@ -463,7 +463,7 @@ export type Database = {
           gateway_id?: string | null
           id?: string
           method?: Database["public"]["Enums"]["payment_method"]
-          profile_id?: string
+          profile_id?: string | null
           reference_id?: string | null
           reference_type?:
             | Database["public"]["Enums"]["payment_ref_type"]
