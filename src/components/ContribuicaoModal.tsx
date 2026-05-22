@@ -18,7 +18,7 @@ const PRESETS = [10, 25, 50, 100, 200];
 
 const METHOD_COPY: Record<ContribMethod["key"], { title: string; subtitle: string; cta: string }> = {
   pix:    { title: "Contribuir via Pix",          subtitle: "Qual valor você quer contribuir via Pix?",         cta: "Gerar Pix" },
-  boleto: { title: "Contribuir via Boleto",       subtitle: "Qual valor você quer contribuir via Boleto?",      cta: "Gerar Boleto" },
+  boleto: { title: "Pagar com Boleto",            subtitle: "Qual valor você quer pagar com boleto?",           cta: "Pagar com Boleto" },
   fatura: { title: "Contribuir com Cartão",       subtitle: "Qual valor você quer contribuir no cartão?",       cta: "Continuar no cartão" },
   mais:   { title: "Escolher forma de pagamento", subtitle: "Qual valor você quer contribuir?",                 cta: "Continuar" },
   custom: { title: "Contribuir",                  subtitle: "Qual valor você quer contribuir?",                 cta: "Continuar" },
