@@ -22,6 +22,7 @@ import {
   Receipt,
   ArrowLeftRight,
   PiggyBank,
+  Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -892,6 +893,28 @@ function ChurchPage() {
 
         <div className="fade-up-2">
           <PaymentsQuickActions primary={primary} accent={accent} pixKey={PIX_KEY} />
+        </div>
+
+        <div
+          className="fade-up-2"
+          style={{
+            maxWidth: 620,
+            margin: "32px auto 0",
+            padding: "16px 20px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 10,
+            background: "#F9FAFB",
+            border: "1px solid #E5E7EB",
+            borderRadius: 12,
+            color: "#6B7280",
+            fontSize: "0.85rem",
+            textAlign: "center",
+          }}
+        >
+          <Lock size={16} strokeWidth={2.2} style={{ color: "#7C3AED", flexShrink: 0 }} />
+          <span>Pagamento 100% seguro · Dados criptografados · Confirmação por SMS</span>
         </div>
       </section>
 
