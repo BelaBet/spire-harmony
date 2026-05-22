@@ -44,6 +44,7 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
           amount: amountCents,
           description: "Contribuição",
           quantity: 1,
+          code: "CONTRIB",
         },
       ],
       customer: {
@@ -52,6 +53,7 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
         type: "individual",
         document: (data.customerDocument ?? "00000000000").replace(/\D/g, ""),
         document_type: "CPF",
+        phones: { mobile_phone: parseBrPhone(data.customerPhone ?? "11900000000") },
       },
       payments: [
         {
