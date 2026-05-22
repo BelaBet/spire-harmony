@@ -8,6 +8,14 @@ const CustomerSchema = {
   customerPhone: z.string().min(10).max(20),
 };
 
+const OptionalCustomerSchema = {
+  customerName: z.string().min(2).max(120).optional(),
+  customerEmail: z.string().email().optional(),
+  customerDocument: z.string().min(8).max(20).optional(),
+  customerPhone: z.string().min(10).max(20).optional(),
+};
+
+
 function parseBrPhone(raw: string) {
   const digits = raw.replace(/\D/g, "");
   // Aceita 10 (fixo) ou 11 (celular) dígitos; opcional 55 country
