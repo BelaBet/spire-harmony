@@ -242,6 +242,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
             customerName: payer.name,
             customerEmail: payer.email,
             customerDocument: payer.cpf,
+            customerPhone: payer.phone,
           },
         });
         const due = result.dueAt ? new Date(result.dueAt) : addBusinessDays(new Date(), 3);
