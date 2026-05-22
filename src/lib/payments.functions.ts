@@ -26,21 +26,22 @@ function parseBrPhone(raw: string) {
 }
 
 function buildCustomer(data: {
-  customerName: string;
-  customerEmail: string;
-  customerDocument: string;
-  customerPhone: string;
+  customerName?: string;
+  customerEmail?: string;
+  customerDocument?: string;
+  customerPhone?: string;
 }) {
-  const phone = parseBrPhone(data.customerPhone);
+  const phone = parseBrPhone(data.customerPhone ?? "11900000000");
   return {
-    name: data.customerName,
-    email: data.customerEmail,
+    name: data.customerName ?? "Contribuinte Anônimo",
+    email: data.customerEmail ?? "contribuinte@anonimo.com",
     type: "individual",
-    document: data.customerDocument.replace(/\D/g, ""),
+    document: (data.customerDocument ?? "00000000000").replace(/\D/g, ""),
     document_type: "CPF",
     phones: { mobile_phone: phone },
   };
 }
+
 
 function buildItems(amountCents: number) {
   return [
