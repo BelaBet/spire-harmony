@@ -153,6 +153,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
       setPayerName("");
       setPayerEmail("");
       setPayerCpf("");
+      setPayerPhone("");
       setCardNumber("");
       setCardHolder("");
       setCardExp("");
