@@ -176,6 +176,21 @@ export const createPixPayment = createServerFn({ method: "POST" })
     const expiresAt: string = tx?.expires_at ?? new Date(Date.now() + expiresIn * 1000).toISOString();
     const gatewayId: string = json?.id ?? charge?.id ?? "";
 
+    if (!qrCode) {
+      console.error("[pix] resposta sem qr_code", {
+        orderStatus: json?.status,
+        chargeStatus: charge?.status,
+        txStatus: tx?.status,
+        gatewayMessage: tx?.gateway_response?.errors ?? tx?.acquirer_message ?? null,
+        rawCharge: charge,
+      });
+      throw new Error(
+        `Pagar.me não retornou QR Code do PIX. Status do pedido: ${json?.status ?? "?"}, ` +
+        `da cobrança: ${charge?.status ?? "?"}. ` +
+        `Verifique se a chave PAGARME_SECRET_KEY é uma secret key (sk_) e se há uma chave PIX/recebedor configurado na conta Pagar.me.`
+      );
+    }
+
     const ids = await persistPayment({
       tenantId: data.tenantId,
       amount: data.amount,
