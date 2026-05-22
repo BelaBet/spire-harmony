@@ -73,10 +73,19 @@ function addBusinessDays(date: Date, days: number, country = "BR", state?: strin
 
 export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props) {
   const { tenant } = useTenant();
+  const createPayment = useServerFn(createBoletoPayment);
   const [selected, setSelected] = useState<number | "custom">(25);
   const [value, setValue] = useState<string>("25");
-  const [boleto, setBoleto] = useState<{ code: string; due: Date; valor: number } | null>(null);
+  const [boleto, setBoleto] = useState<{
+    code: string;
+    due: Date;
+    valor: number;
+    paymentId?: string;
+    donationId?: string;
+  } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const copy = METHOD_COPY[method?.key ?? "custom"];
   const isBoleto = method?.key === "boleto";
@@ -87,6 +96,8 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
       setValue("25");
       setBoleto(null);
       setCopied(false);
+      setSubmitting(false);
+      setError(null);
     }
   }, [isOpen]);
 
@@ -110,16 +121,33 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     setSelected(PRESETS.includes(num) ? num : "custom");
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const num = Number(value);
     if (!num || num <= 0) return;
     if (isBoleto) {
-      setBoleto({
-        code: generateBoletoCode(num),
-        due: addBusinessDays(new Date(), 3),
-        valor: num,
-      });
-      onConfirm?.(num);
+      const code = generateBoletoCode(num);
+      const due = addBusinessDays(new Date(), 3);
+      if (!tenant?.id) {
+        setError("Não foi possível identificar a instituição.");
+        return;
+      }
+      setSubmitting(true);
+      setError(null);
+      try {
+        const { paymentId, donationId } = await createPayment({
+          data: {
+            tenantId: tenant.id,
+            amount: num,
+            gatewayId: code.replace(/\s|\./g, ""),
+          },
+        });
+        setBoleto({ code, due, valor: num, paymentId, donationId });
+        onConfirm?.(num);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Erro ao gerar boleto");
+      } finally {
+        setSubmitting(false);
+      }
       return;
     }
     onConfirm?.(num);
