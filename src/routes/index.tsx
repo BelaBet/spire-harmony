@@ -440,7 +440,6 @@ const QUICK_ACTIONS: { key: ActionKey; label: string; icon: ComponentType<{ clas
   { key: "pix",    label: "Pix",          icon: QrCode,         tint: "bg-emerald-100 text-emerald-700" },
   { key: "boleto", label: "Boleto",       icon: Barcode,        tint: "bg-sky-100 text-sky-700" },
   { key: "fatura", label: "Cartão de crédito", icon: CreditCard,     tint: "bg-violet-100 text-violet-700" },
-  { key: "mais",   label: "Mais opções",  icon: MoreHorizontal, tint: "bg-amber-100 text-amber-700" },
 ];
 
 function PaymentsQuickActions({ primary, accent, pixKey }: { primary: string; accent: string; pixKey: string }) {
@@ -453,7 +452,7 @@ function PaymentsQuickActions({ primary, accent, pixKey }: { primary: string; ac
   return (
     <>
       <div className="rounded-2xl border bg-white p-5 shadow-sm sm:p-6" style={{ borderColor: `${primary}1a` }}>
-        <div className="grid grid-cols-4 gap-3 sm:gap-6">
+        <div className="grid grid-cols-3 gap-3 sm:gap-6">
           {QUICK_ACTIONS.map((a) => {
             const Icon = a.icon;
             return (
