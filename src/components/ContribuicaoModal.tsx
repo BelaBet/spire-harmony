@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Check, Copy, Download, Lock, Star, X } from "lucide-react";
+import jsPDF from "jspdf";
+import JsBarcode from "jsbarcode";
+import { useTenant } from "@/lib/tenant-context";
 
 export type ContribMethod = {
   key: "pix" | "boleto" | "fatura" | "mais" | "custom";
@@ -44,6 +47,7 @@ function addBusinessDays(date: Date, days: number) {
 }
 
 export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props) {
+  const { tenant } = useTenant();
   const [selected, setSelected] = useState<number | "custom">(25);
   const [value, setValue] = useState<string>("25");
   const [boleto, setBoleto] = useState<{ code: string; due: Date; valor: number } | null>(null);
@@ -110,14 +114,147 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
 
   const handleDownloadPdf = () => {
     if (!boleto) return;
-    const content = `BOLETO DE CONTRIBUIÇÃO\n\nValor: R$ ${boleto.valor.toFixed(2)}\nVencimento: ${boleto.due.toLocaleDateString("pt-BR")}\n\nLinha digitável:\n${boleto.code}\n`;
-    const blob = new Blob([content], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `boleto-${Date.now()}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
+
+    const beneficiario = tenant?.name ?? "Beneficiário";
+    const valorFmt = `R$ ${boleto.valor.toFixed(2).replace(".", ",")}`;
+    const venc = boleto.due.toLocaleDateString("pt-BR");
+    const docNum = `${Date.now()}`.slice(-9);
+    const nossoNum = `${Date.now()}`.slice(-11);
+    const linha = boleto.code;
+    // 44-digit barcode (mock derived from linha digitável)
+    const barcode = linha.replace(/[^\d]/g, "").slice(0, 44).padEnd(44, "0");
+
+    // Render barcode (Interleaved 2 of 5 — padrão FEBRABAN)
+    const canvas = document.createElement("canvas");
+    try {
+      JsBarcode(canvas, barcode, {
+        format: "ITF",
+        width: 1.2,
+        height: 50,
+        displayValue: false,
+        margin: 0,
+      });
+    } catch {
+      /* fallback: blank canvas */
+    }
+    const barcodeDataUrl = canvas.toDataURL("image/png");
+
+    const doc = new jsPDF({ unit: "mm", format: "a4" });
+    const W = 210;
+    let y = 12;
+
+    // Header
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("BOLETO DE CONTRIBUIÇÃO", W / 2, y, { align: "center" });
+    y += 4;
+    doc.setLineWidth(0.3);
+    doc.line(10, y, W - 10, y);
+    y += 6;
+
+    // Beneficiário / Cedente
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.text("BENEFICIÁRIO (CEDENTE)", 12, y);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.text(beneficiario, 12, y + 5);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    if (tenant?.slug) doc.text(`Identificador: ${tenant.slug}`, 12, y + 10);
+    y += 16;
+
+    doc.setDrawColor(180);
+    doc.line(10, y, W - 10, y);
+    y += 5;
+
+    // Pagador
+    doc.setFontSize(8);
+    doc.text("PAGADOR", 12, y);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    doc.text("Contribuinte", 12, y + 5);
+    doc.setFont("helvetica", "normal");
+    y += 12;
+
+    doc.line(10, y, W - 10, y);
+    y += 5;
+
+    // Grid: vencimento / valor / doc / nosso número
+    const col = (x: number, label: string, val: string, bold = false) => {
+      doc.setFontSize(7);
+      doc.setFont("helvetica", "normal");
+      doc.text(label, x, y);
+      doc.setFontSize(bold ? 12 : 10);
+      doc.setFont("helvetica", bold ? "bold" : "normal");
+      doc.text(val, x, y + 5);
+    };
+    col(12, "VENCIMENTO", venc, true);
+    col(70, "VALOR DO DOCUMENTO", valorFmt, true);
+    col(130, "Nº DOCUMENTO", docNum);
+    col(170, "NOSSO NÚMERO", nossoNum);
+    y += 12;
+
+    doc.setDrawColor(180);
+    doc.line(10, y, W - 10, y);
+    y += 5;
+
+    // Linha digitável
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "normal");
+    doc.text("LINHA DIGITÁVEL", 12, y);
+    doc.setFont("courier", "bold");
+    doc.setFontSize(11);
+    doc.text(linha, W / 2, y + 6, { align: "center" });
+    y += 12;
+
+    // Instruções
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.text("INSTRUÇÕES", 12, y);
+    y += 4;
+    doc.setFontSize(9);
+    const instr = [
+      `• Válido por 3 dias úteis. Vencimento em ${venc}.`,
+      "• Pagável em qualquer banco, app bancário ou casa lotérica até o vencimento.",
+      "• Após o vencimento, o boleto perde a validade — gere um novo na plataforma.",
+      "• Em caso de dúvidas, entre em contato com o beneficiário.",
+    ];
+    instr.forEach((line) => {
+      doc.text(line, 12, y);
+      y += 5;
+    });
+    y += 4;
+
+    doc.setDrawColor(0);
+    doc.setLineWidth(0.5);
+    doc.line(10, y, W - 10, y);
+    y += 6;
+
+    // Código de barras
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    doc.text("CÓDIGO DE BARRAS", 12, y);
+    y += 2;
+    if (barcodeDataUrl) {
+      doc.addImage(barcodeDataUrl, "PNG", 12, y, 110, 18);
+    }
+    doc.setFont("courier", "normal");
+    doc.setFontSize(8);
+    doc.text(barcode, 12, y + 22);
+
+    // Footer
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(7);
+    doc.setTextColor(120);
+    doc.text(
+      `Documento gerado em ${new Date().toLocaleString("pt-BR")}`,
+      W / 2,
+      285,
+      { align: "center" },
+    );
+
+    doc.save(`boleto-${docNum}.pdf`);
   };
 
   if (typeof document === "undefined") return null;
