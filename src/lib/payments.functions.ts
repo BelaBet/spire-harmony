@@ -5,7 +5,45 @@ const CustomerSchema = {
   customerName: z.string().min(2).max(120),
   customerEmail: z.string().email(),
   customerDocument: z.string().min(8).max(20),
+  customerPhone: z.string().min(10).max(20),
 };
+
+function parseBrPhone(raw: string) {
+  const digits = raw.replace(/\D/g, "");
+  // Aceita 10 (fixo) ou 11 (celular) dígitos; opcional 55 country
+  const local = digits.startsWith("55") && digits.length > 11 ? digits.slice(2) : digits;
+  const area_code = local.slice(0, 2);
+  const number = local.slice(2);
+  return { country_code: "55", area_code, number };
+}
+
+function buildCustomer(data: {
+  customerName: string;
+  customerEmail: string;
+  customerDocument: string;
+  customerPhone: string;
+}) {
+  const phone = parseBrPhone(data.customerPhone);
+  return {
+    name: data.customerName,
+    email: data.customerEmail,
+    type: "individual",
+    document: data.customerDocument.replace(/\D/g, ""),
+    document_type: "CPF",
+    phones: { mobile_phone: phone },
+  };
+}
+
+function buildItems(amountCents: number) {
+  return [
+    {
+      amount: amountCents,
+      description: "Contribuição",
+      quantity: 1,
+      code: "CONTRIB",
+    },
+  ];
+}
 
 const PixInput = z.object({
   tenantId: z.string().uuid(),
