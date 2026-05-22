@@ -510,15 +510,16 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
 
   return createPortal(
     <div
-      className="flex items-center justify-center bg-black/60 p-4"
+      className="flex items-start justify-center overflow-y-auto overscroll-contain bg-black/60 p-3 sm:items-center sm:p-4"
       style={{ position: "fixed", inset: 0, width: "100vw", height: "100vh", zIndex: 9999 }}
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl sm:p-8"
-        style={{ zIndex: 10000 }}
+        className="relative my-auto w-full max-w-md rounded-2xl bg-white p-5 shadow-2xl sm:p-8"
+        style={{ zIndex: 10000, maxHeight: "calc(100dvh - 1.5rem)", overflowY: "auto" }}
         onClick={(e) => e.stopPropagation()}
       >
+
         <button
           onClick={onClose}
           aria-label="Fechar"
