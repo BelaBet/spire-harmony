@@ -73,10 +73,15 @@ function addBusinessDays(date: Date, days: number, country = "BR", state?: strin
 
 export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props) {
   const { tenant } = useTenant();
+  const { user } = useAuth();
   const [selected, setSelected] = useState<number | "custom">(25);
   const [value, setValue] = useState<string>("25");
-  const [boleto, setBoleto] = useState<{ code: string; due: Date; valor: number } | null>(null);
+  const [boleto, setBoleto] = useState<
+    { code: string; due: Date; valor: number; paymentId?: string; donationId?: string } | null
+  >(null);
   const [copied, setCopied] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const copy = METHOD_COPY[method?.key ?? "custom"];
   const isBoleto = method?.key === "boleto";
