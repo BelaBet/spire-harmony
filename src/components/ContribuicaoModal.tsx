@@ -156,11 +156,24 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
         setError("Não foi possível identificar a instituição.");
         return;
       }
+      const name = payerName.trim();
+      const email = payerEmail.trim();
+      const cpfDigits = payerCpf.replace(/\D/g, "");
+      if (name.length < 2) return setError("Informe o nome completo do pagador.");
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return setError("Informe um e-mail válido.");
+      if (!isValidCPF(cpfDigits)) return setError("CPF inválido.");
+
       setSubmitting(true);
       setError(null);
       try {
         const result = await createPayment({
-          data: { tenantId: tenant.id, amount: num },
+          data: {
+            tenantId: tenant.id,
+            amount: num,
+            customerName: name,
+            customerEmail: email,
+            customerDocument: cpfDigits,
+          },
         });
         const due = result.dueAt ? new Date(result.dueAt) : addBusinessDays(new Date(), 3);
         const code = result.line || generateBoletoCode(num);
