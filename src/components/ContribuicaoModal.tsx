@@ -356,7 +356,22 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
       { align: "center" },
     );
 
-    doc.save(`boleto-${docNum}.pdf`);
+    // Gera blob e abre em nova aba (funciona em iframe e Safari iOS,
+    // onde doc.save() é bloqueado silenciosamente).
+    const blob = doc.output("blob");
+    const url = URL.createObjectURL(blob);
+    const win = window.open(url, "_blank", "noopener,noreferrer");
+    if (!win) {
+      // Pop-up bloqueado: força download via link
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `boleto-${docNum}.pdf`;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
   };
 
   if (typeof document === "undefined") return null;
