@@ -34,6 +34,7 @@ import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authen
 import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin.dashboard'
 import { Route as AuthenticatedAdminBillingRouteImport } from './routes/_authenticated/admin.billing'
 import { Route as AuthenticatedAdminAuditRouteImport } from './routes/_authenticated/admin.audit'
+import { Route as ApiPublicWebhooksPagarmeRouteImport } from './routes/api/public/webhooks/pagarme'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -168,6 +169,12 @@ const AuthenticatedAdminAuditRoute = AuthenticatedAdminAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
+const ApiPublicWebhooksPagarmeRoute =
+  ApiPublicWebhooksPagarmeRouteImport.update({
+    id: '/api/public/webhooks/pagarme',
+    path: '/api/public/webhooks/pagarme',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -194,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/manage/settings': typeof AuthenticatedManageSettingsRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/manage/': typeof AuthenticatedManageIndexRoute
+  '/api/public/webhooks/pagarme': typeof ApiPublicWebhooksPagarmeRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -218,6 +226,7 @@ export interface FileRoutesByTo {
   '/manage/settings': typeof AuthenticatedManageSettingsRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/manage': typeof AuthenticatedManageIndexRoute
+  '/api/public/webhooks/pagarme': typeof ApiPublicWebhooksPagarmeRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -246,6 +255,7 @@ export interface FileRoutesById {
   '/_authenticated/manage/settings': typeof AuthenticatedManageSettingsRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/manage/': typeof AuthenticatedManageIndexRoute
+  '/api/public/webhooks/pagarme': typeof ApiPublicWebhooksPagarmeRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/manage/settings'
     | '/admin/'
     | '/manage/'
+    | '/api/public/webhooks/pagarme'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -298,6 +309,7 @@ export interface FileRouteTypes {
     | '/manage/settings'
     | '/admin'
     | '/manage'
+    | '/api/public/webhooks/pagarme'
   id:
     | '__root__'
     | '/'
@@ -325,6 +337,7 @@ export interface FileRouteTypes {
     | '/_authenticated/manage/settings'
     | '/_authenticated/admin/'
     | '/_authenticated/manage/'
+    | '/api/public/webhooks/pagarme'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -335,6 +348,7 @@ export interface RootRouteChildren {
   RedefinirSenhaRoute: typeof RedefinirSenhaRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  ApiPublicWebhooksPagarmeRoute: typeof ApiPublicWebhooksPagarmeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -514,6 +528,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminAuditRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/api/public/webhooks/pagarme': {
+      id: '/api/public/webhooks/pagarme'
+      path: '/api/public/webhooks/pagarme'
+      fullPath: '/api/public/webhooks/pagarme'
+      preLoaderRoute: typeof ApiPublicWebhooksPagarmeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -589,17 +610,8 @@ const rootRouteChildren: RootRouteChildren = {
   RedefinirSenhaRoute: RedefinirSenhaRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  ApiPublicWebhooksPagarmeRoute: ApiPublicWebhooksPagarmeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
