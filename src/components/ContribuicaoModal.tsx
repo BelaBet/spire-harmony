@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Check, Copy, Download, Lock, Star, X } from "lucide-react";
+import { Check, Copy, Download, Loader2, Lock, Star, X } from "lucide-react";
 import jsPDF from "jspdf";
 import JsBarcode from "jsbarcode";
+import { useServerFn } from "@tanstack/react-start";
 import { useTenant } from "@/lib/tenant-context";
+import { createBoletoPayment } from "@/lib/boleto.functions";
 
 export type ContribMethod = {
   key: "pix" | "boleto" | "fatura" | "mais" | "custom";
@@ -71,10 +73,19 @@ function addBusinessDays(date: Date, days: number, country = "BR", state?: strin
 
 export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props) {
   const { tenant } = useTenant();
+  const createPayment = useServerFn(createBoletoPayment);
   const [selected, setSelected] = useState<number | "custom">(25);
   const [value, setValue] = useState<string>("25");
-  const [boleto, setBoleto] = useState<{ code: string; due: Date; valor: number } | null>(null);
+  const [boleto, setBoleto] = useState<{
+    code: string;
+    due: Date;
+    valor: number;
+    paymentId?: string;
+    donationId?: string;
+  } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const copy = METHOD_COPY[method?.key ?? "custom"];
   const isBoleto = method?.key === "boleto";
@@ -85,6 +96,8 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
       setValue("25");
       setBoleto(null);
       setCopied(false);
+      setSubmitting(false);
+      setError(null);
     }
   }, [isOpen]);
 
@@ -108,16 +121,33 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     setSelected(PRESETS.includes(num) ? num : "custom");
   };
 
-  const handleConfirm = () => {
+  const handleConfirm = async () => {
     const num = Number(value);
     if (!num || num <= 0) return;
     if (isBoleto) {
-      setBoleto({
-        code: generateBoletoCode(num),
-        due: addBusinessDays(new Date(), 3),
-        valor: num,
-      });
-      onConfirm?.(num);
+      const code = generateBoletoCode(num);
+      const due = addBusinessDays(new Date(), 3);
+      if (!tenant?.id) {
+        setError("Não foi possível identificar a instituição.");
+        return;
+      }
+      setSubmitting(true);
+      setError(null);
+      try {
+        const { paymentId, donationId } = await createPayment({
+          data: {
+            tenantId: tenant.id,
+            amount: num,
+            gatewayId: code.replace(/\s|\./g, ""),
+          },
+        });
+        setBoleto({ code, due, valor: num, paymentId, donationId });
+        onConfirm?.(num);
+      } catch (e) {
+        setError(e instanceof Error ? e.message : "Erro ao gerar boleto");
+      } finally {
+        setSubmitting(false);
+      }
       return;
     }
     onConfirm?.(num);
@@ -325,6 +355,37 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
               </div>
             </div>
 
+            <div className="mt-5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-4">
+
+              <div className="text-xs font-medium uppercase tracking-wide text-[#6B7280]">
+                Instituição beneficiária
+              </div>
+              <div className="mt-0.5 text-sm font-semibold text-[#111827]">
+                {tenant?.name ?? "—"}
+              </div>
+              {tenant?.slug && (
+                <div className="text-xs text-[#6B7280]">@{tenant.slug}</div>
+              )}
+              <div className="mt-3 grid grid-cols-1 gap-2 text-xs">
+                <div>
+                  <div className="font-medium uppercase tracking-wide text-[#6B7280]">
+                    ID do pagamento
+                  </div>
+                  <div className="break-all font-mono text-[#111827]">
+                    {boleto.paymentId ?? "—"}
+                  </div>
+                </div>
+                <div>
+                  <div className="font-medium uppercase tracking-wide text-[#6B7280]">
+                    ID da doação
+                  </div>
+                  <div className="break-all font-mono text-[#111827]">
+                    {boleto.donationId ?? "—"}
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div className="mt-4">
               <div className="text-xs font-medium uppercase tracking-wide text-[#6B7280]">
                 Linha digitável
@@ -418,12 +479,19 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
               Pagamento 100% seguro
             </div>
 
+            {error && (
+              <div className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                {error}
+              </div>
+            )}
+
             <button
               onClick={handleConfirm}
-              className="mt-4 h-[52px] w-full rounded-full bg-[#7C3AED] text-base font-semibold text-white transition hover:bg-[#6D28D9] disabled:opacity-50"
-              disabled={!Number(value)}
+              className="mt-4 flex h-[52px] w-full items-center justify-center gap-2 rounded-full bg-[#7C3AED] text-base font-semibold text-white transition hover:bg-[#6D28D9] disabled:opacity-50"
+              disabled={!Number(value) || submitting}
             >
-              {copy.cta}
+              {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+              {submitting ? "Gerando..." : copy.cta}
             </button>
           </>
         )}
