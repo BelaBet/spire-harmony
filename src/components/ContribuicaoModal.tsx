@@ -297,6 +297,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
             customerName: payer.name,
             customerEmail: payer.email,
             customerDocument: payer.cpf,
+            customerPhone: payer.phone,
             card: {
               number: digits,
               holderName: cardHolder.trim(),
