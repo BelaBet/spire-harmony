@@ -773,6 +773,13 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
 
             {needsPayer && (
               <div className="mt-5 space-y-2.5">
+                {isPix && (
+                  <p className="text-xs text-[#6B7280]">
+                    Dados do pagador são opcionais no Pix. Preencha o celular se quiser
+                    receber a confirmação por WhatsApp.
+                  </p>
+                )}
+
                 <div>
                   <label className="text-xs font-medium text-[#6B7280]">Nome completo</label>
                   <input
