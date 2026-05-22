@@ -267,12 +267,13 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
           data: {
             tenantId: tenant.id,
             amount: num,
-            customerName: payer.name,
-            customerEmail: payer.email,
-            customerDocument: payer.cpf,
-            customerPhone: payer.phone,
+            ...(payer.name ? { customerName: payer.name } : {}),
+            ...(payer.email ? { customerEmail: payer.email } : {}),
+            ...(payer.cpf ? { customerDocument: payer.cpf } : {}),
+            ...(payer.phone ? { customerPhone: payer.phone } : {}),
           },
         });
+
         if (!result.qrCode) throw new Error("PIX não retornou código. Verifique a configuração da Pagar.me.");
         setPix({
           code: result.qrCode,
