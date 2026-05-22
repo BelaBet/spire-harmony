@@ -156,7 +156,8 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
           {copy.cta}
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
