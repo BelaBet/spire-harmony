@@ -262,6 +262,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
             customerName: payer.name,
             customerEmail: payer.email,
             customerDocument: payer.cpf,
+            customerPhone: payer.phone,
           },
         });
         if (!result.qrCode) throw new Error("PIX não retornou código. Verifique a configuração da Pagar.me.");
