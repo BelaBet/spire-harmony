@@ -517,7 +517,98 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
           <X className="h-5 w-5" />
         </button>
 
-        {boleto ? (
+        {pix ? (
+          <>
+            <h2 className="mt-1 text-[24px] font-bold leading-tight text-[#111827]">PIX gerado</h2>
+            <p className="mt-1 text-sm text-[#6B7280]">
+              Abra o app do seu banco, escolha pagar com PIX e escaneie o QR Code ou cole o código.
+            </p>
+
+            <div className="mt-5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-4">
+              <div className="text-xs font-medium uppercase tracking-wide text-[#6B7280]">Valor</div>
+              <div className="mt-0.5 text-2xl font-bold text-[#111827]">
+                R$ {pix.valor.toFixed(2).replace(".", ",")}
+              </div>
+              <div className="mt-3 text-xs font-medium uppercase tracking-wide text-[#6B7280]">Expira em</div>
+              <div className="mt-0.5 text-sm font-semibold text-[#111827]">
+                {pix.expiresAt.toLocaleString("pt-BR")}
+              </div>
+            </div>
+
+            {pix.qrUrl && (
+              <div className="mt-4 flex justify-center">
+                <img
+                  src={pix.qrUrl}
+                  alt="QR Code PIX"
+                  className="h-56 w-56 rounded-xl border border-[#E5E7EB] bg-white p-2"
+                />
+              </div>
+            )}
+
+            <div className="mt-4">
+              <div className="text-xs font-medium uppercase tracking-wide text-[#6B7280]">
+                PIX Copia e Cola
+              </div>
+              <div className="mt-1 break-all rounded-xl border border-[#E5E7EB] bg-white p-3 font-mono text-[12px] text-[#111827]">
+                {pix.code}
+              </div>
+            </div>
+
+            <button
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(pix.code);
+                  setCopied(true);
+                  setTimeout(() => setCopied(false), 2000);
+                } catch { /* noop */ }
+              }}
+              className="mt-3 flex h-[48px] w-full items-center justify-center gap-2 rounded-full bg-[#7C3AED] text-sm font-semibold text-white transition hover:bg-[#6D28D9]"
+            >
+              {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+              {copied ? "Código copiado" : "Copiar código PIX"}
+            </button>
+
+            <div className="mt-4 flex items-center justify-center gap-1.5 text-xs text-[#6B7280]">
+              <Lock className="h-3.5 w-3.5" /> Pagamento 100% seguro
+            </div>
+          </>
+        ) : cardResult ? (
+          <>
+            <div className="mt-1 flex flex-col items-center text-center">
+              {cardResult.status === "confirmed" ? (
+                <>
+                  <CheckCircle2 className="h-14 w-14 text-emerald-500" />
+                  <h2 className="mt-3 text-[24px] font-bold text-[#111827]">Pagamento aprovado</h2>
+                  <p className="mt-1 text-sm text-[#6B7280]">
+                    Sua contribuição de R$ {cardResult.valor.toFixed(2).replace(".", ",")} foi confirmada.
+                  </p>
+                </>
+              ) : cardResult.status === "pending" ? (
+                <>
+                  <Loader2 className="h-14 w-14 animate-spin text-[#7C3AED]" />
+                  <h2 className="mt-3 text-[24px] font-bold text-[#111827]">Processando pagamento</h2>
+                  <p className="mt-1 text-sm text-[#6B7280]">
+                    Aguardando confirmação da operadora.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <X className="h-14 w-14 rounded-full bg-red-100 p-3 text-red-600" />
+                  <h2 className="mt-3 text-[24px] font-bold text-[#111827]">Pagamento recusado</h2>
+                  <p className="mt-1 text-sm text-[#6B7280]">
+                    {cardResult.message ?? "Verifique os dados do cartão e tente novamente."}
+                  </p>
+                </>
+              )}
+            </div>
+            <button
+              onClick={onClose}
+              className="mt-6 flex h-[48px] w-full items-center justify-center rounded-full bg-[#7C3AED] text-sm font-semibold text-white hover:bg-[#6D28D9]"
+            >
+              Fechar
+            </button>
+          </>
+        ) : boleto ? (
           <>
             <h2 className="mt-1 text-[24px] font-bold leading-tight text-[#111827]">
               Boleto gerado
