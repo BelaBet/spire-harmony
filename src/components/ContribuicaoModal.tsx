@@ -35,13 +35,36 @@ function generateBoletoCode(valor: number) {
   return `${rnd(5)}.${rnd(5)} ${rnd(5)}.${rnd(6)} ${rnd(5)}.${rnd(6)} ${rnd(1)} ${rnd(4)}${cents}`;
 }
 
-function addBusinessDays(date: Date, days: number) {
+import Holidays from "date-holidays";
+
+const holidaysCache = new Map<string, Holidays>();
+function getHolidays(country: string, state?: string) {
+  const key = `${country}:${state ?? ""}`;
+  let h = holidaysCache.get(key);
+  if (!h) {
+    h = state ? new Holidays(country, state) : new Holidays(country);
+    holidaysCache.set(key, h);
+  }
+  return h;
+}
+
+function isHoliday(date: Date, country: string, state?: string) {
+  const hits = getHolidays(country, state).isHoliday(date);
+  if (!hits) return false;
+  // Only count public/bank holidays — ignore observance / optional
+  const list = Array.isArray(hits) ? hits : [hits];
+  return list.some((h) => h.type === "public" || h.type === "bank");
+}
+
+function addBusinessDays(date: Date, days: number, country = "BR", state?: string) {
   const d = new Date(date);
   let added = 0;
   while (added < days) {
     d.setDate(d.getDate() + 1);
     const day = d.getDay();
-    if (day !== 0 && day !== 6) added++;
+    if (day === 0 || day === 6) continue;
+    if (isHoliday(d, country, state)) continue;
+    added++;
   }
   return d;
 }
