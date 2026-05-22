@@ -176,6 +176,53 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     }
   }, [isOpen]);
 
+  // Polling do PIX: quando temos gatewayId e ainda falta o QR Code (ou status pendente),
+  // consultamos a Pagar.me a cada 3s até obter o código ou confirmação de pagamento.
+  useEffect(() => {
+    if (!pix?.gatewayId) return;
+    if (pix.status && pix.status !== "pending") return;
+    if (pix.code && !pix.waiting) return;
+
+    let cancelled = false;
+    let attempts = 0;
+    const maxAttempts = 40; // ~2 minutos
+
+    const tick = async () => {
+      if (cancelled) return;
+      attempts++;
+      try {
+        const r = await pollPix({ data: { gatewayId: pix.gatewayId! } });
+        if (cancelled) return;
+        const paid = r.chargeStatus === "paid";
+        const failed = r.chargeStatus === "failed" || r.chargeStatus === "refused";
+        setPix((prev) =>
+          prev
+            ? {
+                ...prev,
+                code: r.qrCode || prev.code,
+                qrUrl: r.qrCodeUrl || prev.qrUrl,
+                expiresAt: r.expiresAt ? new Date(r.expiresAt) : prev.expiresAt,
+                waiting: !r.qrCode && !paid,
+                status: paid ? "paid" : failed ? "failed" : "pending",
+              }
+            : prev,
+        );
+        if (paid || failed) return;
+      } catch {
+        /* tenta de novo */
+      }
+      if (attempts < maxAttempts && !cancelled) {
+        setTimeout(tick, 3000);
+      }
+    };
+
+    const t = setTimeout(tick, 2000);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+    };
+  }, [pix?.gatewayId, pix?.code, pix?.waiting, pix?.status, pollPix]);
+
   if (!isOpen) return null;
 
   const pickPreset = (v: number) => {
