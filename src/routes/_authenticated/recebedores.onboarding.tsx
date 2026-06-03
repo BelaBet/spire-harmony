@@ -313,7 +313,7 @@ function OnboardingPage() {
                       setValue("document", masked, { shouldValidate: false });
                     }}
                     placeholder={type === "pj" ? "00.000.000/0000-00" : "000.000.000-00"}
-                    className={fieldBase}
+                    className={`${fieldBase} ${errors.document ? "border-destructive ring-1 ring-destructive focus:border-destructive focus:ring-destructive/40" : ""}`}
                     inputMode="numeric"
                   />
                   <ErrorMsg msg={errors.document?.message} />
