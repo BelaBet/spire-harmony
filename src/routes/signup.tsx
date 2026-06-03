@@ -49,6 +49,7 @@ function SignupPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setEmailError(null);
+    setEmailTaken(false);
     if (!consent) return toast.error("Você precisa aceitar os termos LGPD.");
     const parsed = signupSchema.safeParse({ fullName, email, phone, password });
     if (!parsed.success) {
