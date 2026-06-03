@@ -46,7 +46,7 @@ export const updateChurchIdentity = createServerFn({ method: "POST" })
       logoUrl = pub.publicUrl;
     }
 
-    const update: Record<string, unknown> = { name: data.name };
+    const update: { name: string; tagline?: string; logo_url?: string } = { name: data.name };
     if (data.tagline !== undefined) update.tagline = data.tagline;
     if (logoUrl) update.logo_url = logoUrl;
 

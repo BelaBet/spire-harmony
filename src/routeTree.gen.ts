@@ -24,10 +24,9 @@ import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedManageRouteImport } from './routes/_authenticated/manage'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
-import { Route as AuthenticatedRecebedoresIndexRouteImport } from './routes/_authenticated/recebedores.index'
 import { Route as AuthenticatedManageIndexRouteImport } from './routes/_authenticated/manage.index'
+import { Route as AuthenticatedIgrejasIndexRouteImport } from './routes/_authenticated/igrejas.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
-import { Route as AuthenticatedRecebedoresOnboardingRouteImport } from './routes/_authenticated/recebedores.onboarding'
 import { Route as AuthenticatedManageSettingsRouteImport } from './routes/_authenticated/manage.settings'
 import { Route as AuthenticatedManageMembersRouteImport } from './routes/_authenticated/manage.members'
 import { Route as AuthenticatedManageDashboardRouteImport } from './routes/_authenticated/manage.dashboard'
@@ -113,29 +112,23 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedRecebedoresIndexRoute =
-  AuthenticatedRecebedoresIndexRouteImport.update({
-    id: '/recebedores/',
-    path: '/recebedores/',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedManageIndexRoute =
   AuthenticatedManageIndexRouteImport.update({
     id: '/',
     path: '/',
     getParentRoute: () => AuthenticatedManageRoute,
   } as any)
+const AuthenticatedIgrejasIndexRoute =
+  AuthenticatedIgrejasIndexRouteImport.update({
+    id: '/igrejas/',
+    path: '/igrejas/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAdminIndexRoute = AuthenticatedAdminIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AuthenticatedAdminRoute,
 } as any)
-const AuthenticatedRecebedoresOnboardingRoute =
-  AuthenticatedRecebedoresOnboardingRouteImport.update({
-    id: '/recebedores/onboarding',
-    path: '/recebedores/onboarding',
-    getParentRoute: () => AuthenticatedRoute,
-  } as any)
 const AuthenticatedManageSettingsRoute =
   AuthenticatedManageSettingsRouteImport.update({
     id: '/settings',
@@ -213,10 +206,9 @@ export interface FileRoutesByFullPath {
   '/manage/dashboard': typeof AuthenticatedManageDashboardRoute
   '/manage/members': typeof AuthenticatedManageMembersRoute
   '/manage/settings': typeof AuthenticatedManageSettingsRoute
-  '/recebedores/onboarding': typeof AuthenticatedRecebedoresOnboardingRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
+  '/igrejas/': typeof AuthenticatedIgrejasIndexRoute
   '/manage/': typeof AuthenticatedManageIndexRoute
-  '/recebedores/': typeof AuthenticatedRecebedoresIndexRoute
   '/api/public/webhooks/pagarme': typeof ApiPublicWebhooksPagarmeRoute
 }
 export interface FileRoutesByTo {
@@ -240,10 +232,9 @@ export interface FileRoutesByTo {
   '/manage/dashboard': typeof AuthenticatedManageDashboardRoute
   '/manage/members': typeof AuthenticatedManageMembersRoute
   '/manage/settings': typeof AuthenticatedManageSettingsRoute
-  '/recebedores/onboarding': typeof AuthenticatedRecebedoresOnboardingRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
+  '/igrejas': typeof AuthenticatedIgrejasIndexRoute
   '/manage': typeof AuthenticatedManageIndexRoute
-  '/recebedores': typeof AuthenticatedRecebedoresIndexRoute
   '/api/public/webhooks/pagarme': typeof ApiPublicWebhooksPagarmeRoute
 }
 export interface FileRoutesById {
@@ -271,10 +262,9 @@ export interface FileRoutesById {
   '/_authenticated/manage/dashboard': typeof AuthenticatedManageDashboardRoute
   '/_authenticated/manage/members': typeof AuthenticatedManageMembersRoute
   '/_authenticated/manage/settings': typeof AuthenticatedManageSettingsRoute
-  '/_authenticated/recebedores/onboarding': typeof AuthenticatedRecebedoresOnboardingRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
+  '/_authenticated/igrejas/': typeof AuthenticatedIgrejasIndexRoute
   '/_authenticated/manage/': typeof AuthenticatedManageIndexRoute
-  '/_authenticated/recebedores/': typeof AuthenticatedRecebedoresIndexRoute
   '/api/public/webhooks/pagarme': typeof ApiPublicWebhooksPagarmeRoute
 }
 export interface FileRouteTypes {
@@ -302,10 +292,9 @@ export interface FileRouteTypes {
     | '/manage/dashboard'
     | '/manage/members'
     | '/manage/settings'
-    | '/recebedores/onboarding'
     | '/admin/'
+    | '/igrejas/'
     | '/manage/'
-    | '/recebedores/'
     | '/api/public/webhooks/pagarme'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -329,10 +318,9 @@ export interface FileRouteTypes {
     | '/manage/dashboard'
     | '/manage/members'
     | '/manage/settings'
-    | '/recebedores/onboarding'
     | '/admin'
+    | '/igrejas'
     | '/manage'
-    | '/recebedores'
     | '/api/public/webhooks/pagarme'
   id:
     | '__root__'
@@ -359,10 +347,9 @@ export interface FileRouteTypes {
     | '/_authenticated/manage/dashboard'
     | '/_authenticated/manage/members'
     | '/_authenticated/manage/settings'
-    | '/_authenticated/recebedores/onboarding'
     | '/_authenticated/admin/'
+    | '/_authenticated/igrejas/'
     | '/_authenticated/manage/'
-    | '/_authenticated/recebedores/'
     | '/api/public/webhooks/pagarme'
   fileRoutesById: FileRoutesById
 }
@@ -484,13 +471,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/recebedores/': {
-      id: '/_authenticated/recebedores/'
-      path: '/recebedores'
-      fullPath: '/recebedores/'
-      preLoaderRoute: typeof AuthenticatedRecebedoresIndexRouteImport
-      parentRoute: typeof AuthenticatedRoute
-    }
     '/_authenticated/manage/': {
       id: '/_authenticated/manage/'
       path: '/'
@@ -498,19 +478,19 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedManageIndexRouteImport
       parentRoute: typeof AuthenticatedManageRoute
     }
+    '/_authenticated/igrejas/': {
+      id: '/_authenticated/igrejas/'
+      path: '/igrejas'
+      fullPath: '/igrejas/'
+      preLoaderRoute: typeof AuthenticatedIgrejasIndexRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin/': {
       id: '/_authenticated/admin/'
       path: '/'
       fullPath: '/admin/'
       preLoaderRoute: typeof AuthenticatedAdminIndexRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
-    }
-    '/_authenticated/recebedores/onboarding': {
-      id: '/_authenticated/recebedores/onboarding'
-      path: '/recebedores/onboarding'
-      fullPath: '/recebedores/onboarding'
-      preLoaderRoute: typeof AuthenticatedRecebedoresOnboardingRouteImport
-      parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/manage/settings': {
       id: '/_authenticated/manage/settings'
@@ -625,8 +605,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedScanRoute: typeof AuthenticatedScanRoute
   AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRoute
-  AuthenticatedRecebedoresOnboardingRoute: typeof AuthenticatedRecebedoresOnboardingRoute
-  AuthenticatedRecebedoresIndexRoute: typeof AuthenticatedRecebedoresIndexRoute
+  AuthenticatedIgrejasIndexRoute: typeof AuthenticatedIgrejasIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -638,9 +617,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedScanRoute: AuthenticatedScanRoute,
   AuthenticatedTicketsRoute: AuthenticatedTicketsRoute,
-  AuthenticatedRecebedoresOnboardingRoute:
-    AuthenticatedRecebedoresOnboardingRoute,
-  AuthenticatedRecebedoresIndexRoute: AuthenticatedRecebedoresIndexRoute,
+  AuthenticatedIgrejasIndexRoute: AuthenticatedIgrejasIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -660,13 +637,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
