@@ -43,11 +43,13 @@ function SignupPage() {
   const [emailError, setEmailError] = useState<string | null>(null);
 
   const EMAIL_TAKEN_MSG =
-    "Este e-mail já está cadastrado em outra instituição. Use um e-mail diferente ou entre em contato com o suporte.";
+    "Este e-mail já está cadastrado. Volte ao login para acessar sua conta.";
+  const [emailTaken, setEmailTaken] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setEmailError(null);
+    setEmailTaken(false);
     if (!consent) return toast.error("Você precisa aceitar os termos LGPD.");
     const parsed = signupSchema.safeParse({ fullName, email, phone, password });
     if (!parsed.success) {
@@ -69,6 +71,7 @@ function SignupPage() {
     if (taken) {
       setLoading(false);
       setEmailError(EMAIL_TAKEN_MSG);
+      setEmailTaken(true);
       return;
     }
 
@@ -91,6 +94,7 @@ function SignupPage() {
       const status = (error as { status?: number }).status;
       if (code === "user_already_exists" || status === 422 || /already registered/i.test(error.message)) {
         setEmailError(EMAIL_TAKEN_MSG);
+        setEmailTaken(true);
         return;
       }
       return toast.error(translateError(error));
@@ -134,7 +138,7 @@ function SignupPage() {
               id="email"
               type="email"
               value={email}
-              onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(null); }}
+              onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(null); if (emailTaken) setEmailTaken(false); }}
               required
               autoComplete="email"
               maxLength={255}
@@ -143,7 +147,14 @@ function SignupPage() {
               className={emailError ? "border-destructive focus-visible:ring-destructive" : undefined}
             />
             {emailError && (
-              <p id="email-error" className="mt-1.5 text-xs text-destructive">{emailError}</p>
+              <p id="email-error" className="mt-1.5 text-xs text-destructive">
+                {emailError}{" "}
+                {emailTaken && (
+                  <Link to="/login" className="font-medium text-primary underline">
+                    Ir para o login
+                  </Link>
+                )}
+              </p>
             )}
           </div>
           <div>
