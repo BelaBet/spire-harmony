@@ -225,7 +225,7 @@ function OnboardingPage() {
     }
     let allOk = true;
     for (const ref of refs) {
-      const email = getValues(ref.path as never) as string;
+      const email = getValues(ref.path as never) as unknown as string;
       try {
         const taken = await isEmailTaken(email);
         if (taken) {
