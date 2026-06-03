@@ -71,6 +71,7 @@ function SignupPage() {
     if (taken) {
       setLoading(false);
       setEmailError(EMAIL_TAKEN_MSG);
+      setEmailTaken(true);
       return;
     }
 
