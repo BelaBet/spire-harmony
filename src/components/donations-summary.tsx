@@ -14,8 +14,21 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { format, subDays, startOfDay } from "date-fns";
+import {
+  format,
+  startOfDay,
+  startOfYear,
+  startOfWeek,
+  startOfMonth,
+  subDays,
+  differenceInDays,
+  eachDayOfInterval,
+  eachWeekOfInterval,
+  eachMonthOfInterval,
+  eachHourOfInterval,
+} from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 ChartJS.register(
   CategoryScale,
@@ -28,26 +41,51 @@ ChartJS.register(
   Filler,
 );
 
-const AUTHORIZED_STATUSES = new Set(["paid", "authorized", "succeeded", "approved"]);
-const PENDING_STATUSES = new Set(["pending", "processing", "queued", "waiting"]);
-const REFUSED_STATUSES = new Set(["failed", "refused", "declined", "canceled", "cancelled", "rejected"]);
+const AUTHORIZED = new Set(["paid", "authorized", "succeeded", "approved"]);
+const PENDING = new Set(["pending", "processing", "queued", "waiting"]);
+const REFUSED = new Set(["failed", "refused", "declined", "canceled", "cancelled", "rejected"]);
 
+type Periodo = "hoje" | "7d" | "30d" | "90d" | "ano" | "custom";
 type Row = { amount: number; created_at: string; status: string | null };
 
-function useDashboardMetrics() {
+function getDateRange(periodo: Periodo, dataInicio: string, dataFim: string) {
+  const hoje = new Date();
+  switch (periodo) {
+    case "hoje":
+      return { inicio: startOfDay(hoje), fim: hoje };
+    case "7d":
+      return { inicio: subDays(hoje, 7), fim: hoje };
+    case "30d":
+      return { inicio: subDays(hoje, 30), fim: hoje };
+    case "90d":
+      return { inicio: subDays(hoje, 90), fim: hoje };
+    case "ano":
+      return { inicio: startOfYear(hoje), fim: hoje };
+    case "custom":
+      if (!dataInicio || !dataFim) return { inicio: subDays(hoje, 7), fim: hoje };
+      return { inicio: startOfDay(new Date(dataInicio)), fim: new Date(dataFim + "T23:59:59") };
+  }
+}
+
+function useDashboardMetrics(periodo: Periodo, dataInicio: string, dataFim: string) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
+    setLoading(true);
+    const range = getDateRange(periodo, dataInicio, dataFim);
     (async () => {
       const { data, error } = await supabase
         .from("donations")
         .select("amount, created_at, payments(status)")
-        .is("deleted_at", null);
+        .is("deleted_at", null)
+        .gte("created_at", range.inicio.toISOString())
+        .lte("created_at", range.fim.toISOString());
       if (!alive) return;
       if (error) {
         toast.error("Erro ao carregar métricas de doações");
+        setRows([]);
         setLoading(false);
         return;
       }
@@ -62,89 +100,163 @@ function useDashboardMetrics() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [periodo, dataInicio, dataFim]);
 
-  return { rows, loading };
+  return { rows, loading, range: getDateRange(periodo, dataInicio, dataFim) };
 }
 
 const fmtBRL = (v: number) =>
   v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
+const QUICK: { key: Periodo; label: string }[] = [
+  { key: "hoje", label: "Hoje" },
+  { key: "7d", label: "7 dias" },
+  { key: "30d", label: "30 dias" },
+  { key: "90d", label: "90 dias" },
+  { key: "ano", label: "Este ano" },
+];
+
+const PERIOD_LABEL: Record<Periodo, string> = {
+  hoje: "Hoje",
+  "7d": "Últimos 7 dias",
+  "30d": "Últimos 30 dias",
+  "90d": "Últimos 90 dias",
+  ano: "Este ano",
+  custom: "Período personalizado",
+};
+
+type Bucket = "hour" | "day" | "week" | "month";
+
+function pickBucket(periodo: Periodo, inicio: Date, fim: Date): Bucket {
+  if (periodo === "hoje") return "hour";
+  if (periodo === "7d" || periodo === "30d") return "day";
+  if (periodo === "90d") return "week";
+  if (periodo === "ano") return "month";
+  const days = differenceInDays(fim, inicio);
+  if (days <= 1) return "hour";
+  if (days <= 31) return "day";
+  if (days <= 120) return "week";
+  return "month";
+}
+
+function buildBuckets(bucket: Bucket, inicio: Date, fim: Date) {
+  if (bucket === "hour") {
+    return eachHourOfInterval({ start: startOfDay(inicio), end: fim }).map((d) => ({
+      key: format(d, "yyyy-MM-dd-HH"),
+      label: format(d, "HH'h'"),
+    }));
+  }
+  if (bucket === "day") {
+    return eachDayOfInterval({ start: inicio, end: fim }).map((d) => ({
+      key: format(d, "yyyy-MM-dd"),
+      label: format(d, "dd/MM"),
+    }));
+  }
+  if (bucket === "week") {
+    return eachWeekOfInterval({ start: inicio, end: fim }, { weekStartsOn: 1 }).map((d) => ({
+      key: format(d, "yyyy-'W'II"),
+      label: format(d, "dd/MM"),
+    }));
+  }
+  return eachMonthOfInterval({ start: inicio, end: fim }).map((d) => ({
+    key: format(d, "yyyy-MM"),
+    label: format(d, "MMM", { locale: ptBR }),
+  }));
+}
+
+function bucketKey(bucket: Bucket, d: Date) {
+  if (bucket === "hour") return format(d, "yyyy-MM-dd-HH");
+  if (bucket === "day") return format(d, "yyyy-MM-dd");
+  if (bucket === "week") return format(startOfWeek(d, { weekStartsOn: 1 }), "yyyy-'W'II");
+  return format(startOfMonth(d), "yyyy-MM");
+}
+
 export function DonationsSummary() {
-  const { rows, loading } = useDashboardMetrics();
+  const [periodo, setPeriodo] = useState<Periodo>("7d");
+  const [dataInicio, setDataInicio] = useState("");
+  const [dataFim, setDataFim] = useState("");
+  const [appliedInicio, setAppliedInicio] = useState("");
+  const [appliedFim, setAppliedFim] = useState("");
+
+  const { rows, loading, range } = useDashboardMetrics(periodo, appliedInicio, appliedFim);
+
+  const aplicarCustom = () => {
+    if (!dataInicio || !dataFim) {
+      toast.error("Selecione data inicial e final");
+      return;
+    }
+    setAppliedInicio(dataInicio);
+    setAppliedFim(dataFim);
+    setPeriodo("custom");
+  };
+
+  const limpar = () => {
+    setDataInicio("");
+    setDataFim("");
+    setAppliedInicio("");
+    setAppliedFim("");
+    setPeriodo("7d");
+  };
 
   const { metrics, lineData, barData, statusCounts } = useMemo(() => {
     const r = rows ?? [];
     const created = r.reduce((s, x) => s + x.amount, 0);
-    const authorizedRows = r.filter((x) => x.status && AUTHORIZED_STATUSES.has(x.status));
-    const authorized = authorizedRows.reduce((s, x) => s + x.amount, 0);
+    const authorized = r
+      .filter((x) => x.status && AUTHORIZED.has(x.status))
+      .reduce((s, x) => s + x.amount, 0);
     const count = r.length;
     const avg = count ? created / count : 0;
 
-    // last 7 days series
-    const days: { label: string; key: string }[] = [];
-    for (let i = 6; i >= 0; i--) {
-      const d = subDays(new Date(), i);
-      days.push({
-        label: format(d, "EEE", { locale: ptBR }),
-        key: format(startOfDay(d), "yyyy-MM-dd"),
-      });
-    }
-    const authMap = new Map(days.map((d) => [d.key, 0]));
-    const createdMap = new Map(days.map((d) => [d.key, 0]));
+    const bucket = pickBucket(periodo, range.inicio, range.fim);
+    const buckets = buildBuckets(bucket, range.inicio, range.fim);
+    const authMap = new Map(buckets.map((b) => [b.key, 0]));
+    const createdMap = new Map(buckets.map((b) => [b.key, 0]));
     for (const x of r) {
-      const k = format(startOfDay(new Date(x.created_at)), "yyyy-MM-dd");
+      const k = bucketKey(bucket, new Date(x.created_at));
       if (createdMap.has(k)) createdMap.set(k, (createdMap.get(k) ?? 0) + x.amount);
-      if (x.status && AUTHORIZED_STATUSES.has(x.status) && authMap.has(k)) {
+      if (x.status && AUTHORIZED.has(x.status) && authMap.has(k)) {
         authMap.set(k, (authMap.get(k) ?? 0) + x.amount);
       }
     }
-
     const lineData = {
-      labels: days.map((d) => d.label),
+      labels: buckets.map((b) => b.label),
       datasets: [
         {
           label: "Autorizado",
-          data: days.map((d) => authMap.get(d.key) ?? 0),
+          data: buckets.map((b) => authMap.get(b.key) ?? 0),
           borderColor: "#1D9E75",
-          backgroundColor: "rgba(29, 158, 117, 0.08)",
+          backgroundColor: "rgba(29,158,117,0.08)",
           fill: true,
           tension: 0.35,
-          pointRadius: 3,
+          pointRadius: 2,
         },
         {
           label: "Criado",
-          data: days.map((d) => createdMap.get(d.key) ?? 0),
+          data: buckets.map((b) => createdMap.get(b.key) ?? 0),
           borderColor: "#888780",
           borderDash: [5, 3],
           backgroundColor: "transparent",
           fill: false,
           tension: 0.35,
-          pointRadius: 3,
+          pointRadius: 2,
         },
       ],
     };
 
-    let authorizedC = 0,
-      pendingC = 0,
-      refusedC = 0;
+    let a = 0, p = 0, f = 0;
     for (const x of r) {
-      if (!x.status) {
-        pendingC++;
-        continue;
-      }
-      if (AUTHORIZED_STATUSES.has(x.status)) authorizedC++;
-      else if (REFUSED_STATUSES.has(x.status)) refusedC++;
-      else if (PENDING_STATUSES.has(x.status)) pendingC++;
-      else pendingC++;
+      if (x.status && AUTHORIZED.has(x.status)) a++;
+      else if (x.status && REFUSED.has(x.status)) f++;
+      else if (x.status && PENDING.has(x.status)) p++;
+      else p++;
     }
-    const totalC = authorizedC + pendingC + refusedC;
+    const totalC = a + p + f;
     const barData = {
       labels: ["Autorizadas", "Pendentes", "Recusadas"],
       datasets: [
         {
           label: "Doações",
-          data: [authorizedC, pendingC, refusedC],
+          data: [a, p, f],
           backgroundColor: ["#1D9E75", "#378ADD", "#E24B4A"],
           borderRadius: 4,
         },
@@ -155,9 +267,9 @@ export function DonationsSummary() {
       metrics: { created, authorized, count, avg },
       lineData,
       barData,
-      statusCounts: { authorized: authorizedC, pending: pendingC, refused: refusedC, total: totalC },
+      statusCounts: { authorized: a, pending: p, refused: f, total: totalC },
     };
-  }, [rows]);
+  }, [rows, periodo, range.inicio, range.fim]);
 
   const cards = [
     { label: "Doações criadas", value: fmtBRL(metrics.created) },
@@ -168,12 +280,13 @@ export function DonationsSummary() {
 
   const pct = (n: number) =>
     statusCounts.total ? `${Math.round((n / statusCounts.total) * 100)}%` : "0%";
-
   const barLegend = [
     { color: "#1D9E75", label: "Autorizadas", pct: pct(statusCounts.authorized) },
     { color: "#378ADD", label: "Pendentes", pct: pct(statusCounts.pending) },
     { color: "#E24B4A", label: "Recusadas", pct: pct(statusCounts.refused) },
   ];
+
+  const customAtivo = periodo === "custom";
 
   return (
     <section
@@ -185,9 +298,84 @@ export function DonationsSummary() {
         Resumo de doações do período
       </h2>
 
+      {/* Filtros */}
+      <div className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap gap-2">
+          {QUICK.map((q) => {
+            const active = periodo === q.key;
+            return (
+              <button
+                key={q.key}
+                type="button"
+                onClick={() => {
+                  setPeriodo(q.key);
+                  setAppliedInicio("");
+                  setAppliedFim("");
+                  setDataInicio("");
+                  setDataFim("");
+                }}
+                className={cn(
+                  "rounded-md transition-colors",
+                  active
+                    ? "border text-[#C9A84C]"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+                style={{
+                  padding: "6px 14px",
+                  fontSize: 13,
+                  borderWidth: active ? 1 : 0.5,
+                  borderStyle: "solid",
+                  borderColor: active ? "#C9A84C" : "var(--border)",
+                }}
+              >
+                {q.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="date"
+            value={dataInicio}
+            onChange={(e) => setDataInicio(e.target.value)}
+            className="rounded-md bg-background px-3 py-1.5 text-sm"
+            style={{ border: "0.5px solid var(--border)" }}
+            aria-label="De"
+          />
+          <span className="text-xs text-muted-foreground">até</span>
+          <input
+            type="date"
+            value={dataFim}
+            onChange={(e) => setDataFim(e.target.value)}
+            className="rounded-md bg-background px-3 py-1.5 text-sm"
+            style={{ border: "0.5px solid var(--border)" }}
+            aria-label="Até"
+          />
+          <button
+            type="button"
+            onClick={aplicarCustom}
+            className="rounded-md px-3 py-1.5 text-sm font-medium text-black"
+            style={{ background: "#C9A84C" }}
+          >
+            Aplicar
+          </button>
+          {customAtivo && (
+            <button
+              type="button"
+              onClick={limpar}
+              className="rounded-md px-3 py-1.5 text-sm text-muted-foreground hover:text-foreground"
+              style={{ border: "0.5px solid var(--border)" }}
+            >
+              Limpar
+            </button>
+          )}
+        </div>
+      </div>
+
       {/* Metric cards */}
       <div
-        className="grid"
+        className="grid grid-cols-2"
         style={{ gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10 }}
       >
         {cards.map((c) => (
@@ -229,7 +417,7 @@ export function DonationsSummary() {
           <div>
             <div className="font-medium">Volume total de doações</div>
             <div className="text-xs text-muted-foreground">
-              Últimos 7 dias — valores em R$
+              {PERIOD_LABEL[periodo]} — valores em R$
             </div>
           </div>
           <div className="flex gap-3 text-xs">
@@ -303,7 +491,8 @@ export function DonationsSummary() {
                     borderRadius: 2,
                   }}
                 />
-                {it.label} <span className="text-muted-foreground">({it.pct})</span>
+                {it.label}{" "}
+                <span className="text-muted-foreground">({it.pct})</span>
               </span>
             ))}
           </div>
