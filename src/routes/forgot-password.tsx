@@ -20,14 +20,15 @@ function ForgotPasswordPage() {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    // Force the app origin (never the Lovable editor / iframe parent)
+    // Force a stable app origin so the recovery link works from any preview/editor host
     const host = window.location.hostname;
     const isEditor =
       host.includes("lovable.dev") ||
       host.includes("lovableproject.com") ||
+      host.includes("id-preview--") ||
       host === "localhost";
     const appOrigin = isEditor
-      ? "https://spire-harmony.lovable.app"
+      ? "https://tk2projeto1.lovable.app"
       : window.location.origin;
 
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
