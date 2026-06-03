@@ -10,6 +10,16 @@ import { Button } from "@/components/ui/button";
 import { cpf, cnpj } from "cpf-cnpj-validator";
 import { useServerFn } from "@tanstack/react-start";
 import { updateChurchIdentity } from "@/lib/church.functions";
+import { supabase } from "@/integrations/supabase/client";
+
+const EMAIL_TAKEN_MSG =
+  "Este e-mail já está cadastrado em outra instituição. Use um e-mail diferente ou entre em contato com o suporte.";
+
+async function isEmailTaken(email: string): Promise<boolean> {
+  const { data, error } = await supabase.rpc("is_email_registered", { _email: email });
+  if (error) throw new Error(error.message);
+  return !!data;
+}
 
 export const Route = createFileRoute("/_authenticated/igrejas/onboarding")({
   component: OnboardingGate,
