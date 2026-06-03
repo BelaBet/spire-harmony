@@ -51,7 +51,7 @@ function SignupPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: `${window.location.origin}/login`,
         data: {
           full_name: fullName,
           phone,
@@ -76,8 +76,7 @@ function SignupPage() {
             Clique no link para validar sua conta.
           </p>
           <p className="mt-2 text-sm text-muted-foreground">
-            Após confirmar seu e-mail, seu cadastro será analisado pelo gestor de <strong>{tenant?.name ?? "sua comunidade"}</strong>.
-            Você receberá um aviso assim que tiver acesso.
+            Após confirmar seu e-mail, faça login para iniciar o onboarding de <strong>{tenant?.name ?? "sua comunidade"}</strong>.
           </p>
           <Button asChild className="mt-6" variant="outline"><Link to="/login">Voltar ao login</Link></Button>
         </div>

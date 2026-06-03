@@ -1,4 +1,4 @@
-import { createFileRoute, Outlet, redirect, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, Link, useRouter, useLocation } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import { useTenant } from "@/lib/tenant-context";
 import { Button } from "@/components/ui/button";
@@ -14,15 +14,21 @@ function AuthLayout() {
   const { user, loading, signOut, profile, isStaff } = useAuth();
   const { tenant } = useTenant();
   const router = useRouter();
+  const location = useLocation();
 
   useEffect(() => {
     if (!loading && !user) {
-      // soft client-side redirect
       router.navigate({ to: "/login" });
     }
   }, [user, loading, router]);
 
-  // Avoid SSR auth check (session is browser-only); also gate via supabase
+  // Pending users go straight to the onboarding flow after login.
+  useEffect(() => {
+    if (!loading && user && profile?.status === "pending" && location.pathname !== "/recebedores/onboarding") {
+      router.navigate({ to: "/recebedores/onboarding" });
+    }
+  }, [loading, user, profile?.status, location.pathname, router]);
+
   void supabase;
   void redirect;
 
@@ -30,21 +36,6 @@ function AuthLayout() {
     return <div className="flex min-h-screen items-center justify-center text-muted-foreground">Carregando...</div>;
   }
   if (!user) return null;
-
-  if (profile?.status === "pending") {
-    return (
-      <div className="flex min-h-screen items-center justify-center px-4">
-        <div className="w-full max-w-md text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 text-2xl">⏳</div>
-          <h1 className="font-display text-2xl">Aguardando aprovação do gestor</h1>
-          <p className="mt-3 text-muted-foreground">
-            Sua conta foi criada com sucesso. Assim que um gestor aprovar seu cadastro, você terá acesso completo à comunidade.
-          </p>
-          <Button variant="outline" className="mt-6" onClick={signOut}>Sair</Button>
-        </div>
-      </div>
-    );
-  }
 
   if (profile?.status === "rejected") {
     return (
