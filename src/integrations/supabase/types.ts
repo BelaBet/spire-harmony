@@ -771,6 +771,24 @@ export type Database = {
           },
         ]
       }
+      tenant_payment_settings: {
+        Row: {
+          pix_key: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          pix_key?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          pix_key?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tenant_subscriptions: {
         Row: {
           cancel_at_period_end: boolean
@@ -839,7 +857,6 @@ export type Database = {
           id: string
           logo_url: string | null
           name: string
-          pix_key: string | null
           primary_color: string | null
           secondary_color: string | null
           slug: string
@@ -856,7 +873,6 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name: string
-          pix_key?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           slug: string
@@ -873,7 +889,6 @@ export type Database = {
           id?: string
           logo_url?: string | null
           name?: string
-          pix_key?: string | null
           primary_color?: string | null
           secondary_color?: string | null
           slug?: string

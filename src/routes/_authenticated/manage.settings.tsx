@@ -35,11 +35,21 @@ function SettingsPage() {
 
   useEffect(() => {
     if (!profile?.tenant_id) return;
-    supabase.from("tenants")
-      .select("id, name, slug, tagline, logo_url, cover_photo_url, primary_color, accent_color, pix_key")
-      .eq("id", profile.tenant_id)
-      .maybeSingle()
-      .then(({ data }) => data && setRow(data as TenantRow));
+    (async () => {
+      const [{ data: t }, { data: pay }] = await Promise.all([
+        supabase
+          .from("tenants")
+          .select("id, name, slug, tagline, logo_url, cover_photo_url, primary_color, accent_color")
+          .eq("id", profile.tenant_id)
+          .maybeSingle(),
+        supabase
+          .from("tenant_payment_settings")
+          .select("pix_key")
+          .eq("tenant_id", profile.tenant_id)
+          .maybeSingle(),
+      ]);
+      if (t) setRow({ ...t, pix_key: pay?.pix_key ?? null } as TenantRow);
+    })();
   }, [profile?.tenant_id]);
 
   if (!row) {
@@ -59,10 +69,16 @@ function SettingsPage() {
       cover_photo_url: row.cover_photo_url,
       primary_color: row.primary_color,
       accent_color: row.accent_color,
-      pix_key: row.pix_key,
     }).eq("id", row.id);
+    if (error) {
+      setSaving(false);
+      return toast.error(translateError(error));
+    }
+    const { error: pErr } = await supabase
+      .from("tenant_payment_settings")
+      .upsert({ tenant_id: row.id, pix_key: row.pix_key, updated_at: new Date().toISOString() }, { onConflict: "tenant_id" });
     setSaving(false);
-    if (error) return toast.error(translateError(error));
+    if (pErr) return toast.error(translateError(pErr));
     toast.success("Configurações salvas");
     refresh();
   };
