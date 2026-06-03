@@ -1,0 +1,494 @@
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import { toast } from "sonner";
+import { Check, ChevronLeft, ChevronRight, Plus, Trash2, Loader2 } from "lucide-react";
+
+export const Route = createFileRoute("/_authenticated/recebedores/onboarding")({
+  component: OnboardingPage,
+});
+
+// ─────────────────────────── Helpers ───────────────────────────
+
+const onlyDigits = (v: string) => v.replace(/\D/g, "");
+
+const maskCPF = (v: string) => {
+  const d = onlyDigits(v).slice(0, 11);
+  return d
+    .replace(/^(\d{3})(\d)/, "$1.$2")
+    .replace(/^(\d{3})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1-$2");
+};
+
+const maskCNPJ = (v: string) => {
+  const d = onlyDigits(v).slice(0, 14);
+  return d
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1/$2")
+    .replace(/(\d{4})(\d)/, "$1-$2");
+};
+
+const isValidCPF = (v: string) => onlyDigits(v).length === 11;
+const isValidCNPJ = (v: string) => onlyDigits(v).length === 14;
+
+// ─────────────────────────── Schemas ───────────────────────────
+
+const partnerSchema = z.object({
+  full_name: z.string().trim().min(3, "Informe o nome completo").max(120),
+  cpf: z.string().refine(isValidCPF, "CPF inválido"),
+  email: z.string().trim().email("E-mail inválido").max(160),
+});
+
+const schema = z
+  .object({
+    type: z.enum(["pj", "pf"]),
+    document: z.string().min(1, "Informe o documento"),
+    company_name: z.string().trim().max(160).optional().or(z.literal("")),
+    company_email: z.string().trim().max(160).optional().or(z.literal("")),
+    partners: z.array(partnerSchema).min(1).max(2),
+    receiver_email: z.string().trim().max(160).optional().or(z.literal("")),
+    description: z.string().trim().max(500).optional().or(z.literal("")),
+  })
+  .superRefine((data, ctx) => {
+    if (data.type === "pj") {
+      if (!isValidCNPJ(data.document))
+        ctx.addIssue({ path: ["document"], code: "custom", message: "CNPJ inválido" });
+      if (!data.company_name || data.company_name.trim().length < 2)
+        ctx.addIssue({ path: ["company_name"], code: "custom", message: "Informe o nome da empresa" });
+      if (data.company_email && !/^\S+@\S+\.\S+$/.test(data.company_email))
+        ctx.addIssue({ path: ["company_email"], code: "custom", message: "E-mail inválido" });
+    } else {
+      if (!isValidCPF(data.document))
+        ctx.addIssue({ path: ["document"], code: "custom", message: "CPF inválido" });
+    }
+    if (data.receiver_email && !/^\S+@\S+\.\S+$/.test(data.receiver_email))
+      ctx.addIssue({ path: ["receiver_email"], code: "custom", message: "E-mail inválido" });
+  });
+
+type FormValues = z.infer<typeof schema>;
+
+const STEPS = [
+  { key: "ident", title: "Identificação" },
+  { key: "empresa", title: "Empresa" },
+  { key: "socio", title: "Sócio" },
+  { key: "receb", title: "Recebedor" },
+  { key: "revisao", title: "Revisão" },
+] as const;
+
+// ─────────────────────────── UI primitives ───────────────────────────
+
+const fieldBase =
+  "w-full rounded-md border border-[#2a2a36] bg-[#13131A] px-3.5 py-2.5 text-sm text-[#EDEDF2] placeholder:text-[#5a5a6a] focus:outline-none focus:ring-2 focus:ring-[#C9A84C]/40 focus:border-[#C9A84C]/60 transition";
+
+function Label({ children, required }: { children: React.ReactNode; required?: boolean }) {
+  return (
+    <label className="mb-1.5 block text-xs font-medium uppercase tracking-wider text-[#A9A9B8]">
+      {children} {required && <span className="text-[#C9A84C]">*</span>}
+    </label>
+  );
+}
+
+function ErrorMsg({ msg }: { msg?: string }) {
+  if (!msg) return null;
+  return <p className="mt-1.5 text-xs text-[#E05C5C]">{msg}</p>;
+}
+
+// ─────────────────────────── Page ───────────────────────────
+
+function OnboardingPage() {
+  const router = useRouter();
+  const [step, setStep] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
+
+  const form = useForm<FormValues>({
+    resolver: zodResolver(schema),
+    mode: "onBlur",
+    defaultValues: {
+      type: "pj",
+      document: "",
+      company_name: "",
+      company_email: "",
+      partners: [{ full_name: "", cpf: "", email: "" }],
+      receiver_email: "",
+      description: "",
+    },
+  });
+
+  const { register, watch, setValue, formState, trigger, getValues, handleSubmit } = form;
+  const errors = formState.errors;
+  const type = watch("type");
+  const partners = watch("partners");
+
+  // Skip empresa step for PF
+  const visibleSteps = useMemo(
+    () => (type === "pj" ? STEPS : STEPS.filter((s) => s.key !== "empresa")),
+    [type],
+  );
+  const currentIndex = Math.min(step, visibleSteps.length - 1);
+  const currentKey = visibleSteps[currentIndex].key;
+  const progress = ((currentIndex + 1) / visibleSteps.length) * 100;
+
+  async function next() {
+    const fieldsByKey: Record<string, (keyof FormValues | `partners.${number}.${"full_name" | "cpf" | "email"}`)[]> = {
+      ident: ["type", "document"],
+      empresa: ["company_name", "company_email"],
+      socio: partners.flatMap((_, i) => [
+        `partners.${i}.full_name` as const,
+        `partners.${i}.cpf` as const,
+        `partners.${i}.email` as const,
+      ]),
+      receb: ["receiver_email", "description"],
+      revisao: [],
+    };
+    const ok = await trigger(fieldsByKey[currentKey] as never, { shouldFocus: true });
+    if (!ok) return;
+    setStep(currentIndex + 1);
+  }
+
+  function prev() {
+    setStep(Math.max(0, currentIndex - 1));
+  }
+
+  function goTo(idx: number) {
+    if (idx <= currentIndex) setStep(idx);
+  }
+
+  function addPartner() {
+    if (partners.length >= 2) return;
+    setValue("partners", [...partners, { full_name: "", cpf: "", email: "" }], { shouldValidate: false });
+  }
+
+  function removePartner(i: number) {
+    setValue(
+      "partners",
+      partners.filter((_, idx) => idx !== i),
+      { shouldValidate: false },
+    );
+  }
+
+  const onSubmit = handleSubmit(async (values) => {
+    setSubmitting(true);
+    try {
+      // TODO: integrate Pagar.me v5 receiver creation here
+      await new Promise((r) => setTimeout(r, 900));
+      toast.success("Recebedor cadastrado com sucesso!");
+      router.navigate({ to: "/recebedores" });
+    } catch {
+      toast.error("Não foi possível concluir o cadastro. Tente novamente.");
+    } finally {
+      setSubmitting(false);
+    }
+  });
+
+  return (
+    <div className="-mx-6 -my-8 min-h-[calc(100vh-4rem)] bg-[#0A0A0F] px-4 py-10 text-[#EDEDF2]">
+      <div className="mx-auto w-full max-w-[640px]">
+        <header className="mb-6 text-center">
+          <h1 style={{ fontFamily: "'Cormorant Garamond', serif" }} className="text-3xl font-semibold tracking-tight text-[#EDEDF2] sm:text-4xl">
+            Cadastro de Recebedor
+          </h1>
+          <p className="mt-2 text-sm text-[#A9A9B8]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+            Complete as etapas para habilitar o recebimento via Pagar.me.
+          </p>
+        </header>
+
+        <div className="rounded-2xl border border-[#C9A84C]/20 bg-[#0F0F16] p-6 shadow-[0_10px_40px_-15px_rgba(201,168,76,0.15)] sm:p-8" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+          {/* Progress bar */}
+          <div className="mb-2 h-1.5 w-full overflow-hidden rounded-full bg-[#1c1c26]">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-[#C9A84C] to-[#E6CB7E] transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          {/* Steps breadcrumb */}
+          <ol className="mb-8 flex flex-wrap items-center gap-x-2 gap-y-2 text-xs">
+            {visibleSteps.map((s, i) => {
+              const done = i < currentIndex;
+              const active = i === currentIndex;
+              const clickable = i <= currentIndex;
+              return (
+                <li key={s.key} className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => goTo(i)}
+                    disabled={!clickable}
+                    className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 transition ${
+                      active
+                        ? "bg-[#C9A84C]/15 text-[#C9A84C]"
+                        : done
+                        ? "text-[#C9A84C]/80 hover:text-[#C9A84C]"
+                        : "text-[#5a5a6a]"
+                    } ${clickable ? "cursor-pointer" : "cursor-not-allowed"}`}
+                  >
+                    <span
+                      className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold ${
+                        active
+                          ? "bg-[#C9A84C] text-[#0A0A0F]"
+                          : done
+                          ? "bg-[#C9A84C]/20 text-[#C9A84C]"
+                          : "bg-[#1c1c26] text-[#5a5a6a]"
+                      }`}
+                    >
+                      {done ? <Check className="h-3 w-3" /> : i + 1}
+                    </span>
+                    <span className="hidden sm:inline">{s.title}</span>
+                  </button>
+                  {i < visibleSteps.length - 1 && <span className="text-[#2a2a36]">›</span>}
+                </li>
+              );
+            })}
+          </ol>
+
+          <form onSubmit={onSubmit} className="space-y-6">
+            {/* STEP: IDENT */}
+            {currentKey === "ident" && (
+              <div className="space-y-5">
+                <h2 className="text-lg font-medium text-[#EDEDF2]">Identificação do recebedor</h2>
+                <div>
+                  <Label required>Tipo de recebedor</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { v: "pj", label: "Pessoa Jurídica" },
+                      { v: "pf", label: "Pessoa Física" },
+                    ].map((opt) => {
+                      const selected = type === opt.v;
+                      return (
+                        <button
+                          key={opt.v}
+                          type="button"
+                          onClick={() => {
+                            setValue("type", opt.v as "pj" | "pf");
+                            setValue("document", "");
+                          }}
+                          className={`rounded-md border px-4 py-3 text-sm font-medium transition ${
+                            selected
+                              ? "border-[#C9A84C] bg-[#C9A84C]/10 text-[#C9A84C]"
+                              : "border-[#2a2a36] bg-[#13131A] text-[#A9A9B8] hover:border-[#3a3a46]"
+                          }`}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <Label required>Número do documento</Label>
+                  <input
+                    {...register("document")}
+                    onChange={(e) => {
+                      const masked = type === "pj" ? maskCNPJ(e.target.value) : maskCPF(e.target.value);
+                      setValue("document", masked, { shouldValidate: false });
+                    }}
+                    placeholder={type === "pj" ? "00.000.000/0000-00" : "000.000.000-00"}
+                    className={fieldBase}
+                    inputMode="numeric"
+                  />
+                  <ErrorMsg msg={errors.document?.message} />
+                </div>
+              </div>
+            )}
+
+            {/* STEP: EMPRESA */}
+            {currentKey === "empresa" && (
+              <div className="space-y-5">
+                <h2 className="text-lg font-medium">Dados da empresa</h2>
+                <div>
+                  <Label required>Nome da empresa</Label>
+                  <input {...register("company_name")} className={fieldBase} placeholder="Razão social" />
+                  <ErrorMsg msg={errors.company_name?.message} />
+                </div>
+                <div>
+                  <Label>E-mail da empresa</Label>
+                  <input
+                    {...register("company_email")}
+                    type="email"
+                    className={fieldBase}
+                    placeholder="contato@empresa.com"
+                  />
+                  <ErrorMsg msg={errors.company_email?.message} />
+                </div>
+              </div>
+            )}
+
+            {/* STEP: SOCIO */}
+            {currentKey === "socio" && (
+              <div className="space-y-6">
+                <h2 className="text-lg font-medium">Dados do sócio</h2>
+                {partners.map((_, i) => (
+                  <div key={i} className="rounded-lg border border-[#2a2a36] bg-[#0F0F16] p-5">
+                    <div className="mb-4 flex items-center justify-between">
+                      <h3 className="text-sm font-medium text-[#C9A84C]">Sócio {i + 1}</h3>
+                      {i > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => removePartner(i)}
+                          className="flex items-center gap-1 text-xs text-[#A9A9B8] hover:text-[#E05C5C]"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" /> Remover
+                        </button>
+                      )}
+                    </div>
+                    <div className="space-y-4">
+                      <div>
+                        <Label required>Nome completo</Label>
+                        <input {...register(`partners.${i}.full_name`)} className={fieldBase} />
+                        <ErrorMsg msg={errors.partners?.[i]?.full_name?.message} />
+                      </div>
+                      <div>
+                        <Label required>CPF</Label>
+                        <input
+                          {...register(`partners.${i}.cpf`)}
+                          onChange={(e) =>
+                            setValue(`partners.${i}.cpf`, maskCPF(e.target.value), { shouldValidate: false })
+                          }
+                          placeholder="000.000.000-00"
+                          inputMode="numeric"
+                          className={fieldBase}
+                        />
+                        <ErrorMsg msg={errors.partners?.[i]?.cpf?.message} />
+                      </div>
+                      <div>
+                        <Label required>E-mail</Label>
+                        <input
+                          type="email"
+                          {...register(`partners.${i}.email`)}
+                          className={fieldBase}
+                          placeholder="socio@empresa.com"
+                        />
+                        <ErrorMsg msg={errors.partners?.[i]?.email?.message} />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {partners.length < 2 && (
+                  <button
+                    type="button"
+                    onClick={addPartner}
+                    className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-[#C9A84C]/40 px-4 py-3 text-sm text-[#C9A84C] transition hover:bg-[#C9A84C]/5"
+                  >
+                    <Plus className="h-4 w-4" /> Adicionar outro sócio
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* STEP: RECEB */}
+            {currentKey === "receb" && (
+              <div className="space-y-5">
+                <h2 className="text-lg font-medium">Dados do recebedor</h2>
+                <div>
+                  <Label>E-mail do recebedor</Label>
+                  <input
+                    type="email"
+                    {...register("receiver_email")}
+                    className={fieldBase}
+                    placeholder="financeiro@recebedor.com"
+                  />
+                  <ErrorMsg msg={errors.receiver_email?.message} />
+                </div>
+                <div>
+                  <Label>Descrição</Label>
+                  <textarea
+                    {...register("description")}
+                    rows={4}
+                    className={`${fieldBase} resize-none`}
+                    placeholder="Descreva brevemente a atividade do recebedor"
+                  />
+                  <ErrorMsg msg={errors.description?.message} />
+                </div>
+              </div>
+            )}
+
+            {/* STEP: REVISAO */}
+            {currentKey === "revisao" && (
+              <div className="space-y-4">
+                <h2 className="text-lg font-medium">Revisão e confirmação</h2>
+                <ReviewBlock title="Identificação">
+                  <Row label="Tipo" value={getValues("type") === "pj" ? "Pessoa Jurídica" : "Pessoa Física"} />
+                  <Row label="Documento" value={getValues("document")} />
+                </ReviewBlock>
+
+                {getValues("type") === "pj" && (
+                  <ReviewBlock title="Empresa">
+                    <Row label="Nome" value={getValues("company_name") || "—"} />
+                    <Row label="E-mail" value={getValues("company_email") || "—"} />
+                  </ReviewBlock>
+                )}
+
+                <ReviewBlock title={getValues("partners").length > 1 ? "Sócios" : "Sócio"}>
+                  {getValues("partners").map((p, i) => (
+                    <div key={i} className="rounded-md border border-[#2a2a36] bg-[#0A0A0F] p-3">
+                      <p className="mb-1 text-[10px] uppercase tracking-wider text-[#C9A84C]">Sócio {i + 1}</p>
+                      <Row label="Nome" value={p.full_name} />
+                      <Row label="CPF" value={p.cpf} />
+                      <Row label="E-mail" value={p.email} />
+                    </div>
+                  ))}
+                </ReviewBlock>
+
+                <ReviewBlock title="Recebedor">
+                  <Row label="E-mail" value={getValues("receiver_email") || "—"} />
+                  <Row label="Descrição" value={getValues("description") || "—"} />
+                </ReviewBlock>
+              </div>
+            )}
+
+            {/* Nav */}
+            <div className="flex items-center justify-between gap-3 border-t border-[#2a2a36] pt-6">
+              <button
+                type="button"
+                onClick={prev}
+                disabled={currentIndex === 0 || submitting}
+                className="flex items-center gap-1.5 rounded-md border border-[#2a2a36] bg-transparent px-4 py-2.5 text-sm text-[#A9A9B8] transition hover:border-[#3a3a46] hover:text-[#EDEDF2] disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                <ChevronLeft className="h-4 w-4" /> Voltar
+              </button>
+
+              {currentKey !== "revisao" ? (
+                <button
+                  type="button"
+                  onClick={next}
+                  className="flex items-center gap-1.5 rounded-md bg-gradient-to-r from-[#C9A84C] to-[#E6CB7E] px-5 py-2.5 text-sm font-semibold text-[#0A0A0F] shadow-[0_4px_20px_-4px_rgba(201,168,76,0.45)] transition hover:brightness-110"
+                >
+                  Próximo <ChevronRight className="h-4 w-4" />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="flex items-center gap-2 rounded-md bg-gradient-to-r from-[#C9A84C] to-[#E6CB7E] px-5 py-2.5 text-sm font-semibold text-[#0A0A0F] shadow-[0_4px_20px_-4px_rgba(201,168,76,0.45)] transition hover:brightness-110 disabled:cursor-wait disabled:opacity-70"
+                >
+                  {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {submitting ? "Cadastrando..." : "Confirmar e cadastrar"}
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ReviewBlock({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-lg border border-[#2a2a36] bg-[#0F0F16] p-4">
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#C9A84C]">{title}</h3>
+      <div className="space-y-2">{children}</div>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-start justify-between gap-4 text-sm">
+      <span className="text-[#A9A9B8]">{label}</span>
+      <span className="text-right text-[#EDEDF2]">{value}</span>
+    </div>
+  );
+}
