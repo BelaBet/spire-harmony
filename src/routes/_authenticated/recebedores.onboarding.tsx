@@ -504,8 +504,8 @@ function OnboardingPage() {
 
 function ReviewBlock({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-[#2a2a36] bg-[#0F0F16] p-4">
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-[#C9A84C]">{title}</h3>
+    <div className="rounded-lg border border-border bg-muted/30 p-4">
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wider text-primary">{title}</h3>
       <div className="space-y-2">{children}</div>
     </div>
   );
@@ -514,8 +514,8 @@ function ReviewBlock({ title, children }: { title: string; children: React.React
 function Row({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-start justify-between gap-4 text-sm">
-      <span className="text-[#A9A9B8]">{label}</span>
-      <span className="text-right text-[#EDEDF2]">{value}</span>
+      <span className="text-muted-foreground">{label}</span>
+      <span className="text-right text-foreground">{value}</span>
     </div>
   );
 }
