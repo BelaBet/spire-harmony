@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,6 +34,21 @@ function Dashboard() {
     },
   });
 
+  const { data: myTenant } = useQuery({
+    queryKey: ["my-tenant", profile?.tenant_id],
+    enabled: !!profile?.tenant_id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("tenants")
+        .select("name, logo_url, slug")
+        .eq("id", profile!.tenant_id)
+        .maybeSingle();
+      return data;
+    },
+  });
+
+  const onboardingDone = myTenant ? myTenant.logo_url != null && myTenant.name !== "Comunidade Demo" : false;
+
   const greeting = `Olá, ${profile?.full_name?.split(" ")[0] ?? "membro"} 👋`;
 
   const cards = [
@@ -52,7 +67,6 @@ function Dashboard() {
 
       <DonationsSummary />
 
-
       <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {cards.map((c) => (
           <div key={c.label} className="rounded-2xl border bg-card p-5 shadow-[var(--shadow-card)]">
@@ -65,13 +79,19 @@ function Dashboard() {
         ))}
       </div>
 
-      <div className="mt-10 rounded-2xl border bg-card p-6">
-        <h2 className="font-display text-xl">Próximos passos</h2>
-        <ul className="mt-3 list-inside list-disc space-y-1 text-sm text-muted-foreground">
-          <li>Atualize seu <strong>perfil</strong> e preferências de privacidade.</li>
-          {isStaff && <li>Crie uma nova campanha de doação.</li>}
-        </ul>
-      </div>
+      {!onboardingDone && (
+        <div className="mt-10 rounded-2xl border bg-card p-6">
+          <h2 className="font-display text-xl">Próximos passos</h2>
+          <ul className="mt-3 list-inside list-disc space-y-1 text-sm text-muted-foreground">
+            <li>
+              <Link to="/igrejas/onboarding" className="underline decoration-primary hover:text-foreground transition-colors">
+                Atualize seu <strong>perfil</strong> e preferências de privacidade.
+              </Link>
+            </li>
+            {isStaff && <li>Crie uma nova campanha de doação.</li>}
+          </ul>
+        </div>
+      )}
     </div>
   );
 }
