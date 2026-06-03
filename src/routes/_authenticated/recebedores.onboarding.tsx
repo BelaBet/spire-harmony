@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Check, ChevronLeft, ChevronRight, Plus, Trash2, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
+import { cpf, cnpj } from "cpf-cnpj-validator";
 
 export const Route = createFileRoute("/_authenticated/recebedores/onboarding")({
   component: OnboardingGate,
@@ -58,14 +59,14 @@ const maskCNPJ = (v: string) => {
     .replace(/(\d{4})(\d)/, "$1-$2");
 };
 
-const isValidCPF = (v: string) => onlyDigits(v).length === 11;
-const isValidCNPJ = (v: string) => onlyDigits(v).length === 14;
+const isValidCPF = (v: string) => cpf.isValid(v);
+const isValidCNPJ = (v: string) => cnpj.isValid(v);
 
 // ─────────────────────────── Schemas ───────────────────────────
 
 const partnerSchema = z.object({
   full_name: z.string().trim().min(3, "Informe o nome completo").max(120),
-  cpf: z.string().refine(isValidCPF, "CPF inválido"),
+  cpf: z.string().refine(isValidCPF, "CPF do sócio inválido"),
   email: z.string().trim().email("E-mail inválido").max(160),
 });
 
@@ -312,7 +313,7 @@ function OnboardingPage() {
                       setValue("document", masked, { shouldValidate: false });
                     }}
                     placeholder={type === "pj" ? "00.000.000/0000-00" : "000.000.000-00"}
-                    className={fieldBase}
+                    className={`${fieldBase} ${errors.document ? "border-destructive ring-1 ring-destructive focus:border-destructive focus:ring-destructive/40" : ""}`}
                     inputMode="numeric"
                   />
                   <ErrorMsg msg={errors.document?.message} />
@@ -480,7 +481,12 @@ function OnboardingPage() {
                 <button
                   type="button"
                   onClick={next}
-                  className="flex items-center gap-1.5 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+                  disabled={
+                    (currentKey === "ident" && !!errors.document) ||
+                    (currentKey === "empresa" && (!!errors.company_name || !!errors.company_email)) ||
+                    (currentKey === "socio" && !!errors.partners)
+                  }
+                  className="flex items-center gap-1.5 rounded-md bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground shadow-sm transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Próximo <ChevronRight className="h-4 w-4" />
                 </button>
