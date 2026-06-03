@@ -17,6 +17,7 @@ import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedTicketsRouteImport } from './routes/_authenticated/tickets'
+import { Route as AuthenticatedSuperAdminRouteImport } from './routes/_authenticated/super-admin'
 import { Route as AuthenticatedScanRouteImport } from './routes/_authenticated/scan'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedNotificationsRouteImport } from './routes/_authenticated/notifications'
@@ -75,6 +76,11 @@ const IndexRoute = IndexRouteImport.update({
 const AuthenticatedTicketsRoute = AuthenticatedTicketsRouteImport.update({
   id: '/tickets',
   path: '/tickets',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedSuperAdminRoute = AuthenticatedSuperAdminRouteImport.update({
+  id: '/super-admin',
+  path: '/super-admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedScanRoute = AuthenticatedScanRouteImport.update({
@@ -204,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/scan': typeof AuthenticatedScanRoute
+  '/super-admin': typeof AuthenticatedSuperAdminRoute
   '/tickets': typeof AuthenticatedTicketsRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/billing': typeof AuthenticatedAdminBillingRoute
@@ -231,6 +238,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof AuthenticatedNotificationsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/scan': typeof AuthenticatedScanRoute
+  '/super-admin': typeof AuthenticatedSuperAdminRoute
   '/tickets': typeof AuthenticatedTicketsRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/billing': typeof AuthenticatedAdminBillingRoute
@@ -262,6 +270,7 @@ export interface FileRoutesById {
   '/_authenticated/notifications': typeof AuthenticatedNotificationsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/scan': typeof AuthenticatedScanRoute
+  '/_authenticated/super-admin': typeof AuthenticatedSuperAdminRoute
   '/_authenticated/tickets': typeof AuthenticatedTicketsRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/billing': typeof AuthenticatedAdminBillingRoute
@@ -293,6 +302,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/profile'
     | '/scan'
+    | '/super-admin'
     | '/tickets'
     | '/admin/audit'
     | '/admin/billing'
@@ -320,6 +330,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/profile'
     | '/scan'
+    | '/super-admin'
     | '/tickets'
     | '/admin/audit'
     | '/admin/billing'
@@ -350,6 +361,7 @@ export interface FileRouteTypes {
     | '/_authenticated/notifications'
     | '/_authenticated/profile'
     | '/_authenticated/scan'
+    | '/_authenticated/super-admin'
     | '/_authenticated/tickets'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/billing'
@@ -433,6 +445,13 @@ declare module '@tanstack/react-router' {
       path: '/tickets'
       fullPath: '/tickets'
       preLoaderRoute: typeof AuthenticatedTicketsRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/super-admin': {
+      id: '/_authenticated/super-admin'
+      path: '/super-admin'
+      fullPath: '/super-admin'
+      preLoaderRoute: typeof AuthenticatedSuperAdminRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/scan': {
@@ -624,6 +643,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedNotificationsRoute: typeof AuthenticatedNotificationsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedScanRoute: typeof AuthenticatedScanRoute
+  AuthenticatedSuperAdminRoute: typeof AuthenticatedSuperAdminRoute
   AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRoute
   AuthenticatedIgrejasOnboardingRoute: typeof AuthenticatedIgrejasOnboardingRoute
   AuthenticatedIgrejasIndexRoute: typeof AuthenticatedIgrejasIndexRoute
@@ -637,6 +657,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedNotificationsRoute: AuthenticatedNotificationsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedScanRoute: AuthenticatedScanRoute,
+  AuthenticatedSuperAdminRoute: AuthenticatedSuperAdminRoute,
   AuthenticatedTicketsRoute: AuthenticatedTicketsRoute,
   AuthenticatedIgrejasOnboardingRoute: AuthenticatedIgrejasOnboardingRoute,
   AuthenticatedIgrejasIndexRoute: AuthenticatedIgrejasIndexRoute,
