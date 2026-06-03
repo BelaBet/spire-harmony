@@ -9,6 +9,7 @@ export type Tenant = {
   primary_color: string | null;
   secondary_color: string | null;
   custom_domain: string | null;
+  tagline: string | null;
 };
 
 type TenantCtx = {
