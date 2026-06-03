@@ -84,7 +84,7 @@ function BillingPage() {
             <Table>
               <TableHeader><TableRow>
                 <TableHead>Plano</TableHead><TableHead className="text-right">Mensal</TableHead><TableHead className="text-right">Taxa</TableHead>
-                <TableHead className="text-right">Membros</TableHead><TableHead className="text-right">Eventos/mês</TableHead><TableHead>Features</TableHead>
+                <TableHead className="text-right">Membros</TableHead><TableHead className="text-right">Eventos/mês</TableHead><TableHead>Recursos</TableHead>
               </TableRow></TableHeader>
               <TableBody>
                 {plans?.map((p) => (
