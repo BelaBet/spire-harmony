@@ -527,6 +527,7 @@ function PixDialog({ open, onClose, pixKey, primary }: { open: boolean; onClose:
   const [key, setKey] = useState(pixKey);
   const [amount, setAmount] = useState("");
   const [copied, setCopied] = useState(false);
+  const qrWrapRef = useRef<HTMLDivElement>(null);
   const brCode = buildPixPayload({
     key,
     amount: amount ? amount.replace(/[^\d,.-]/g, "") : undefined,
@@ -539,12 +540,25 @@ function PixDialog({ open, onClose, pixKey, primary }: { open: boolean; onClose:
     toast.success("Código Pix copiado");
     setTimeout(() => setCopied(false), 1500);
   };
+  const downloadQR = () => {
+    const canvas = qrWrapRef.current?.querySelector("canvas");
+    if (!canvas) return;
+    const link = document.createElement("a");
+    link.download = "qrcode-pix.png";
+    link.href = (canvas as HTMLCanvasElement).toDataURL("image/png");
+    link.click();
+    toast.success("QR Code baixado");
+  };
   return (
     <PaymentDialogShell open={open} onClose={onClose} title="Transferência Pix" description="Escaneie o QR Code ou copie o código Pix.">
-      <div className="flex justify-center">
-        <div className="rounded-2xl border bg-white p-3 shadow-sm" style={{ borderColor: `${primary}26` }}>
+      <div className="flex flex-col items-center gap-2">
+        <div ref={qrWrapRef} className="rounded-2xl border bg-white p-3 shadow-sm" style={{ borderColor: `${primary}26` }}>
           <QRCodeCanvas value={brCode} size={220} level="M" includeMargin={false} />
         </div>
+        <Button type="button" variant="outline" size="sm" className="gap-1.5 text-xs" onClick={downloadQR}>
+          <Download className="h-3.5 w-3.5" />
+          Baixar QR Code
+        </Button>
       </div>
       <div className="space-y-2">
         <Label htmlFor="pix-key">Chave Pix</Label>
