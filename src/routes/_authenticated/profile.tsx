@@ -99,7 +99,7 @@ function ProfilePage() {
     await signOut();
   };
 
-  const createdAt = profile?.created_at ? new Date(profile.created_at).toLocaleDateString("pt-BR") : "—";
+  const createdAt = user?.created_at ? new Date(user.created_at).toLocaleDateString("pt-BR") : "—";
 
   return (
     <div className="max-w-3xl">
