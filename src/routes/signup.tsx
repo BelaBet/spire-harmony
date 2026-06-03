@@ -138,7 +138,7 @@ function SignupPage() {
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/login`,
+        emailRedirectTo: `${window.location.origin}/dashboard`,
         data: {
           full_name: fullName,
           phone,
