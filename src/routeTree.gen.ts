@@ -24,6 +24,7 @@ import { Route as AuthenticatedMessagesRouteImport } from './routes/_authenticat
 import { Route as AuthenticatedManageRouteImport } from './routes/_authenticated/manage'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAdminRouteImport } from './routes/_authenticated/admin'
+import { Route as AuthenticatedRecebedoresIndexRouteImport } from './routes/_authenticated/recebedores.index'
 import { Route as AuthenticatedManageIndexRouteImport } from './routes/_authenticated/manage.index'
 import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authenticated/admin.index'
 import { Route as AuthenticatedRecebedoresOnboardingRouteImport } from './routes/_authenticated/recebedores.onboarding'
@@ -112,6 +113,12 @@ const AuthenticatedAdminRoute = AuthenticatedAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
+const AuthenticatedRecebedoresIndexRoute =
+  AuthenticatedRecebedoresIndexRouteImport.update({
+    id: '/recebedores/',
+    path: '/recebedores/',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedManageIndexRoute =
   AuthenticatedManageIndexRouteImport.update({
     id: '/',
@@ -209,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/recebedores/onboarding': typeof AuthenticatedRecebedoresOnboardingRoute
   '/admin/': typeof AuthenticatedAdminIndexRoute
   '/manage/': typeof AuthenticatedManageIndexRoute
+  '/recebedores/': typeof AuthenticatedRecebedoresIndexRoute
   '/api/public/webhooks/pagarme': typeof ApiPublicWebhooksPagarmeRoute
 }
 export interface FileRoutesByTo {
@@ -235,6 +243,7 @@ export interface FileRoutesByTo {
   '/recebedores/onboarding': typeof AuthenticatedRecebedoresOnboardingRoute
   '/admin': typeof AuthenticatedAdminIndexRoute
   '/manage': typeof AuthenticatedManageIndexRoute
+  '/recebedores': typeof AuthenticatedRecebedoresIndexRoute
   '/api/public/webhooks/pagarme': typeof ApiPublicWebhooksPagarmeRoute
 }
 export interface FileRoutesById {
@@ -265,6 +274,7 @@ export interface FileRoutesById {
   '/_authenticated/recebedores/onboarding': typeof AuthenticatedRecebedoresOnboardingRoute
   '/_authenticated/admin/': typeof AuthenticatedAdminIndexRoute
   '/_authenticated/manage/': typeof AuthenticatedManageIndexRoute
+  '/_authenticated/recebedores/': typeof AuthenticatedRecebedoresIndexRoute
   '/api/public/webhooks/pagarme': typeof ApiPublicWebhooksPagarmeRoute
 }
 export interface FileRouteTypes {
@@ -295,6 +305,7 @@ export interface FileRouteTypes {
     | '/recebedores/onboarding'
     | '/admin/'
     | '/manage/'
+    | '/recebedores/'
     | '/api/public/webhooks/pagarme'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -321,6 +332,7 @@ export interface FileRouteTypes {
     | '/recebedores/onboarding'
     | '/admin'
     | '/manage'
+    | '/recebedores'
     | '/api/public/webhooks/pagarme'
   id:
     | '__root__'
@@ -350,6 +362,7 @@ export interface FileRouteTypes {
     | '/_authenticated/recebedores/onboarding'
     | '/_authenticated/admin/'
     | '/_authenticated/manage/'
+    | '/_authenticated/recebedores/'
     | '/api/public/webhooks/pagarme'
   fileRoutesById: FileRoutesById
 }
@@ -469,6 +482,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AuthenticatedAdminRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/recebedores/': {
+      id: '/_authenticated/recebedores/'
+      path: '/recebedores'
+      fullPath: '/recebedores/'
+      preLoaderRoute: typeof AuthenticatedRecebedoresIndexRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/manage/': {
@@ -606,6 +626,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedScanRoute: typeof AuthenticatedScanRoute
   AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRoute
   AuthenticatedRecebedoresOnboardingRoute: typeof AuthenticatedRecebedoresOnboardingRoute
+  AuthenticatedRecebedoresIndexRoute: typeof AuthenticatedRecebedoresIndexRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
@@ -619,6 +640,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedTicketsRoute: AuthenticatedTicketsRoute,
   AuthenticatedRecebedoresOnboardingRoute:
     AuthenticatedRecebedoresOnboardingRoute,
+  AuthenticatedRecebedoresIndexRoute: AuthenticatedRecebedoresIndexRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
