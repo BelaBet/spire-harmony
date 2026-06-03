@@ -1,20 +1,36 @@
-import { createFileRoute, Outlet, redirect, Link, useRouter } from "@tanstack/react-router";
+import { createFileRoute, Outlet, redirect, Link, useRouter, useLocation } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import { useTenant } from "@/lib/tenant-context";
 import { Button } from "@/components/ui/button";
 import { LayoutDashboard, User, LogOut, Sparkles, Bell, Megaphone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 export const Route = createFileRoute("/_authenticated")({
   component: AuthLayout,
 });
 
 function AuthLayout() {
-  const { user, loading, signOut, profile, isStaff } = useAuth();
-  const { tenant } = useTenant();
+  const { user, loading, signOut, profile, isStaff, isAdmin } = useAuth();
+  const { tenant: urlTenant } = useTenant();
   const router = useRouter();
-  
+  const location = useLocation();
+
+  // Always load the *user's own* tenant (profile.tenant_id) so the header
+  // reflects the institution registered at signup, not the URL-resolved default.
+  const { data: myTenant } = useQuery({
+    queryKey: ["my-tenant-header", profile?.tenant_id],
+    enabled: !!profile?.tenant_id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("tenants")
+        .select("id,name,logo_url,tagline")
+        .eq("id", profile!.tenant_id)
+        .maybeSingle();
+      return data;
+    },
+  });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -22,8 +38,16 @@ function AuthLayout() {
     }
   }, [user, loading, router]);
 
-  // Onboarding access is gated inside /igrejas/onboarding itself
-  // (requires confirmed email + approved profile).
+  // First-run onboarding: send tenant admins without a logo to /igrejas/onboarding.
+  useEffect(() => {
+    if (loading || !user || !profile || !myTenant) return;
+    if (!isAdmin) return;
+    if (myTenant.logo_url) return;
+    if (!user.email_confirmed_at) return;
+    const path = location.pathname;
+    if (path.startsWith("/igrejas/onboarding") || path.startsWith("/login")) return;
+    router.navigate({ to: "/igrejas/onboarding" });
+  }, [loading, user, profile, myTenant, isAdmin, location.pathname, router]);
 
   void supabase;
   void redirect;
@@ -45,6 +69,8 @@ function AuthLayout() {
     );
   }
 
+  // Prefer the user's own tenant (from profile) over the URL-resolved tenant.
+  const tenant = myTenant ?? urlTenant;
   const name = tenant?.name ?? "Comunidade";
   const tagline = tenant?.tagline;
 
