@@ -24,11 +24,9 @@ export function ManagerSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b">
         <div className="flex items-center gap-2 px-2 py-1">
-          {tenant?.logo_url ? (
-            <img src={tenant.logo_url} alt="" className="h-7 w-7 rounded-full object-cover" />
-          ) : (
-            <div className="h-7 w-7 rounded-full bg-primary" />
-          )}
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-medium">
+            {initials(tenant?.name ?? "Gestão")}
+          </div>
           {!collapsed && <span className="font-display text-sm">{tenant?.name ?? "Gestão"}</span>}
         </div>
       </SidebarHeader>
