@@ -27,6 +27,8 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { ContribuicaoModal } from "@/components/ContribuicaoModal";
+import { QRCodeCanvas } from "qrcode.react";
+import { buildPixPayload } from "@/lib/pix";
 
 export const Route = createFileRoute("/")({
   component: ChurchPage,
@@ -524,19 +526,23 @@ function PixDialog({ open, onClose, pixKey, primary }: { open: boolean; onClose:
   const [key, setKey] = useState(pixKey);
   const [amount, setAmount] = useState("");
   const [copied, setCopied] = useState(false);
+  const brCode = buildPixPayload({
+    key,
+    amount: amount ? amount.replace(/[^\d,.-]/g, "") : undefined,
+    merchantName: "TK2 EMPREENDIMENTOS",
+    merchantCity: "SAO PAULO",
+  });
   const copy = async () => {
-    await navigator.clipboard.writeText(key);
+    await navigator.clipboard.writeText(brCode);
     setCopied(true);
-    toast.success("Chave copiada");
+    toast.success("Código Pix copiado");
     setTimeout(() => setCopied(false), 1500);
   };
-  const qrPayload = encodeURIComponent(`PIX|${key}|${amount || "0"}`);
-  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&margin=10&data=${qrPayload}`;
   return (
-    <PaymentDialogShell open={open} onClose={onClose} title="Transferência Pix" description="Escaneie o QR Code ou copie a chave.">
+    <PaymentDialogShell open={open} onClose={onClose} title="Transferência Pix" description="Escaneie o QR Code ou copie o código Pix.">
       <div className="flex justify-center">
         <div className="rounded-2xl border bg-white p-3 shadow-sm" style={{ borderColor: `${primary}26` }}>
-          <img src={qrSrc} alt="QR Code Pix" width={220} height={220} className="h-[220px] w-[220px]" />
+          <QRCodeCanvas value={brCode} size={220} level="M" includeMargin={false} />
         </div>
       </div>
       <div className="space-y-2">
