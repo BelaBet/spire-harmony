@@ -59,14 +59,14 @@ const maskCNPJ = (v: string) => {
     .replace(/(\d{4})(\d)/, "$1-$2");
 };
 
-const isValidCPF = (v: string) => onlyDigits(v).length === 11;
-const isValidCNPJ = (v: string) => onlyDigits(v).length === 14;
+const isValidCPF = (v: string) => cpf.isValid(v);
+const isValidCNPJ = (v: string) => cnpj.isValid(v);
 
 // ─────────────────────────── Schemas ───────────────────────────
 
 const partnerSchema = z.object({
   full_name: z.string().trim().min(3, "Informe o nome completo").max(120),
-  cpf: z.string().refine(isValidCPF, "CPF inválido"),
+  cpf: z.string().refine(isValidCPF, "CPF do sócio inválido"),
   email: z.string().trim().email("E-mail inválido").max(160),
 });
 
