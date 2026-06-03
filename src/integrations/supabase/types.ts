@@ -911,6 +911,7 @@ export type Database = {
     }
     Functions: {
       current_tenant_id: { Args: never; Returns: string }
+      get_tenant_pix_key: { Args: { _tenant_id: string }; Returns: string }
       has_platform_role: {
         Args: {
           _role: Database["public"]["Enums"]["platform_role"]
