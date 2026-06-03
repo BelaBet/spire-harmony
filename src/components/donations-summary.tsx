@@ -381,7 +381,7 @@ export function DonationsSummary() {
         {cards.map((c) => (
           <div
             key={c.label}
-            className="bg-secondary"
+            className="bg-card"
             style={{ borderRadius: "var(--radius-md, 0.5rem)", padding: "14px 16px" }}
           >
             <div style={{ fontSize: 12 }} className="text-muted-foreground">
