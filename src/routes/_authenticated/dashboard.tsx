@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Users } from "lucide-react";
+
 import { DonationsSummary } from "@/components/donations-summary";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -14,14 +14,6 @@ function Dashboard() {
   const { profile, roles } = useAuth();
   const isStaff = roles.includes("manager") || roles.includes("admin");
 
-  const { data: stats } = useQuery({
-    queryKey: ["dash-stats", profile?.tenant_id, isStaff],
-    enabled: !!profile && isStaff,
-    queryFn: async () => {
-      const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true });
-      return { members: count ?? 0 };
-    },
-  });
 
   const { data: myTenant } = useQuery({
     queryKey: ["my-tenant", profile?.tenant_id],
@@ -40,9 +32,6 @@ function Dashboard() {
 
   const greeting = `Olá, ${profile?.full_name?.split(" ")[0] ?? "membro"} 👋`;
 
-  const cards = [
-    ...(isStaff ? [{ label: "Membros", value: stats?.members ?? "—", icon: Users }] : []),
-  ];
 
   return (
     <div>
@@ -53,17 +42,6 @@ function Dashboard() {
 
       <DonationsSummary />
 
-      <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {cards.map((c) => (
-          <div key={c.label} className="rounded-2xl border bg-card p-5 shadow-[var(--shadow-card)]">
-            <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">{c.label}</span>
-              <c.icon className="h-4 w-4 text-primary" />
-            </div>
-            <div className="mt-3 font-display text-3xl">{c.value}</div>
-          </div>
-        ))}
-      </div>
 
       {!onboardingDone && (
         <div className="mt-10 rounded-2xl border bg-card p-6">
