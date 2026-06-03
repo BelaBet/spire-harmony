@@ -46,20 +46,32 @@ function AuthLayout() {
   }
 
   const name = tenant?.name ?? "Comunidade";
+  const tagline = tenant?.tagline;
 
   return (
     <div className="min-h-screen pb-20 md:pb-0">
       <header className="border-b bg-card/80 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-3">
-          <Link to="/dashboard" className="flex items-center gap-2">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
+          <Link to="/dashboard" className="flex items-center gap-3 min-w-0">
             {tenant?.logo_url ? (
-              <img src={tenant.logo_url} alt={name} className="h-8 w-8 rounded-full object-cover" />
+              <img
+                src={tenant.logo_url}
+                alt={name}
+                className="h-10 w-10 rounded-lg object-cover ring-1 ring-border bg-background"
+              />
             ) : (
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                <Sparkles className="h-4 w-4" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                <Sparkles className="h-5 w-5" />
               </div>
             )}
-            <span className="font-display">{name}</span>
+            <div className="flex flex-col min-w-0 leading-tight">
+              <span className="font-display text-base truncate">{name}</span>
+              {tagline && (
+                <span className="text-xs text-muted-foreground truncate hidden sm:inline">
+                  {tagline}
+                </span>
+              )}
+            </div>
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
             <Button asChild variant="ghost" size="sm"><Link to="/dashboard">Painel</Link></Button>
