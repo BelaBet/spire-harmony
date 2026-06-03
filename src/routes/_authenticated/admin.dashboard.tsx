@@ -1,7 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { KpiCard } from "@/components/kpi-card";
+import { Card } from "@/components/ui/card";
 import { Building2, Users, Heart, TrendingUp, Calendar, Megaphone, DollarSign, Wallet } from "lucide-react";
 
 export const Route = createFileRoute("/_authenticated/admin/dashboard")({
@@ -56,6 +57,24 @@ function AdminDashboard() {
     { label: "MRR",                value: data ? fmtBRL(data.mrr) : "—",            icon: Megaphone },
   ];
 
+  const { data: ranking } = useQuery({
+    queryKey: ["platform-tenant-ranking"],
+    queryFn: async () => {
+      const [{ data: tenants }, { data: dons }] = await Promise.all([
+        supabase.from("tenants").select("id,name,slug").is("deleted_at", null),
+        supabase.from("donations").select("tenant_id,amount").is("deleted_at", null),
+      ]);
+      const totals = new Map<string, number>();
+      (dons ?? []).forEach((d: { tenant_id: string; amount: number }) => {
+        totals.set(d.tenant_id, (totals.get(d.tenant_id) ?? 0) + Number(d.amount));
+      });
+      return (tenants ?? [])
+        .map((t) => ({ ...t, total: totals.get(t.id) ?? 0 }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 8);
+    },
+  });
+
   return (
     <div className="space-y-6">
       <div>
@@ -67,6 +86,30 @@ function AdminDashboard() {
           <KpiCard key={k.label} icon={k.icon} label={k.label} value={k.value} />
         ))}
       </div>
+
+      <Card className="p-4">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-display text-lg">Ranking de igrejas — arrecadação</h2>
+          <Link to="/admin/tenants" className="text-xs text-primary hover:underline">
+            Ver todas →
+          </Link>
+        </div>
+        <div className="divide-y">
+          {(ranking ?? []).map((t, i) => (
+            <div key={t.id} className="flex items-center justify-between py-2 text-sm">
+              <div className="flex items-center gap-3">
+                <span className="w-6 text-right font-mono text-xs text-muted-foreground">#{i + 1}</span>
+                <span className="font-medium">{t.name}</span>
+                <span className="text-xs text-muted-foreground">{t.slug}</span>
+              </div>
+              <span className="font-mono">{fmtBRL(t.total)}</span>
+            </div>
+          ))}
+          {(ranking?.length ?? 0) === 0 && (
+            <p className="py-6 text-center text-sm text-muted-foreground">Nenhuma arrecadação registrada ainda.</p>
+          )}
+        </div>
+      </Card>
     </div>
   );
 }
