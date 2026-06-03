@@ -244,7 +244,11 @@ function OnboardingPage() {
   const onSubmit = handleSubmit(async (values) => {
     setSubmitting(true);
     try {
-      const payload: Parameters<typeof submitChurch>[0]["data"] = {
+      const payload: {
+        name: string;
+        tagline: string;
+        logo?: { base64: string; contentType: string; filename: string };
+      } = {
         name: values.church_name,
         tagline: values.church_tagline || "",
       };

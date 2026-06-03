@@ -30,6 +30,7 @@ import { Route as AuthenticatedAdminIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedManageSettingsRouteImport } from './routes/_authenticated/manage.settings'
 import { Route as AuthenticatedManageMembersRouteImport } from './routes/_authenticated/manage.members'
 import { Route as AuthenticatedManageDashboardRouteImport } from './routes/_authenticated/manage.dashboard'
+import { Route as AuthenticatedIgrejasOnboardingRouteImport } from './routes/_authenticated/igrejas.onboarding'
 import { Route as AuthenticatedAdminTenantsRouteImport } from './routes/_authenticated/admin.tenants'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
 import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin.dashboard'
@@ -147,6 +148,12 @@ const AuthenticatedManageDashboardRoute =
     path: '/dashboard',
     getParentRoute: () => AuthenticatedManageRoute,
   } as any)
+const AuthenticatedIgrejasOnboardingRoute =
+  AuthenticatedIgrejasOnboardingRouteImport.update({
+    id: '/igrejas/onboarding',
+    path: '/igrejas/onboarding',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedAdminTenantsRoute =
   AuthenticatedAdminTenantsRouteImport.update({
     id: '/tenants',
@@ -203,6 +210,7 @@ export interface FileRoutesByFullPath {
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/tenants': typeof AuthenticatedAdminTenantsRoute
+  '/igrejas/onboarding': typeof AuthenticatedIgrejasOnboardingRoute
   '/manage/dashboard': typeof AuthenticatedManageDashboardRoute
   '/manage/members': typeof AuthenticatedManageMembersRoute
   '/manage/settings': typeof AuthenticatedManageSettingsRoute
@@ -229,6 +237,7 @@ export interface FileRoutesByTo {
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/tenants': typeof AuthenticatedAdminTenantsRoute
+  '/igrejas/onboarding': typeof AuthenticatedIgrejasOnboardingRoute
   '/manage/dashboard': typeof AuthenticatedManageDashboardRoute
   '/manage/members': typeof AuthenticatedManageMembersRoute
   '/manage/settings': typeof AuthenticatedManageSettingsRoute
@@ -259,6 +268,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/tenants': typeof AuthenticatedAdminTenantsRoute
+  '/_authenticated/igrejas/onboarding': typeof AuthenticatedIgrejasOnboardingRoute
   '/_authenticated/manage/dashboard': typeof AuthenticatedManageDashboardRoute
   '/_authenticated/manage/members': typeof AuthenticatedManageMembersRoute
   '/_authenticated/manage/settings': typeof AuthenticatedManageSettingsRoute
@@ -289,6 +299,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/settings'
     | '/admin/tenants'
+    | '/igrejas/onboarding'
     | '/manage/dashboard'
     | '/manage/members'
     | '/manage/settings'
@@ -315,6 +326,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/settings'
     | '/admin/tenants'
+    | '/igrejas/onboarding'
     | '/manage/dashboard'
     | '/manage/members'
     | '/manage/settings'
@@ -344,6 +356,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/dashboard'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/tenants'
+    | '/_authenticated/igrejas/onboarding'
     | '/_authenticated/manage/dashboard'
     | '/_authenticated/manage/members'
     | '/_authenticated/manage/settings'
@@ -513,6 +526,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedManageDashboardRouteImport
       parentRoute: typeof AuthenticatedManageRoute
     }
+    '/_authenticated/igrejas/onboarding': {
+      id: '/_authenticated/igrejas/onboarding'
+      path: '/igrejas/onboarding'
+      fullPath: '/igrejas/onboarding'
+      preLoaderRoute: typeof AuthenticatedIgrejasOnboardingRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/admin/tenants': {
       id: '/_authenticated/admin/tenants'
       path: '/tenants'
@@ -605,6 +625,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedScanRoute: typeof AuthenticatedScanRoute
   AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRoute
+  AuthenticatedIgrejasOnboardingRoute: typeof AuthenticatedIgrejasOnboardingRoute
   AuthenticatedIgrejasIndexRoute: typeof AuthenticatedIgrejasIndexRoute
 }
 
@@ -617,6 +638,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedScanRoute: AuthenticatedScanRoute,
   AuthenticatedTicketsRoute: AuthenticatedTicketsRoute,
+  AuthenticatedIgrejasOnboardingRoute: AuthenticatedIgrejasOnboardingRoute,
   AuthenticatedIgrejasIndexRoute: AuthenticatedIgrejasIndexRoute,
 }
 
