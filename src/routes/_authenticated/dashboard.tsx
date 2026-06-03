@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, Users, Heart, Bell } from "lucide-react";
+import { Users } from "lucide-react";
 import { DonationsSummary } from "@/components/donations-summary";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
