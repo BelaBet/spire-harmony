@@ -34,21 +34,6 @@ function OnboardingGate() {
     );
   }
 
-  if (profile?.status !== "active") {
-    return (
-      <div className="flex min-h-screen items-center justify-center px-4">
-        <div className="w-full max-w-md text-center">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-amber-500/10 text-amber-600 text-2xl">⏳</div>
-          <h1 className="font-display text-2xl">Aguardando aprovação</h1>
-          <p className="mt-3 text-muted-foreground">
-            Seu cadastro precisa ser aprovado pelo gestor da comunidade antes de iniciar o onboarding de recebedor.
-          </p>
-          <Button asChild variant="outline" className="mt-6"><Link to="/dashboard">Ir para o painel</Link></Button>
-        </div>
-      </div>
-    );
-  }
-
   return <OnboardingPage />;
 }
 
