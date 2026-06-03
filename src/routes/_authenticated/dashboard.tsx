@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth-context";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Calendar, Users, Heart, Bell } from "lucide-react";
+import { Users } from "lucide-react";
 import { DonationsSummary } from "@/components/donations-summary";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -16,21 +16,10 @@ function Dashboard() {
 
   const { data: stats } = useQuery({
     queryKey: ["dash-stats", profile?.tenant_id, isStaff],
-    enabled: !!profile,
+    enabled: !!profile && isStaff,
     queryFn: async () => {
-      const [events, members, donations, notifs] = await Promise.all([
-        supabase.from("events").select("id", { count: "exact", head: true }).eq("status", "active"),
-        isStaff ? supabase.from("profiles").select("id", { count: "exact", head: true }) : Promise.resolve({ count: null }),
-        supabase.from("donations").select("amount"),
-        supabase.from("notifications").select("id", { count: "exact", head: true }).eq("read", false),
-      ]);
-      const totalDonations = (donations.data ?? []).reduce((s, d: { amount: number }) => s + Number(d.amount), 0);
-      return {
-        events: events.count ?? 0,
-        members: members.count ?? 0,
-        donations: totalDonations,
-        notifications: notifs.count ?? 0,
-      };
+      const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true });
+      return { members: count ?? 0 };
     },
   });
 
@@ -52,10 +41,7 @@ function Dashboard() {
   const greeting = `Olá, ${profile?.full_name?.split(" ")[0] ?? "membro"} 👋`;
 
   const cards = [
-    { label: "Eventos ativos", value: stats?.events ?? "—", icon: Calendar },
     ...(isStaff ? [{ label: "Membros", value: stats?.members ?? "—", icon: Users }] : []),
-    { label: "Doações (total)", value: stats ? `R$ ${stats.donations.toFixed(2)}` : "—", icon: Heart },
-    { label: "Notificações", value: stats?.notifications ?? 0, icon: Bell },
   ];
 
   return (
