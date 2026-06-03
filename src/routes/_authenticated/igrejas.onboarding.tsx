@@ -157,7 +157,7 @@ function OnboardingPage() {
     },
   });
 
-  const { register, watch, setValue, formState, trigger, getValues, handleSubmit } = form;
+  const { register, watch, setValue, formState, trigger, getValues, handleSubmit, setError, clearErrors } = form;
   const errors = formState.errors;
   const type = watch("type");
   const partners = watch("partners");
