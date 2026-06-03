@@ -16,21 +16,10 @@ function Dashboard() {
 
   const { data: stats } = useQuery({
     queryKey: ["dash-stats", profile?.tenant_id, isStaff],
-    enabled: !!profile,
+    enabled: !!profile && isStaff,
     queryFn: async () => {
-      const [events, members, donations, notifs] = await Promise.all([
-        supabase.from("events").select("id", { count: "exact", head: true }).eq("status", "active"),
-        isStaff ? supabase.from("profiles").select("id", { count: "exact", head: true }) : Promise.resolve({ count: null }),
-        supabase.from("donations").select("amount"),
-        supabase.from("notifications").select("id", { count: "exact", head: true }).eq("read", false),
-      ]);
-      const totalDonations = (donations.data ?? []).reduce((s, d: { amount: number }) => s + Number(d.amount), 0);
-      return {
-        events: events.count ?? 0,
-        members: members.count ?? 0,
-        donations: totalDonations,
-        notifications: notifs.count ?? 0,
-      };
+      const { count } = await supabase.from("profiles").select("id", { count: "exact", head: true });
+      return { members: count ?? 0 };
     },
   });
 
