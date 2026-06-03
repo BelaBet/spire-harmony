@@ -20,7 +20,7 @@ const signupSchema = z.object({
   fullName: z.string().trim().min(2, "Nome muito curto").max(120),
   email: z.string().trim().email("E-mail inválido").max(255),
   phone: z.string().trim().regex(/^\(\d{2}\) \d{5}-\d{4}$/, "Telefone inválido"),
-  password: z.string().min(6, "Mínimo de 6 caracteres").max(72),
+  password: z.string().min(8, "A senha deve ter no mínimo 8 caracteres.").max(72),
 });
 
 function maskPhone(v: string) {
@@ -168,7 +168,7 @@ function SignupPage() {
           </div>
           <div>
             <Label htmlFor="password">Senha</Label>
-            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} maxLength={72} autoComplete="new-password" />
+            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} maxLength={72} autoComplete="new-password" />
           </div>
           <label className="flex items-start gap-3 text-xs text-muted-foreground">
             <Checkbox checked={consent} onCheckedChange={(v) => setConsent(v === true)} className="mt-0.5" />
