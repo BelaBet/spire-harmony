@@ -43,7 +43,8 @@ function SignupPage() {
   const [emailError, setEmailError] = useState<string | null>(null);
 
   const EMAIL_TAKEN_MSG =
-    "Este e-mail já está cadastrado em outra instituição. Use um e-mail diferente ou entre em contato com o suporte.";
+    "Este e-mail já está cadastrado. Volte ao login para acessar sua conta.";
+  const [emailTaken, setEmailTaken] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
