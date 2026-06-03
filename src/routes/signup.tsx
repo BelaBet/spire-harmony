@@ -130,7 +130,21 @@ function SignupPage() {
           </div>
           <div>
             <Label htmlFor="email">E-mail</Label>
-            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" maxLength={255} />
+            <Input
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => { setEmail(e.target.value); if (emailError) setEmailError(null); }}
+              required
+              autoComplete="email"
+              maxLength={255}
+              aria-invalid={!!emailError}
+              aria-describedby={emailError ? "email-error" : undefined}
+              className={emailError ? "border-destructive focus-visible:ring-destructive" : undefined}
+            />
+            {emailError && (
+              <p id="email-error" className="mt-1.5 text-xs text-destructive">{emailError}</p>
+            )}
           </div>
           <div>
             <Label htmlFor="phone">Celular</Label>
