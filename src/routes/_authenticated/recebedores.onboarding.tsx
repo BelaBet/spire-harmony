@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { Check, ChevronLeft, ChevronRight, Plus, Trash2, Loader2 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
+import { cpf, cnpj } from "cpf-cnpj-validator";
 
 export const Route = createFileRoute("/_authenticated/recebedores/onboarding")({
   component: OnboardingGate,
