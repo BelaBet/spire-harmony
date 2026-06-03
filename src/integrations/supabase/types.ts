@@ -854,6 +854,8 @@ export type Database = {
           custom_domain: string | null
           deleted_at: string | null
           deleted_by: string | null
+          document: string | null
+          document_type: string | null
           id: string
           logo_url: string | null
           name: string
@@ -870,6 +872,8 @@ export type Database = {
           custom_domain?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          document?: string | null
+          document_type?: string | null
           id?: string
           logo_url?: string | null
           name: string
@@ -886,6 +890,8 @@ export type Database = {
           custom_domain?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          document?: string | null
+          document_type?: string | null
           id?: string
           logo_url?: string | null
           name?: string
