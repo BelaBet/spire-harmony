@@ -772,21 +772,30 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
         }}
       >
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "14px 24px", display: "flex", alignItems: "center", gap: 10 }}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 999,
-              background: primary,
-              color: "#fff",
-              display: "grid",
-              placeItems: "center",
-              fontSize: 12,
-              fontWeight: 700,
-            }}
-          >
-            {initials(CHURCH.name)}
-          </div>
+          {CHURCH.logo ? (
+            <img
+              src={CHURCH.logo}
+              alt={CHURCH.name}
+              style={{ width: 32, height: 32, borderRadius: 999, objectFit: "cover", background: "#fff" }}
+            />
+          ) : (
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 999,
+                background: primary,
+                color: "#fff",
+                display: "grid",
+                placeItems: "center",
+                fontSize: 12,
+                fontWeight: 700,
+              }}
+            >
+              {initials(CHURCH.name)}
+            </div>
+          )}
+
           <span style={{ fontWeight: 600, color: scrolled ? "#1a1a1a" : "transparent", transition: "color .3s" }}>
             {CHURCH.name}
           </span>
