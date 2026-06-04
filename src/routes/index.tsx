@@ -854,19 +854,29 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
         />
 
         <div className="fade-up relative mx-auto max-w-3xl flex flex-col items-center">
-          {/* Logo — sempre iniciais */}
+          {/* Logo da empresa quando houver, sen\u00e3o iniciais */}
           <div className="mb-1 sm:mb-6">
-            <div
-              className="mx-auto grid place-items-center rounded-full w-11 h-11 sm:w-24 sm:h-24 text-sm sm:text-3xl font-extrabold"
-              style={{
-                background: "#fff",
-                color: primary,
-                border: `2px solid ${accent}`,
-              }}
-            >
-              {initials(CHURCH.name)}
-            </div>
+            {CHURCH.logo ? (
+              <img
+                src={CHURCH.logo}
+                alt={CHURCH.name}
+                className="mx-auto rounded-full w-11 h-11 sm:w-24 sm:h-24 object-cover bg-white"
+                style={{ border: `2px solid ${accent}` }}
+              />
+            ) : (
+              <div
+                className="mx-auto grid place-items-center rounded-full w-11 h-11 sm:w-24 sm:h-24 text-sm sm:text-3xl font-extrabold"
+                style={{
+                  background: "#fff",
+                  color: primary,
+                  border: `2px solid ${accent}`,
+                }}
+              >
+                {initials(CHURCH.name)}
+              </div>
+            )}
           </div>
+
 
           {/* Church Name */}
           <h1
