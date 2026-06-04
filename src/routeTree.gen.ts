@@ -16,6 +16,7 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ISlugRouteImport } from './routes/i.$slug'
 import { Route as AuthenticatedTicketsRouteImport } from './routes/_authenticated/tickets'
 import { Route as AuthenticatedSuperAdminRouteImport } from './routes/_authenticated/super-admin'
 import { Route as AuthenticatedScanRouteImport } from './routes/_authenticated/scan'
@@ -71,6 +72,11 @@ const AuthenticatedRoute = AuthenticatedRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ISlugRoute = ISlugRouteImport.update({
+  id: '/i/$slug',
+  path: '/i/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedTicketsRoute = AuthenticatedTicketsRouteImport.update({
@@ -212,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/scan': typeof AuthenticatedScanRoute
   '/super-admin': typeof AuthenticatedSuperAdminRoute
   '/tickets': typeof AuthenticatedTicketsRoute
+  '/i/$slug': typeof ISlugRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/billing': typeof AuthenticatedAdminBillingRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
@@ -240,6 +247,7 @@ export interface FileRoutesByTo {
   '/scan': typeof AuthenticatedScanRoute
   '/super-admin': typeof AuthenticatedSuperAdminRoute
   '/tickets': typeof AuthenticatedTicketsRoute
+  '/i/$slug': typeof ISlugRoute
   '/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/admin/billing': typeof AuthenticatedAdminBillingRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
@@ -272,6 +280,7 @@ export interface FileRoutesById {
   '/_authenticated/scan': typeof AuthenticatedScanRoute
   '/_authenticated/super-admin': typeof AuthenticatedSuperAdminRoute
   '/_authenticated/tickets': typeof AuthenticatedTicketsRoute
+  '/i/$slug': typeof ISlugRoute
   '/_authenticated/admin/audit': typeof AuthenticatedAdminAuditRoute
   '/_authenticated/admin/billing': typeof AuthenticatedAdminBillingRoute
   '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
@@ -304,6 +313,7 @@ export interface FileRouteTypes {
     | '/scan'
     | '/super-admin'
     | '/tickets'
+    | '/i/$slug'
     | '/admin/audit'
     | '/admin/billing'
     | '/admin/dashboard'
@@ -332,6 +342,7 @@ export interface FileRouteTypes {
     | '/scan'
     | '/super-admin'
     | '/tickets'
+    | '/i/$slug'
     | '/admin/audit'
     | '/admin/billing'
     | '/admin/dashboard'
@@ -363,6 +374,7 @@ export interface FileRouteTypes {
     | '/_authenticated/scan'
     | '/_authenticated/super-admin'
     | '/_authenticated/tickets'
+    | '/i/$slug'
     | '/_authenticated/admin/audit'
     | '/_authenticated/admin/billing'
     | '/_authenticated/admin/dashboard'
@@ -386,6 +398,7 @@ export interface RootRouteChildren {
   RedefinirSenhaRoute: typeof RedefinirSenhaRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignupRoute: typeof SignupRoute
+  ISlugRoute: typeof ISlugRoute
   ApiPublicWebhooksPagarmeRoute: typeof ApiPublicWebhooksPagarmeRoute
 }
 
@@ -438,6 +451,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/i/$slug': {
+      id: '/i/$slug'
+      path: '/i/$slug'
+      fullPath: '/i/$slug'
+      preLoaderRoute: typeof ISlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/tickets': {
@@ -675,6 +695,7 @@ const rootRouteChildren: RootRouteChildren = {
   RedefinirSenhaRoute: RedefinirSenhaRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignupRoute: SignupRoute,
+  ISlugRoute: ISlugRoute,
   ApiPublicWebhooksPagarmeRoute: ApiPublicWebhooksPagarmeRoute,
 }
 export const routeTree = rootRouteImport
