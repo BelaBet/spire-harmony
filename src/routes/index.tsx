@@ -30,7 +30,8 @@ import { cn } from "@/lib/utils";
 import { ContribuicaoModal } from "@/components/ContribuicaoModal";
 import { QRCodeCanvas } from "qrcode.react";
 import { buildPixPayload } from "@/lib/pix";
-import { useTenant } from "@/lib/tenant-context";
+import { useTenant, type Tenant } from "@/lib/tenant-context";
+import { useChurchTheme } from "@/lib/theme";
 
 export const Route = createFileRoute("/")({
   component: ChurchPage,
@@ -41,6 +42,7 @@ export const Route = createFileRoute("/")({
     ],
   }),
 });
+
 
 // ── Fallback data (sobrescrita pelos dados do tenant carregados via useTenant) ─
 const CHURCH_DEFAULTS = {
