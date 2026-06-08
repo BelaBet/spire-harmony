@@ -272,14 +272,36 @@ function OnboardingPage() {
           filename: logoFile.name,
         };
       }
-      await submitChurch({ data: payload });
-      toast.success("Igreja cadastrada com sucesso!");
-      // Hard reload para que TenantProvider recarregue a nova identidade visual em /
-      if (typeof window !== "undefined") {
-        window.location.assign("/");
-      } else {
-        router.navigate({ to: "/" });
+      const result = await submitChurch({ data: payload });
+
+      // Marca onboarding_completed no user_metadata
+      const { error: updErr } = await supabase.auth.updateUser({
+        data: { onboarding_completed: true },
+      });
+      if (updErr) throw new Error(`Falha ao marcar onboarding: ${updErr.message}`);
+
+      // Verifica que o flag persistiu e que o tenant foi atualizado
+      const { data: refreshed, error: getErr } = await supabase.auth.getUser();
+      if (getErr) throw new Error(`Falha ao recarregar usuário: ${getErr.message}`);
+      const ok = refreshed.user?.user_metadata?.onboarding_completed === true;
+      if (!ok) throw new Error("onboarding_completed não foi confirmado no usuário.");
+
+      const { data: tenantRow, error: tErr } = await supabase
+        .from("tenants")
+        .select("id, name, tagline, logo_url")
+        .eq("id", result.tenantId)
+        .maybeSingle();
+      if (tErr) throw new Error(`Falha ao verificar a igreja: ${tErr.message}`);
+      if (!tenantRow || tenantRow.name !== values.church_name) {
+        throw new Error("Dados da igreja não foram persistidos corretamente.");
       }
+
+      setSavedTenant({
+        name: tenantRow.name,
+        tagline: tenantRow.tagline ?? "",
+        logo_url: tenantRow.logo_url ?? null,
+      });
+      toast.success("Igreja cadastrada e verificada com sucesso!");
     } catch (e) {
       const msg = e instanceof Error ? e.message : "Não foi possível concluir o cadastro.";
       toast.error(msg);
@@ -287,6 +309,49 @@ function OnboardingPage() {
       setSubmitting(false);
     }
   });
+
+  if (savedTenant) {
+    return (
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center px-4 py-10">
+        <div className="w-full max-w-md rounded-2xl border border-border bg-card p-8 text-center shadow-sm">
+          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-full bg-primary/10 text-primary">
+            <Check className="h-8 w-8" />
+          </div>
+          <h2 className="text-2xl font-semibold tracking-tight text-foreground">Cadastro concluído</h2>
+          <p className="mt-2 text-sm text-muted-foreground">Dados verificados no servidor.</p>
+
+          <div className="mt-6 flex items-center gap-4 rounded-xl border border-border bg-muted/30 p-4 text-left">
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-background">
+              {savedTenant.logo_url ? (
+                <img src={savedTenant.logo_url} alt="" className="h-full w-full object-cover" />
+              ) : (
+                <ImageIcon className="h-6 w-6 text-muted-foreground" />
+              )}
+            </div>
+            <div className="min-w-0">
+              <p className="truncate font-medium text-foreground">{savedTenant.name}</p>
+              {savedTenant.tagline && (
+                <p className="truncate text-xs text-muted-foreground">{savedTenant.tagline}</p>
+              )}
+              <p className="mt-1 text-[11px] uppercase tracking-wider text-primary">onboarding_completed ✓</p>
+            </div>
+          </div>
+
+          <Button
+            className="mt-6 w-full"
+            onClick={() => {
+              if (typeof window !== "undefined") window.location.assign("/");
+              else router.navigate({ to: "/" });
+            }}
+          >
+            Ir para o painel
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
+
 
   return (
     <div className="min-h-[calc(100vh-4rem)] px-4 py-10">
