@@ -3,11 +3,12 @@ import {
   Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Building2, CreditCard, ScrollText, Settings, ShieldAlert, ArrowLeft } from "lucide-react";
+import { LayoutDashboard, Building2, CreditCard, ScrollText, Settings, ShieldAlert, ArrowLeft, Wallet } from "lucide-react";
 
 const items = [
   { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
   { title: "Igrejas",   url: "/admin/tenants",   icon: Building2 },
+  { title: "Financeiro",url: "/admin/financeiro",icon: Wallet },
   { title: "Billing",   url: "/admin/billing",   icon: CreditCard },
   { title: "Auditoria", url: "/admin/audit",     icon: ScrollText },
   { title: "Plataforma",url: "/admin/settings",  icon: Settings },
