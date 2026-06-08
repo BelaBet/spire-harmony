@@ -5,7 +5,7 @@ import {
   calculateAmounts,
   fetchSellerRecipientId,
 } from "./split.utils";
-import { buildPagarmeCustomer, resolveCustomer } from "./payments-customer";
+import { buildPagarmeCustomer, resolveCustomer, validateDocument } from "./payments-customer";
 
 const OptionalCustomerSchema = {
   customerName: z.string().min(2).max(120).optional(),
