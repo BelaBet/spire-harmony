@@ -5,6 +5,7 @@ import jsPDF from "jspdf";
 import JsBarcode from "jsbarcode";
 import { useServerFn } from "@tanstack/react-start";
 import { useTenant } from "@/lib/tenant-context";
+import { useAuth } from "@/lib/auth-context";
 import { createBoletoPayment } from "@/lib/boleto.functions";
 import { createPixPayment, createCreditCardPayment, pollPixCharge } from "@/lib/payments.functions";
 import { calculateAmounts } from "@/lib/split.utils";
@@ -98,6 +99,7 @@ function isValidCPF(raw: string) {
 
 export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props) {
   const { tenant } = useTenant();
+  const { user, profile } = useAuth();
   const createBoleto = useServerFn(createBoletoPayment);
   const createPix = useServerFn(createPixPayment);
   const pollPix = useServerFn(pollPixCharge);
@@ -108,6 +110,10 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
   const [payerEmail, setPayerEmail] = useState("");
   const [payerCpf, setPayerCpf] = useState("");
   const [payerPhone, setPayerPhone] = useState("");
+  const isLoggedIn = !!user;
+  const lockName = isLoggedIn && !!profile?.full_name;
+  const lockEmail = isLoggedIn && !!(profile?.email ?? user?.email);
+  const lockPhone = isLoggedIn && !!profile?.phone;
   // Card-only fields
   const [cardNumber, setCardNumber] = useState("");
   const [cardHolder, setCardHolder] = useState("");
@@ -158,10 +164,10 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     if (isOpen) {
       setSelected(25);
       setValue("25");
-      setPayerName("");
-      setPayerEmail("");
+      setPayerName(profile?.full_name ?? "");
+      setPayerEmail(profile?.email ?? user?.email ?? "");
       setPayerCpf("");
-      setPayerPhone("");
+      setPayerPhone(profile?.phone ?? "");
       setCardNumber("");
       setCardHolder("");
       setCardExp("");
@@ -178,7 +184,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
       setSubmitting(false);
       setError(null);
     }
-  }, [isOpen]);
+  }, [isOpen, profile?.full_name, profile?.email, profile?.phone, user?.email]);
 
   // Polling do PIX: quando temos gatewayId e ainda falta o QR Code (ou status pendente),
   // consultamos a Pagar.me a cada 3s até obter o código ou confirmação de pagamento.
@@ -248,33 +254,30 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
   };
 
   const validatePayer = (
-    opts: { optional?: boolean; phoneOnly?: boolean } = {},
+    opts: { optional?: boolean } = {},
   ): { name: string; email: string; cpf: string; phone: string } | null => {
     const name = payerName.trim();
     const email = payerEmail.trim();
     const cpfDigits = payerCpf.replace(/\D/g, "");
     const phoneDigits = payerPhone.replace(/\D/g, "");
 
-    if (opts.phoneOnly) {
-      if (phoneDigits.length < 10 || phoneDigits.length > 11) {
-        setError("Informe um telefone válido com DDD para envio do comprovante.");
-        return null;
-      }
+    if (opts.optional) {
+      // PIX: nada obrigatório. Validar formato apenas se preenchido.
       if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         setError("Informe um e-mail válido ou deixe em branco.");
         return null;
       }
-      if (cpfDigits && !isValidCPF(cpfDigits)) {
+      if (cpfDigits && cpfDigits.length === 11 && !isValidCPF(cpfDigits)) {
         setError("CPF inválido. Deixe em branco se preferir não informar.");
+        return null;
+      }
+      if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
+        setError("Telefone inválido. Deixe em branco se preferir não informar.");
         return null;
       }
       return { name, email, cpf: cpfDigits, phone: phoneDigits };
     }
 
-    const allEmpty = !name && !email && !cpfDigits && !phoneDigits;
-    if (opts.optional && allEmpty) {
-      return { name: "", email: "", cpf: "", phone: "" };
-    }
     if (name.length < 2) {
       setError("Informe o nome completo do pagador.");
       return null;
@@ -283,11 +286,17 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
       setError("Informe um e-mail válido.");
       return null;
     }
-    if (!isValidCPF(cpfDigits)) {
-      setError("CPF inválido.");
+    // Aceita CPF (11) ou CNPJ (14)
+    if (cpfDigits.length === 11) {
+      if (!isValidCPF(cpfDigits)) {
+        setError("CPF inválido.");
+        return null;
+      }
+    } else if (cpfDigits.length !== 14) {
+      setError("Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido.");
       return null;
     }
-    if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+    if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
       setError("Informe um telefone válido com DDD.");
       return null;
     }
@@ -307,7 +316,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
       setError("Não foi possível identificar a instituição.");
       return;
     }
-    const payer = validatePayer(isPix ? { phoneOnly: true } : {});
+    const payer = validatePayer(isPix ? { optional: true } : {});
     if (!payer) return;
 
 
@@ -892,36 +901,43 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
               <div className="mt-5 space-y-2.5">
                 {isPix && (
                   <div className="rounded-xl border border-[#FCD34D] bg-[#FEF3C7] px-3 py-2 text-xs text-[#92400E]">
-                    <strong>Atenção:</strong> apenas o celular é obrigatório no Pix —
-                    usaremos esse número para enviar o comprovante via WhatsApp.
-                    Nome, e-mail e CPF são opcionais.
+                    <strong>Identificar doação (opcional):</strong> nome, e-mail, CPF/CNPJ
+                    e telefone são opcionais para Pix. Doações anônimas são permitidas.
                   </div>
                 )}
 
                 <div>
-                  <label className="text-xs font-medium text-[#6B7280]">Nome completo{isPix && " (opcional)"}</label>
+                  <label className="flex items-center gap-1 text-xs font-medium text-[#6B7280]">
+                    Nome completo{isPix && " (opcional)"}
+                    {lockName && <Lock className="h-3 w-3" />}
+                  </label>
                   <input
                     type="text"
                     value={payerName}
                     onChange={(e) => setPayerName(e.target.value)}
+                    readOnly={lockName}
                     maxLength={120}
                     placeholder="Como aparece no documento"
-                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                    className={`mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED] ${lockName ? "bg-gray-50" : "bg-white"}`}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-[#6B7280]">E-mail{isPix && " (opcional)"}</label>
+                  <label className="flex items-center gap-1 text-xs font-medium text-[#6B7280]">
+                    E-mail{isPix && " (opcional)"}
+                    {lockEmail && <Lock className="h-3 w-3" />}
+                  </label>
                   <input
                     type="email"
                     value={payerEmail}
                     onChange={(e) => setPayerEmail(e.target.value)}
+                    readOnly={lockEmail}
                     maxLength={255}
                     placeholder="seu@email.com"
-                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                    className={`mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED] ${lockEmail ? "bg-gray-50" : "bg-white"}`}
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-[#6B7280]">CPF{isPix && " (opcional)"}</label>
+                  <label className="text-xs font-medium text-[#6B7280]">CPF ou CNPJ{isPix && " (opcional)"}</label>
                   <input
                     type="text"
                     inputMode="numeric"
@@ -932,13 +948,15 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-[#6B7280]">
-                    Celular (WhatsApp){isPix && <span className="text-[#DC2626]"> *obrigatório</span>}
+                  <label className="flex items-center gap-1 text-xs font-medium text-[#6B7280]">
+                    Celular (WhatsApp){isPix && " (opcional)"}
+                    {lockPhone && <Lock className="h-3 w-3" />}
                   </label>
                   <input
                     type="tel"
                     inputMode="numeric"
                     value={payerPhone}
+                    readOnly={lockPhone}
                     onChange={(e) => {
                       const d = e.target.value.replace(/\D/g, "").slice(0, 11);
                       const formatted =
@@ -952,7 +970,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
                       setPayerPhone(formatted);
                     }}
                     placeholder="(11) 99999-9999"
-                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                    className={`mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED] ${lockPhone ? "bg-gray-50" : "bg-white"}`}
                   />
                 </div>
               </div>

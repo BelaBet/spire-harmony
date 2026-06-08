@@ -5,6 +5,7 @@ import {
   calculateAmounts,
   fetchSellerRecipientId,
 } from "./split.utils";
+import { buildPagarmeCustomer, resolveCustomer } from "./payments-customer";
 
 const InputSchema = z.object({
   tenantId: z.string().uuid(),
@@ -14,12 +15,6 @@ const InputSchema = z.object({
   customerDocument: z.string().min(8).max(20).optional(),
   customerPhone: z.string().min(10).max(20).optional(),
 });
-
-function parseBrPhone(raw: string) {
-  const digits = raw.replace(/\D/g, "");
-  const local = digits.startsWith("55") && digits.length > 11 ? digits.slice(2) : digits;
-  return { country_code: "55", area_code: local.slice(0, 2), number: local.slice(2) };
-}
 
 function addBusinessDays(date: Date, days: number) {
   const d = new Date(date);
@@ -45,6 +40,12 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
     const platformRecipientId = process.env.PLATFORM_RECIPIENT_ID;
     const dueAt = addBusinessDays(new Date(), 3).toISOString();
 
+    const resolved = await resolveCustomer(data);
+    if (!resolved.name) throw new Error("Nome é obrigatório para boleto");
+    if (!resolved.email) throw new Error("E-mail é obrigatório para boleto");
+    if (!resolved.document) throw new Error("CPF ou CNPJ é obrigatório para boleto");
+    const customer = buildPagarmeCustomer(resolved, { allowAnonymous: false });
+
     const orderPayload = {
       items: [
         {
@@ -54,14 +55,7 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
           code: "CONTRIB",
         },
       ],
-      customer: {
-        name: data.customerName ?? "Contribuinte Anônimo",
-        email: data.customerEmail ?? "contribuinte@anonimo.com",
-        type: "individual",
-        document: (data.customerDocument ?? "00000000000").replace(/\D/g, ""),
-        document_type: "CPF",
-        phones: { mobile_phone: parseBrPhone(data.customerPhone ?? "11900000000") },
-      },
+      customer,
       payments: [
         {
           payment_method: "boleto",

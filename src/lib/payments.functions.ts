@@ -5,13 +5,7 @@ import {
   calculateAmounts,
   fetchSellerRecipientId,
 } from "./split.utils";
-
-const CustomerSchema = {
-  customerName: z.string().min(2).max(120),
-  customerEmail: z.string().email(),
-  customerDocument: z.string().min(8).max(20),
-  customerPhone: z.string().min(10).max(20),
-};
+import { buildPagarmeCustomer, resolveCustomer } from "./payments-customer";
 
 const OptionalCustomerSchema = {
   customerName: z.string().min(2).max(120).optional(),
@@ -19,29 +13,6 @@ const OptionalCustomerSchema = {
   customerDocument: z.string().min(8).max(20).optional(),
   customerPhone: z.string().min(10).max(20).optional(),
 };
-
-function parseBrPhone(raw: string) {
-  const digits = raw.replace(/\D/g, "");
-  const local = digits.startsWith("55") && digits.length > 11 ? digits.slice(2) : digits;
-  return { country_code: "55", area_code: local.slice(0, 2), number: local.slice(2) };
-}
-
-function buildCustomer(data: {
-  customerName?: string;
-  customerEmail?: string;
-  customerDocument?: string;
-  customerPhone?: string;
-}) {
-  const phone = parseBrPhone(data.customerPhone ?? "11900000000");
-  return {
-    name: data.customerName ?? "Contribuinte Anônimo",
-    email: data.customerEmail ?? "contribuinte@anonimo.com",
-    type: "individual",
-    document: (data.customerDocument ?? "00000000000").replace(/\D/g, ""),
-    document_type: "CPF",
-    phones: { mobile_phone: phone },
-  };
-}
 
 function buildItems(amountCents: number) {
   return [
@@ -81,7 +52,7 @@ const CardInput = z.object({
     state: z.string().length(2),
     country: z.string().length(2).default("BR"),
   }),
-  ...CustomerSchema,
+  ...OptionalCustomerSchema,
 });
 
 async function pagarmeFetch(path: string, body: unknown) {
@@ -169,16 +140,19 @@ export const createPixPayment = createServerFn({ method: "POST" })
     const { donationAmount, tickettoFee, totalAmount } = calculateAmounts(data.donationAmount);
     const expiresIn = 60 * 60; // 1h
 
+    const resolved = await resolveCustomer(data);
+    const customer = buildPagarmeCustomer(resolved, { allowAnonymous: true });
+
     const json = await pagarmeFetch("/orders", {
       items: buildItems(totalAmount),
-      customer: buildCustomer(data),
+      customer,
       payments: [
         {
           payment_method: "pix",
           pix: {
             expires_in: expiresIn,
             additional_information: [
-              { name: "Contribuição", value: data.customerName ?? "Anônimo" },
+              { name: "Contribuição", value: resolved.name ?? "Anônimo" },
             ],
           },
           split: buildSplitPayload(donationAmount, tickettoFee, sellerRecipientId),
@@ -283,9 +257,16 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
     const sellerRecipientId = await fetchSellerRecipientId(data.tenantId);
     const { donationAmount, tickettoFee, totalAmount } = calculateAmounts(data.donationAmount);
 
+    const resolved = await resolveCustomer(data);
+    if (!resolved.name) throw new Error("Nome do titular é obrigatório");
+    if (!resolved.email) throw new Error("E-mail é obrigatório");
+    if (!resolved.document) throw new Error("CPF ou CNPJ é obrigatório");
+    if (!data.billingAddress) throw new Error("Endereço de cobrança é obrigatório");
+    const customer = buildPagarmeCustomer(resolved, { allowAnonymous: false });
+
     const json = await pagarmeFetch("/orders", {
       items: buildItems(totalAmount),
-      customer: buildCustomer(data),
+      customer,
       payments: [
         {
           payment_method: "credit_card",
