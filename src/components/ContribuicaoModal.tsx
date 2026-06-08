@@ -261,18 +261,25 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     const cpfDigits = payerCpf.replace(/\D/g, "");
     const phoneDigits = payerPhone.replace(/\D/g, "");
 
+    // CPF/CNPJ e celular são obrigatórios em todos os métodos.
+    if (cpfDigits.length === 11) {
+      if (!isValidCPF(cpfDigits)) {
+        setError("CPF inválido.");
+        return null;
+      }
+    } else if (cpfDigits.length !== 14) {
+      setError("Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido.");
+      return null;
+    }
+    if (phoneDigits.length < 10 || phoneDigits.length > 11) {
+      setError("Informe um celular válido com DDD.");
+      return null;
+    }
+
     if (opts.optional) {
-      // PIX: nada obrigatório. Validar formato apenas se preenchido.
+      // PIX: nome e e-mail opcionais; CPF/CNPJ e celular obrigatórios.
       if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         setError("Informe um e-mail válido ou deixe em branco.");
-        return null;
-      }
-      if (cpfDigits && cpfDigits.length === 11 && !isValidCPF(cpfDigits)) {
-        setError("CPF inválido. Deixe em branco se preferir não informar.");
-        return null;
-      }
-      if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
-        setError("Telefone inválido. Deixe em branco se preferir não informar.");
         return null;
       }
       return { name, email, cpf: cpfDigits, phone: phoneDigits };
@@ -284,20 +291,6 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError("Informe um e-mail válido.");
-      return null;
-    }
-    // Aceita CPF (11) ou CNPJ (14)
-    if (cpfDigits.length === 11) {
-      if (!isValidCPF(cpfDigits)) {
-        setError("CPF inválido.");
-        return null;
-      }
-    } else if (cpfDigits.length !== 14) {
-      setError("Informe um CPF (11 dígitos) ou CNPJ (14 dígitos) válido.");
-      return null;
-    }
-    if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
-      setError("Informe um telefone válido com DDD.");
       return null;
     }
     return { name, email, cpf: cpfDigits, phone: phoneDigits };
