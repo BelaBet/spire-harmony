@@ -164,10 +164,10 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     if (isOpen) {
       setSelected(25);
       setValue("25");
-      setPayerName("");
-      setPayerEmail("");
+      setPayerName(profile?.full_name ?? "");
+      setPayerEmail(profile?.email ?? user?.email ?? "");
       setPayerCpf("");
-      setPayerPhone("");
+      setPayerPhone(profile?.phone ?? "");
       setCardNumber("");
       setCardHolder("");
       setCardExp("");
