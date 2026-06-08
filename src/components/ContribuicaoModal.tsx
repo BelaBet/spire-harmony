@@ -7,6 +7,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { useTenant } from "@/lib/tenant-context";
 import { createBoletoPayment } from "@/lib/boleto.functions";
 import { createPixPayment, createCreditCardPayment, pollPixCharge } from "@/lib/payments.functions";
+import { calculateAmounts } from "@/lib/split.utils";
+
+const formatBRL = (cents: number) =>
+  (cents / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export type ContribMethod = {
   key: "pix" | "boleto" | "fatura" | "mais" | "custom";
@@ -314,7 +318,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
         const result = await createBoleto({
           data: {
             tenantId: tenant.id,
-            amount: num,
+            donationAmount: Math.round(num * 100),
             customerName: payer.name,
             customerEmail: payer.email,
             customerDocument: payer.cpf,
@@ -334,7 +338,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
         const result = await createPix({
           data: {
             tenantId: tenant.id,
-            amount: num,
+            donationAmount: Math.round(num * 100),
             ...(payer.name ? { customerName: payer.name } : {}),
             ...(payer.email ? { customerEmail: payer.email } : {}),
             ...(payer.cpf ? { customerDocument: payer.cpf } : {}),
@@ -372,7 +376,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
         const result = await createCard({
           data: {
             tenantId: tenant.id,
-            amount: num,
+            donationAmount: Math.round(num * 100),
             installments,
             customerName: payer.name,
             customerEmail: payer.email,
