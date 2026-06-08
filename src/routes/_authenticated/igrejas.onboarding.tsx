@@ -10,16 +10,6 @@ import { Button } from "@/components/ui/button";
 import { cpf, cnpj } from "cpf-cnpj-validator";
 import { useServerFn } from "@tanstack/react-start";
 import { updateChurchIdentity } from "@/lib/church.functions";
-import { supabase } from "@/integrations/supabase/client";
-
-const EMAIL_TAKEN_MSG =
-  "Este e-mail já está cadastrado em outra instituição. Use um e-mail diferente ou entre em contato com o suporte.";
-
-async function isEmailTaken(email: string): Promise<boolean> {
-  const { data, error } = await supabase.rpc("is_email_registered", { _email: email });
-  if (error) throw new Error(error.message);
-  return !!data;
-}
 
 export const Route = createFileRoute("/_authenticated/igrejas/onboarding")({
   component: OnboardingGate,
@@ -143,6 +133,7 @@ function ErrorMsg({ msg }: { msg?: string }) {
 
 function OnboardingPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -151,23 +142,33 @@ function OnboardingPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const submitChurch = useServerFn(updateChurchIdentity);
 
+  const meta = (user?.user_metadata ?? {}) as Record<string, string | undefined>;
+  const prefilledDoc = (meta.document ?? "").replace(/\D/g, "");
+  const prefilledType: "pj" | "pf" =
+    meta.document_type === "cpf" ? "pf" : meta.document_type === "cnpj" ? "pj" : prefilledDoc.length === 11 ? "pf" : "pj";
+  const prefilledDocMasked = prefilledDoc
+    ? prefilledType === "pj"
+      ? maskCNPJ(prefilledDoc)
+      : maskCPF(prefilledDoc)
+    : "";
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     mode: "onBlur",
     defaultValues: {
-      church_name: "",
+      church_name: meta.institution_name ?? "",
       church_tagline: "",
-      type: "pj",
-      document: "",
-      company_name: "",
+      type: prefilledType,
+      document: prefilledDocMasked,
+      company_name: meta.institution_name ?? "",
       company_email: "",
-      partners: [{ full_name: "", cpf: "", email: "" }],
-      receiver_email: "",
+      partners: [{ full_name: meta.full_name ?? "", cpf: "", email: user?.email ?? "" }],
+      receiver_email: user?.email ?? "",
       description: "",
     },
   });
 
-  const { register, watch, setValue, formState, trigger, getValues, handleSubmit, setError, clearErrors } = form;
+  const { register, watch, setValue, formState, trigger, getValues, handleSubmit } = form;
   const errors = formState.errors;
   const type = watch("type");
   const partners = watch("partners");
@@ -204,43 +205,6 @@ function OnboardingPage() {
     reader.readAsDataURL(file);
   }
 
-  async function checkStepEmails(key: string): Promise<boolean> {
-    type EmailRef =
-      | { path: "company_email" | "receiver_email" }
-      | { path: `partners.${number}.email`; index: number };
-    const refs: EmailRef[] = [];
-    if (key === "empresa") {
-      const v = (getValues("company_email") || "").trim();
-      if (v) refs.push({ path: "company_email" });
-    }
-    if (key === "socio") {
-      partners.forEach((_, i) => {
-        const v = (getValues(`partners.${i}.email`) || "").trim();
-        if (v) refs.push({ path: `partners.${i}.email` as const, index: i });
-      });
-    }
-    if (key === "receb") {
-      const v = (getValues("receiver_email") || "").trim();
-      if (v) refs.push({ path: "receiver_email" });
-    }
-    let allOk = true;
-    for (const ref of refs) {
-      const email = getValues(ref.path as never) as unknown as string;
-      try {
-        const taken = await isEmailTaken(email);
-        if (taken) {
-          setError(ref.path as never, { type: "manual", message: EMAIL_TAKEN_MSG });
-          allOk = false;
-        } else {
-          clearErrors(ref.path as never);
-        }
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : "Falha ao validar e-mail.");
-        allOk = false;
-      }
-    }
-    return allOk;
-  }
 
   async function next() {
     const fieldsByKey: Record<string, (keyof FormValues | `partners.${number}.${"full_name" | "cpf" | "email"}`)[]> = {
@@ -257,8 +221,6 @@ function OnboardingPage() {
     };
     const ok = await trigger(fieldsByKey[currentKey] as never, { shouldFocus: true });
     if (!ok) return;
-    const emailsOk = await checkStepEmails(currentKey);
-    if (!emailsOk) return;
     setStep(currentIndex + 1);
   }
 
@@ -294,15 +256,6 @@ function OnboardingPage() {
   const onSubmit = handleSubmit(async (values) => {
     setSubmitting(true);
     try {
-      // Revalida todos os e-mails antes de concluir
-      for (const key of ["empresa", "socio", "receb"]) {
-        const ok = await checkStepEmails(key);
-        if (!ok) {
-          setSubmitting(false);
-          toast.error(EMAIL_TAKEN_MSG);
-          return;
-        }
-      }
       const payload: {
         name: string;
         tagline: string;

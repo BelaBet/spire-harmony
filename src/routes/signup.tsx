@@ -153,6 +153,9 @@ function SignupPage() {
           tenant_id: tenantId,
           is_tenant_founder: true,
           lgpd_consent: true,
+          institution_name: churchName,
+          document,
+          document_type: documentType,
         },
       },
     });
