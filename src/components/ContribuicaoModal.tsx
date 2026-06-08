@@ -78,11 +78,19 @@ function addBusinessDays(date: Date, days: number, country = "BR", state?: strin
 }
 
 function formatCPF(raw: string) {
-  const d = raw.replace(/\D/g, "").slice(0, 11);
+  const d = raw.replace(/\D/g, "").slice(0, 14);
+  if (d.length <= 11) {
+    return d
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d)/, "$1.$2")
+      .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+  }
+  // CNPJ: 00.000.000/0000-00
   return d
-    .replace(/(\d{3})(\d)/, "$1.$2")
-    .replace(/(\d{3})(\d)/, "$1.$2")
-    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1/$2")
+    .replace(/(\d{4})(\d{1,2})$/, "$1-$2");
 }
 
 function isValidCPF(raw: string) {
@@ -95,6 +103,28 @@ function isValidCPF(raw: string) {
     return r === 10 ? 0 : r;
   };
   return calc(9) === Number(cpf[9]) && calc(10) === Number(cpf[10]);
+}
+
+function isValidCNPJ(raw: string) {
+  const cnpj = raw.replace(/\D/g, "");
+  if (cnpj.length !== 14 || /^(\d)\1{13}$/.test(cnpj)) return false;
+  const calc = (len: number) => {
+    const weights = len === 12
+      ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+      : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+    let sum = 0;
+    for (let i = 0; i < len; i++) sum += Number(cnpj[i]) * weights[i];
+    const r = sum % 11;
+    return r < 2 ? 0 : 11 - r;
+  };
+  return calc(12) === Number(cnpj[12]) && calc(13) === Number(cnpj[13]);
+}
+
+function isValidDoc(raw: string) {
+  const d = raw.replace(/\D/g, "");
+  if (d.length === 11) return isValidCPF(d);
+  if (d.length === 14) return isValidCNPJ(d);
+  return false;
 }
 
 export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props) {
