@@ -142,10 +142,11 @@ export const createPixPayment = createServerFn({ method: "POST" })
 
     const resolved = await resolveCustomer(data);
     if (!resolved.document) throw new Error("CPF ou CNPJ é obrigatório");
+    if (!validateDocument(resolved.document)) throw new Error("CPF ou CNPJ inválido");
     if (!resolved.phone || resolved.phone.length < 10) {
       throw new Error("Celular é obrigatório");
     }
-    const customer = buildPagarmeCustomer(resolved, { allowAnonymous: false });
+    const customer = buildPagarmeCustomer(resolved);
 
     const json = await pagarmeFetch("/orders", {
       items: buildItems(totalAmount),
