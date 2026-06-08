@@ -5,7 +5,6 @@ import jsPDF from "jspdf";
 import JsBarcode from "jsbarcode";
 import { useServerFn } from "@tanstack/react-start";
 import { useTenant } from "@/lib/tenant-context";
-import { useAuth } from "@/lib/auth-context";
 import { createBoletoPayment } from "@/lib/boleto.functions";
 import { createPixPayment, createCreditCardPayment, pollPixCharge } from "@/lib/payments.functions";
 import { calculateAmounts } from "@/lib/split.utils";
@@ -28,9 +27,9 @@ type Props = {
 const PRESETS = [10, 25, 50, 100, 200];
 
 const METHOD_COPY: Record<ContribMethod["key"], { title: string; subtitle: string; cta: string }> = {
-  pix:    { title: "Contribuir via Pix",          subtitle: "Qual valor você quer contribuir via Pix?",         cta: "Gerar Pix" },
-  boleto: { title: "Gerar Boleto",                subtitle: "Qual valor você quer contribuir via Boleto?",      cta: "Gerar Boleto" },
-  fatura: { title: "Contribuir com Cartão",       subtitle: "Qual valor você quer contribuir no cartão?",       cta: "Continuar no cartão" },
+  pix:    { title: "Contribuir via Pix",          subtitle: "Sua contribuição é processada com segurança. Não é necessário criar conta.",         cta: "Gerar QR Code PIX" },
+  boleto: { title: "Gerar Boleto",                subtitle: "Preencha seus dados para emissão do comprovante. Não é necessário criar conta.",     cta: "Gerar boleto" },
+  fatura: { title: "Contribuir com Cartão",       subtitle: "Preencha seus dados para emissão do comprovante. Não é necessário criar conta.",     cta: "Confirmar doação" },
   mais:   { title: "Escolher forma de pagamento", subtitle: "Qual valor você quer contribuir?",                 cta: "Continuar" },
   custom: { title: "Contribuir",                  subtitle: "Qual valor você quer contribuir?",                 cta: "Continuar" },
 };
@@ -129,7 +128,6 @@ function isValidDoc(raw: string) {
 
 export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props) {
   const { tenant } = useTenant();
-  const { user, profile } = useAuth();
   const createBoleto = useServerFn(createBoletoPayment);
   const createPix = useServerFn(createPixPayment);
   const pollPix = useServerFn(pollPixCharge);
@@ -140,10 +138,6 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
   const [payerEmail, setPayerEmail] = useState("");
   const [payerCpf, setPayerCpf] = useState("");
   const [payerPhone, setPayerPhone] = useState("");
-  const isLoggedIn = !!user;
-  const lockName = isLoggedIn && !!profile?.full_name;
-  const lockEmail = isLoggedIn && !!(profile?.email ?? user?.email);
-  const lockPhone = isLoggedIn && !!profile?.phone;
   // Card-only fields
   const [cardNumber, setCardNumber] = useState("");
   const [cardHolder, setCardHolder] = useState("");
@@ -194,10 +188,10 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     if (isOpen) {
       setSelected(25);
       setValue("25");
-      setPayerName(profile?.full_name ?? "");
-      setPayerEmail(profile?.email ?? user?.email ?? "");
+      setPayerName("");
+      setPayerEmail("");
       setPayerCpf("");
-      setPayerPhone(profile?.phone ?? "");
+      setPayerPhone("");
       setCardNumber("");
       setCardHolder("");
       setCardExp("");
@@ -214,7 +208,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
       setSubmitting(false);
       setError(null);
     }
-  }, [isOpen, profile?.full_name, profile?.email, profile?.phone, user?.email]);
+  }, [isOpen]);
 
   // Polling do PIX: quando temos gatewayId e ainda falta o QR Code (ou status pendente),
   // consultamos a Pagar.me a cada 3s até obter o código ou confirmação de pagamento.
@@ -283,47 +277,42 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
     setSelected(PRESETS.includes(num) ? num : "custom");
   };
 
-  const validatePayer = (
-    opts: { optional?: boolean } = {},
-  ): { name: string; email: string; cpf: string; phone: string } | null => {
+  const validatePayer = (): { name: string; email: string; cpf: string; phone: string } | null => {
     const name = payerName.trim();
     const email = payerEmail.trim();
     const cpfDigits = payerCpf.replace(/\D/g, "");
     const phoneDigits = payerPhone.replace(/\D/g, "");
 
-    // CPF/CNPJ e celular são obrigatórios em todos os métodos.
-    if (cpfDigits.length !== 11 && cpfDigits.length !== 14) {
-      setError("Informe um CPF (11 dígitos) ou CNPJ (14 dígitos).");
+    if (!name) {
+      setError("Informe seu nome");
       return null;
     }
-    if (cpfDigits.length === 11 && !isValidCPF(cpfDigits)) {
-      setError("CPF inválido. Verifique os dígitos.");
-      return null;
-    }
-    if (cpfDigits.length === 14 && !isValidCNPJ(cpfDigits)) {
-      setError("CNPJ inválido. Verifique os dígitos.");
-      return null;
-    }
-    if (phoneDigits.length < 10 || phoneDigits.length > 11) {
-      setError("Informe um celular válido com DDD.");
-      return null;
-    }
-
-    if (opts.optional) {
-      // PIX: nome e e-mail opcionais; CPF/CNPJ e celular obrigatórios.
-      if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-        setError("Informe um e-mail válido ou deixe em branco.");
-        return null;
-      }
-      return { name, email, cpf: cpfDigits, phone: phoneDigits };
-    }
-
-    if (name.length < 2) {
-      setError("Informe o nome completo do pagador.");
+    if (!email) {
+      setError("Informe seu e-mail");
       return null;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError("Informe um e-mail válido.");
+      return null;
+    }
+    if (!cpfDigits) {
+      setError("Informe seu CPF ou CNPJ");
+      return null;
+    }
+    if (cpfDigits.length !== 11 && cpfDigits.length !== 14) {
+      setError("Informe um CPF (11 dígitos) ou CNPJ (14 dígitos)");
+      return null;
+    }
+    if (cpfDigits.length === 11 && !isValidCPF(cpfDigits)) {
+      setError("CPF inválido. Verifique os números e tente novamente");
+      return null;
+    }
+    if (cpfDigits.length === 14 && !isValidCNPJ(cpfDigits)) {
+      setError("CNPJ inválido. Verifique os números e tente novamente");
+      return null;
+    }
+    if (phoneDigits && (phoneDigits.length < 10 || phoneDigits.length > 11)) {
+      setError("Informe um celular válido com DDD ou deixe em branco.");
       return null;
     }
     return { name, email, cpf: cpfDigits, phone: phoneDigits };
@@ -342,7 +331,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
       setError("Não foi possível identificar a instituição.");
       return;
     }
-    const payer = validatePayer(isPix ? { optional: true } : {});
+    const payer = validatePayer();
     if (!payer) return;
 
 
@@ -925,64 +914,48 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
 
             {needsPayer && (
               <div className="mt-5 space-y-2.5">
-                {isPix && (
-                  <div className="rounded-xl border border-[#FCD34D] bg-[#FEF3C7] px-3 py-2 text-xs text-[#92400E]">
-                    <strong>CPF/CNPJ e celular obrigatórios.</strong> Nome e e-mail
-                    são opcionais — usaremos o celular para enviar o comprovante via WhatsApp.
-                  </div>
-                )}
-
                 <div>
-                  <label className="flex items-center gap-1 text-xs font-medium text-[#6B7280]">
-                    Nome completo{isPix && " (opcional)"}
-                    {lockName && <Lock className="h-3 w-3" />}
-                  </label>
+                  <label className="text-xs font-medium text-[#6B7280]">Seu nome *</label>
                   <input
                     type="text"
                     value={payerName}
                     onChange={(e) => setPayerName(e.target.value)}
-                    readOnly={lockName}
                     maxLength={120}
-                    placeholder="Como aparece no documento"
-                    className={`mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED] ${lockName ? "bg-gray-50" : "bg-white"}`}
+                    placeholder="Nome completo"
+                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
                   />
                 </div>
                 <div>
-                  <label className="flex items-center gap-1 text-xs font-medium text-[#6B7280]">
-                    E-mail{isPix && " (opcional)"}
-                    {lockEmail && <Lock className="h-3 w-3" />}
-                  </label>
+                  <label className="text-xs font-medium text-[#6B7280]">Seu e-mail *</label>
                   <input
                     type="email"
                     value={payerEmail}
                     onChange={(e) => setPayerEmail(e.target.value)}
-                    readOnly={lockEmail}
                     maxLength={255}
-                    placeholder="seu@email.com"
-                    className={`mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED] ${lockEmail ? "bg-gray-50" : "bg-white"}`}
+                    placeholder="email@exemplo.com"
+                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-medium text-[#6B7280]">CPF ou CNPJ</label>
+                  <label className="text-xs font-medium text-[#6B7280]">CPF ou CNPJ *</label>
                   <input
                     type="text"
                     inputMode="numeric"
                     value={payerCpf}
                     onChange={(e) => setPayerCpf(formatCPF(e.target.value))}
-                    placeholder="000.000.000-00"
+                    placeholder="000.000.000-00 ou 00.000.000/0001-00"
                     className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
                   />
+                  <p className="mt-1 text-xs text-[#6B7280]">
+                    Necessário para identificar sua contribuição
+                  </p>
                 </div>
                 <div>
-                  <label className="flex items-center gap-1 text-xs font-medium text-[#6B7280]">
-                    Celular (WhatsApp)
-                    {lockPhone && <Lock className="h-3 w-3" />}
-                  </label>
+                  <label className="text-xs font-medium text-[#6B7280]">Telefone (opcional)</label>
                   <input
                     type="tel"
                     inputMode="numeric"
                     value={payerPhone}
-                    readOnly={lockPhone}
                     onChange={(e) => {
                       const d = e.target.value.replace(/\D/g, "").slice(0, 11);
                       const formatted =
@@ -995,8 +968,8 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
                           : d;
                       setPayerPhone(formatted);
                     }}
-                    placeholder="(11) 99999-9999"
-                    className={`mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED] ${lockPhone ? "bg-gray-50" : "bg-white"}`}
+                    placeholder="(00) 00000-0000"
+                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
                   />
                 </div>
               </div>
