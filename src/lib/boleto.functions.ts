@@ -44,7 +44,8 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
     if (!resolved.name) throw new Error("Nome é obrigatório para boleto");
     if (!resolved.email) throw new Error("E-mail é obrigatório para boleto");
     if (!resolved.document) throw new Error("CPF ou CNPJ é obrigatório para boleto");
-    const customer = buildPagarmeCustomer(resolved, { allowAnonymous: false });
+    if (!validateDocument(resolved.document)) throw new Error("CPF ou CNPJ inválido");
+    const customer = buildPagarmeCustomer(resolved);
 
     const orderPayload = {
       items: [
