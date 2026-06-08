@@ -864,6 +864,13 @@ export type Database = {
             referencedRelation: "subscription_plans"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "tenant_subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "subscription_plans_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       tenants: {
@@ -1026,6 +1033,33 @@ export type Database = {
       }
     }
     Views: {
+      subscription_plans_public: {
+        Row: {
+          active: boolean | null
+          code: string | null
+          id: string | null
+          monthly_price: number | null
+          name: string | null
+          sort_order: number | null
+        }
+        Insert: {
+          active?: boolean | null
+          code?: string | null
+          id?: string | null
+          monthly_price?: number | null
+          name?: string | null
+          sort_order?: number | null
+        }
+        Update: {
+          active?: boolean | null
+          code?: string | null
+          id?: string | null
+          monthly_price?: number | null
+          name?: string | null
+          sort_order?: number | null
+        }
+        Relationships: []
+      }
       tenants_public: {
         Row: {
           accent_color: string | null
