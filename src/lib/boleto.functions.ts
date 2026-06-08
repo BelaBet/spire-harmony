@@ -5,7 +5,7 @@ import {
   calculateAmounts,
   fetchSellerRecipientId,
 } from "./split.utils";
-import { buildPagarmeCustomer, resolveCustomer } from "./payments-customer";
+import { buildPagarmeCustomer, resolveCustomer, validateDocument } from "./payments-customer";
 
 const InputSchema = z.object({
   tenantId: z.string().uuid(),
