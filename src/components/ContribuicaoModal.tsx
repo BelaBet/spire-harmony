@@ -99,6 +99,7 @@ function isValidCPF(raw: string) {
 
 export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props) {
   const { tenant } = useTenant();
+  const { user, profile } = useAuth();
   const createBoleto = useServerFn(createBoletoPayment);
   const createPix = useServerFn(createPixPayment);
   const pollPix = useServerFn(pollPixCharge);
@@ -109,6 +110,10 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
   const [payerEmail, setPayerEmail] = useState("");
   const [payerCpf, setPayerCpf] = useState("");
   const [payerPhone, setPayerPhone] = useState("");
+  const isLoggedIn = !!user;
+  const lockName = isLoggedIn && !!profile?.full_name;
+  const lockEmail = isLoggedIn && !!(profile?.email ?? user?.email);
+  const lockPhone = isLoggedIn && !!profile?.phone;
   // Card-only fields
   const [cardNumber, setCardNumber] = useState("");
   const [cardHolder, setCardHolder] = useState("");
