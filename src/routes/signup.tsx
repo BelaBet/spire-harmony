@@ -82,6 +82,8 @@ function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [emailError, setEmailError] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const EMAIL_TAKEN_MSG =
     "Este e-mail já está cadastrado. Volte ao login para acessar sua conta.";
