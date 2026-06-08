@@ -140,16 +140,19 @@ export const createPixPayment = createServerFn({ method: "POST" })
     const { donationAmount, tickettoFee, totalAmount } = calculateAmounts(data.donationAmount);
     const expiresIn = 60 * 60; // 1h
 
+    const resolved = await resolveCustomer(data);
+    const customer = buildPagarmeCustomer(resolved, { allowAnonymous: true });
+
     const json = await pagarmeFetch("/orders", {
       items: buildItems(totalAmount),
-      customer: buildCustomer(data),
+      customer,
       payments: [
         {
           payment_method: "pix",
           pix: {
             expires_in: expiresIn,
             additional_information: [
-              { name: "Contribuição", value: data.customerName ?? "Anônimo" },
+              { name: "Contribuição", value: resolved.name ?? "Anônimo" },
             ],
           },
           split: buildSplitPayload(donationAmount, tickettoFee, sellerRecipientId),
