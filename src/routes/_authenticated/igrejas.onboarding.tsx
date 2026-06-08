@@ -133,6 +133,7 @@ function ErrorMsg({ msg }: { msg?: string }) {
 
 function OnboardingPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -141,23 +142,33 @@ function OnboardingPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const submitChurch = useServerFn(updateChurchIdentity);
 
+  const meta = (user?.user_metadata ?? {}) as Record<string, string | undefined>;
+  const prefilledDoc = (meta.document ?? "").replace(/\D/g, "");
+  const prefilledType: "pj" | "pf" =
+    meta.document_type === "cpf" ? "pf" : meta.document_type === "cnpj" ? "pj" : prefilledDoc.length === 11 ? "pf" : "pj";
+  const prefilledDocMasked = prefilledDoc
+    ? prefilledType === "pj"
+      ? maskCNPJ(prefilledDoc)
+      : maskCPF(prefilledDoc)
+    : "";
+
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     mode: "onBlur",
     defaultValues: {
-      church_name: "",
+      church_name: meta.institution_name ?? "",
       church_tagline: "",
-      type: "pj",
-      document: "",
-      company_name: "",
+      type: prefilledType,
+      document: prefilledDocMasked,
+      company_name: meta.institution_name ?? "",
       company_email: "",
-      partners: [{ full_name: "", cpf: "", email: "" }],
-      receiver_email: "",
+      partners: [{ full_name: meta.full_name ?? "", cpf: "", email: user?.email ?? "" }],
+      receiver_email: user?.email ?? "",
       description: "",
     },
   });
 
-  const { register, watch, setValue, formState, trigger, getValues, handleSubmit, setError, clearErrors } = form;
+  const { register, watch, setValue, formState, trigger, getValues, handleSubmit } = form;
   const errors = formState.errors;
   const type = watch("type");
   const partners = watch("partners");
