@@ -52,7 +52,7 @@ const CardInput = z.object({
     state: z.string().length(2),
     country: z.string().length(2).default("BR"),
   }),
-  ...CustomerSchema,
+  ...OptionalCustomerSchema,
 });
 
 async function pagarmeFetch(path: string, body: unknown) {
