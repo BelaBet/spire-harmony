@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
 import { translateError } from "@/lib/translate-error";
+import { Eye, EyeOff } from "lucide-react";
 import { z } from "zod";
 import { cpf, cnpj } from "cpf-cnpj-validator";
 import { useServerFn } from "@tanstack/react-start";
