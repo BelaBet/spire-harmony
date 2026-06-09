@@ -137,7 +137,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => PixInput.parse(data))
   .handler(async ({ data }) => {
     const sellerRecipientId = await fetchSellerRecipientId(data.tenantId);
-    const { donationAmount, tickettoFee, totalAmount } = calculateAmounts(data.donationAmount);
+    const { donationAmount, tickettoFee, pixFixedFee, totalAmount } = calculateAmounts(data.donationAmount, "pix");
     const expiresIn = 60 * 60; // 1h
 
     const resolved = await resolveCustomer(data);
