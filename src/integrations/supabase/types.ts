@@ -480,7 +480,10 @@ export type Database = {
           deleted_at: string | null
           deleted_by: string | null
           donation_amount: number | null
+          error_message: string | null
           gateway_id: string | null
+          gateway_request: Json | null
+          gateway_response: Json | null
           id: string
           method: Database["public"]["Enums"]["payment_method"]
           platform_recipient_id: string | null
@@ -500,7 +503,10 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           donation_amount?: number | null
+          error_message?: string | null
           gateway_id?: string | null
+          gateway_request?: Json | null
+          gateway_response?: Json | null
           id?: string
           method: Database["public"]["Enums"]["payment_method"]
           platform_recipient_id?: string | null
@@ -522,7 +528,10 @@ export type Database = {
           deleted_at?: string | null
           deleted_by?: string | null
           donation_amount?: number | null
+          error_message?: string | null
           gateway_id?: string | null
+          gateway_request?: Json | null
+          gateway_response?: Json | null
           id?: string
           method?: Database["public"]["Enums"]["payment_method"]
           platform_recipient_id?: string | null
