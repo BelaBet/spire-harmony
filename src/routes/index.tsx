@@ -1027,10 +1027,6 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
         </div>
       </section>
 
-      {/* ── DADOS DE PAGAMENTO (via Pagar.me) ──────────────────────────── */}
-      {tenant?.slug && (
-        <PaymentInfoSection slug={tenant.slug} primary={primary} accent={accent} />
-      )}
 
       {/* ── FOOTER ─────────────────────────────────────────────────────── */}
       <footer style={{ padding: "48px 24px", textAlign: "center", background: "#fafaf7", borderTop: "1px solid #eee" }}>
