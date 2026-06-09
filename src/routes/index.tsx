@@ -707,6 +707,7 @@ function ChurchPage() {
 export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | null } = {}) {
   const [copied, setCopied] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [logoError, setLogoError] = useState(false);
   const { tenant: ctxTenant } = useTenant();
   const { profile } = useAuth();
   const { theme } = useChurchTheme();
