@@ -2,26 +2,30 @@
 // Todos os valores em CENTAVOS (integer). Nunca usar float.
 
 export const TICKETTO_RATE = 0.035; // 3,5% de taxa de administração
+export const PIX_FIXED_FEE = 40;    // R$ 0,40 taxa fixa por transação PIX (centavos)
 
 export type PaymentMethod = "pix" | "credit_card" | "boleto";
 
 export type Amounts = {
   donationAmount: number; // valor original que o doador quer doar (centavos)
   tickettoFee: number;    // taxa Ticketto 3,5% (centavos)
+  pixFixedFee: number;    // taxa fixa PIX, quando aplicável (centavos)
   totalAmount: number;    // valor cobrado do doador (centavos)
 };
 
 /**
  * Calcula a taxa Ticketto e o valor total cobrado a partir do valor da doação.
  * Entrada/saída em CENTAVOS.
+ * Para PIX adiciona taxa fixa de R$ 0,40.
  */
-export function calculateAmounts(donationAmount: number): Amounts {
+export function calculateAmounts(donationAmount: number, method?: PaymentMethod): Amounts {
   if (!Number.isInteger(donationAmount) || donationAmount <= 0) {
     throw new Error("donationAmount deve ser um inteiro positivo em centavos");
   }
   const tickettoFee = Math.round(donationAmount * TICKETTO_RATE);
-  const totalAmount = donationAmount + tickettoFee;
-  return { donationAmount, tickettoFee, totalAmount };
+  const pixFixedFee = method === "pix" ? PIX_FIXED_FEE : 0;
+  const totalAmount = donationAmount + tickettoFee + pixFixedFee;
+  return { donationAmount, tickettoFee, pixFixedFee, totalAmount };
 }
 
 /**
