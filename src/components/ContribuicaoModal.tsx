@@ -980,19 +980,41 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
                 <div className="text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
                   Dados do cartão
                 </div>
+                {/* Número — com bandeiras */}
                 <div>
                   <label className="text-xs font-medium text-[#6B7280]">Número do cartão</label>
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    value={cardNumber}
-                    onChange={(e) => {
-                      const d = e.target.value.replace(/\D/g, "").slice(0, 19);
-                      setCardNumber(d.replace(/(\d{4})(?=\d)/g, "$1 "));
-                    }}
-                    placeholder="0000 0000 0000 0000"
-                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 font-mono text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
-                  />
+                  <div className="relative mt-1">
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      value={cardNumber}
+                      onChange={(e) => {
+                        const d = e.target.value.replace(/\D/g, "").slice(0, 19);
+                        setCardNumber(d.replace(/(\d{4})(?=\d)/g, "$1 "));
+                      }}
+                      placeholder="0000 0000 0000 0000"
+                      className="h-11 w-full rounded-xl border border-[#E5E7EB] bg-white pr-[148px] pl-3 font-mono text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                    />
+                    <div className="absolute right-2.5 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                      {(() => {
+                        const brand = detectCardBrand(cardNumber);
+                        const flags: Array<{ key: "visa" | "master" | "elo" | "hiper" | "amex"; Comp: React.FC<{ active: boolean; dim: boolean }> }> = [
+                          { key: "visa",   Comp: CardFlagVisa   },
+                          { key: "master", Comp: CardFlagMaster },
+                          { key: "elo",    Comp: CardFlagElo    },
+                          { key: "hiper",  Comp: CardFlagHiper  },
+                          { key: "amex",   Comp: CardFlagAmex   },
+                        ];
+                        return flags.map(({ key, Comp }) => (
+                          <Comp
+                            key={key}
+                            active={brand === key}
+                            dim={brand !== null && brand !== key}
+                          />
+                        ));
+                      })()}
+                    </div>
+                  </div>
                 </div>
                 <div>
                   <label className="text-xs font-medium text-[#6B7280]">Nome impresso no cartão</label>
@@ -1153,6 +1175,75 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
       </div>
     </div>,
     document.body,
+  );
+}
+
+function detectCardBrand(num: string): "visa" | "master" | "elo" | "hiper" | "amex" | null {
+  const d = num.replace(/\s/g, "");
+  if (/^4011|^4312|^4389|^4514|^4573|^5041|^5066|^5067|^509|^6277|^6362|^6363|^650|^6516|^6550/.test(d)) return "elo";
+  if (/^(606282|3841)/.test(d)) return "hiper";
+  if (/^3[47]/.test(d)) return "amex";
+  if (/^5[1-5]|^2(2[2-9]|[3-6]\d|7[01])/.test(d)) return "master";
+  if (/^4/.test(d)) return "visa";
+  return null;
+}
+
+function CardFlagVisa({ active, dim }: { active: boolean; dim: boolean }) {
+  const opacity = dim ? 0.12 : active ? 1 : 0.22;
+  const scale = active ? "scale(1.08)" : "scale(0.9)";
+  return (
+    <svg viewBox="0 0 36 24" width={36} height={24} style={{ borderRadius: 4, opacity, transform: scale, transition: "opacity .2s, transform .2s" }}>
+      <rect width="36" height="24" rx="4" fill="#1A1F71" />
+      <text x="18" y="16" textAnchor="middle" fontFamily="Arial,sans-serif" fontSize="10" fontWeight="bold" fill="#F7A600" letterSpacing="0.5">VISA</text>
+    </svg>
+  );
+}
+
+function CardFlagMaster({ active, dim }: { active: boolean; dim: boolean }) {
+  const opacity = dim ? 0.12 : active ? 1 : 0.22;
+  const scale = active ? "scale(1.08)" : "scale(0.9)";
+  return (
+    <svg viewBox="0 0 36 24" width={36} height={24} style={{ borderRadius: 4, opacity, transform: scale, transition: "opacity .2s, transform .2s" }}>
+      <rect width="36" height="24" rx="4" fill="#252525" />
+      <circle cx="14" cy="12" r="7" fill="#EB001B" />
+      <circle cx="22" cy="12" r="7" fill="#F79E1B" />
+      <path d="M18 6.8a7 7 0 0 1 0 10.4A7 7 0 0 1 18 6.8z" fill="#FF5F00" />
+    </svg>
+  );
+}
+
+function CardFlagElo({ active, dim }: { active: boolean; dim: boolean }) {
+  const opacity = dim ? 0.12 : active ? 1 : 0.22;
+  const scale = active ? "scale(1.08)" : "scale(0.9)";
+  return (
+    <svg viewBox="0 0 36 24" width={36} height={24} style={{ borderRadius: 4, opacity, transform: scale, transition: "opacity .2s, transform .2s" }}>
+      <rect width="36" height="24" rx="4" fill="#FFD100" />
+      <text x="18" y="16" textAnchor="middle" fontFamily="Arial,sans-serif" fontSize="9" fontWeight="bold" fill="#00A4E0">elo</text>
+    </svg>
+  );
+}
+
+function CardFlagHiper({ active, dim }: { active: boolean; dim: boolean }) {
+  const opacity = dim ? 0.12 : active ? 1 : 0.22;
+  const scale = active ? "scale(1.08)" : "scale(0.9)";
+  return (
+    <svg viewBox="0 0 36 24" width={36} height={24} style={{ borderRadius: 4, opacity, transform: scale, transition: "opacity .2s, transform .2s" }}>
+      <rect width="36" height="24" rx="4" fill="#F08000" />
+      <text x="18" y="10" textAnchor="middle" fontFamily="Arial,sans-serif" fontSize="6" fontWeight="bold" fill="white">HIPER</text>
+      <text x="18" y="18" textAnchor="middle" fontFamily="Arial,sans-serif" fontSize="6" fontWeight="bold" fill="white">CARD</text>
+    </svg>
+  );
+}
+
+function CardFlagAmex({ active, dim }: { active: boolean; dim: boolean }) {
+  const opacity = dim ? 0.12 : active ? 1 : 0.22;
+  const scale = active ? "scale(1.08)" : "scale(0.9)";
+  return (
+    <svg viewBox="0 0 36 24" width={36} height={24} style={{ borderRadius: 4, opacity, transform: scale, transition: "opacity .2s, transform .2s" }}>
+      <rect width="36" height="24" rx="4" fill="#007BC1" />
+      <text x="18" y="10" textAnchor="middle" fontFamily="Arial,sans-serif" fontSize="5.5" fontWeight="bold" fill="white">AMERICAN</text>
+      <text x="18" y="18" textAnchor="middle" fontFamily="Arial,sans-serif" fontSize="5.5" fontWeight="bold" fill="white">EXPRESS</text>
+    </svg>
   );
 }
 
