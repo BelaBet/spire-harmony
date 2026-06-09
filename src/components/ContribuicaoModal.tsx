@@ -374,7 +374,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
         setPix({
           code: result.qrCode || "",
           qrUrl: result.qrCodeUrl || "",
-          valor: num,
+          valor: (result.totalAmount ?? Math.round(num * 100)) / 100,
           expiresAt: new Date(result.expiresAt || Date.now() + 60 * 60 * 1000),
           paymentId: result.paymentId,
           gatewayId: result.gatewayId,
