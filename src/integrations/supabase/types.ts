@@ -789,6 +789,39 @@ export type Database = {
           },
         ]
       }
+      tenant_payment_info_cache: {
+        Row: {
+          fetched_at: string
+          payload: Json
+          tenant_id: string
+        }
+        Insert: {
+          fetched_at?: string
+          payload: Json
+          tenant_id: string
+        }
+        Update: {
+          fetched_at?: string
+          payload?: Json
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_payment_info_cache_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_payment_info_cache_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_payment_settings: {
         Row: {
           pagarme_recipient_id: string | null
