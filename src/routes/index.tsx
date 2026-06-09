@@ -867,7 +867,7 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
       <section
         className="relative overflow-hidden px-6 pt-5 pb-6 text-center sm:px-6 sm:pt-20 sm:pb-24 max-h-[65vh] sm:max-h-none"
         style={{
-          background: `linear-gradient(135deg, ${primary} 0%, ${primary}dd 100%)`,
+          background: `linear-gradient(135deg, ${primary} 0%, ${secondary} 100%)`,
           color: "#fff",
         }}
       >
