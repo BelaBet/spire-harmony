@@ -7,7 +7,7 @@ import {
 import { FEES } from "../fees.config";
 
 // Helper: garante que todos os campos monetários são inteiros (centavos).
-function expectAllIntegers(a: Record<string, number>) {
+function expectAllIntegers(a: object) {
   for (const [k, v] of Object.entries(a)) {
     expect(Number.isInteger(v), `${k} deve ser inteiro, recebeu ${v}`).toBe(true);
   }
