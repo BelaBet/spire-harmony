@@ -2,8 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import {
   buildSplitPayload,
-  calculateAmounts,
+  calculatePixAmounts,
+  calculateCardAmounts,
   fetchSellerRecipientId,
+  type CardBrand,
+  type SplitAmounts,
 } from "./split.utils";
 import { buildPagarmeCustomer, resolveCustomer, validateDocument } from "./payments-customer";
 
@@ -38,6 +41,7 @@ const CardInput = z.object({
   tenantId: z.string().uuid(),
   donationAmount: DonationAmount,
   installments: z.number().int().min(1).max(12).default(1),
+  brand: z.enum(["master_visa", "ello_hiper_amex"]).default("master_visa"),
   card: z.object({
     number: z.string().min(13).max(19),
     holderName: z.string().min(2).max(120),
@@ -128,35 +132,39 @@ async function pagarmeOrderCall(body: unknown): Promise<{
 
 async function persistPayment(args: {
   tenantId: string;
-  donationAmount: number;     // centavos
-  tickettoFee: number;        // centavos
-  totalAmount: number;        // centavos
+  amounts: SplitAmounts;
   sellerRecipientId: string;
-  method: "pix" | "credit_card";
+  method: "pix" | "credit_card" | "boleto";
   status: "pending" | "confirmed" | "failed";
   gatewayId: string;
+  cardBrand?: CardBrand | null;
   gatewayRequest?: any;
   gatewayResponse?: any;
   errorMessage?: string | null;
 }) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const platformRecipientId = process.env.PLATFORM_RECIPIENT_ID;
+  const a = args.amounts;
 
   const { data: payment, error: payErr } = await supabaseAdmin
     .from("payments")
     .insert({
       tenant_id: args.tenantId,
-      amount: args.totalAmount / 100,
+      amount: a.totalAmount / 100,
       method: args.method,
       status: args.status,
       gateway_id: args.gatewayId || `failed_${Date.now()}`,
       reference_type: "donation",
-      donation_amount: args.donationAmount,
-      ticketto_fee: args.tickettoFee,
-      split_platform_amount: args.tickettoFee,
-      split_seller_amount: args.donationAmount,
+      donation_amount: a.donationAmount,
+      ticketto_fee: a.tickettoFee,
+      pagarme_fee: a.pagarmeFee,
+      tk2_op_fee: a.tk2OpFee,
+      transacao_fee: a.transacaoFee,
+      split_platform_amount: a.splitPlatformAmount,
+      split_seller_amount: a.donationAmount,
       platform_recipient_id: platformRecipientId,
       seller_recipient_id: args.sellerRecipientId,
+      card_brand: args.cardBrand ?? null,
       gateway_request: args.gatewayRequest ?? null,
       gateway_response: args.gatewayResponse ?? null,
       error_message: args.errorMessage ?? null,
@@ -170,7 +178,7 @@ async function persistPayment(args: {
       .from("donations")
       .insert({
         tenant_id: args.tenantId,
-        amount: args.donationAmount / 100,
+        amount: a.donationAmount / 100,
         payment_id: payment.id,
       })
       .select("id")
@@ -192,7 +200,10 @@ export const createPixPayment = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => PixInput.parse(data))
   .handler(async ({ data }) => {
     const sellerRecipientId = await fetchSellerRecipientId(data.tenantId);
-    const { donationAmount, tickettoFee, pixFixedFee, totalAmount } = calculateAmounts(data.donationAmount, "pix");
+    const amounts = calculatePixAmounts(data.donationAmount);
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[pix] amounts", amounts, { sellerRecipientId });
+    }
     const expiresIn = 60 * 60;
 
     const resolved = await resolveCustomer(data);
@@ -204,7 +215,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
     const customer = buildPagarmeCustomer(resolved);
 
     const requestBody = {
-      items: buildItems(totalAmount),
+      items: buildItems(amounts.totalAmount),
       customer,
       payments: [
         {
@@ -215,7 +226,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
               { name: "Contribuição", value: resolved.name ?? "Anônimo" },
             ],
           },
-          split: buildSplitPayload(donationAmount, tickettoFee, sellerRecipientId, pixFixedFee),
+          split: buildSplitPayload(amounts, sellerRecipientId),
         },
       ],
     };
@@ -225,9 +236,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
     if (!call.ok) {
       await persistPayment({
         tenantId: data.tenantId,
-        donationAmount,
-        tickettoFee: tickettoFee + pixFixedFee,
-        totalAmount,
+        amounts,
         sellerRecipientId,
         method: "pix",
         status: "failed",
@@ -251,9 +260,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
     if (!gatewayId) {
       await persistPayment({
         tenantId: data.tenantId,
-        donationAmount,
-        tickettoFee: tickettoFee + pixFixedFee,
-        totalAmount,
+        amounts,
         sellerRecipientId,
         method: "pix",
         status: "failed",
@@ -269,9 +276,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
 
     const ids = await persistPayment({
       tenantId: data.tenantId,
-      donationAmount,
-      tickettoFee: tickettoFee + pixFixedFee,
-      totalAmount,
+      amounts,
       sellerRecipientId,
       method: "pix",
       status: "pending",
@@ -287,9 +292,9 @@ export const createPixPayment = createServerFn({ method: "POST" })
       qrCodeUrl,
       expiresAt,
       gatewayId,
-      donationAmount,
-      tickettoFee,
-      totalAmount,
+      donationAmount: amounts.donationAmount,
+      tickettoFee: amounts.tickettoFee,
+      totalAmount: amounts.totalAmount,
       pending: !qrCode,
     };
   });
@@ -350,7 +355,14 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => CardInput.parse(data))
   .handler(async ({ data }) => {
     const sellerRecipientId = await fetchSellerRecipientId(data.tenantId);
-    const { donationAmount, tickettoFee, totalAmount } = calculateAmounts(data.donationAmount);
+    const amounts = calculateCardAmounts(data.donationAmount, data.installments, data.brand);
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[card] amounts", amounts, {
+        sellerRecipientId,
+        installments: data.installments,
+        brand: data.brand,
+      });
+    }
 
     const resolved = await resolveCustomer(data);
     if (!resolved.name) throw new Error("Nome do titular é obrigatório");
@@ -361,7 +373,7 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
     const customer = buildPagarmeCustomer(resolved);
 
     const requestBody = {
-      items: buildItems(totalAmount),
+      items: buildItems(amounts.totalAmount),
       customer,
       payments: [
         {
@@ -369,6 +381,7 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
           credit_card: {
             installments: data.installments,
             statement_descriptor: "CONTRIB",
+            capture: true,
             card: {
               number: data.card.number.replace(/\s/g, ""),
               holder_name: data.card.holderName,
@@ -384,7 +397,7 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
               },
             },
           },
-          split: buildSplitPayload(donationAmount, tickettoFee, sellerRecipientId),
+          split: buildSplitPayload(amounts, sellerRecipientId),
         },
       ],
     };
@@ -394,11 +407,10 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
     if (!call.ok) {
       await persistPayment({
         tenantId: data.tenantId,
-        donationAmount,
-        tickettoFee,
-        totalAmount,
+        amounts,
         sellerRecipientId,
         method: "credit_card",
+        cardBrand: data.brand,
         status: "failed",
         gatewayId: "",
         gatewayRequest: call.request,
@@ -422,11 +434,10 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
 
     const ids = await persistPayment({
       tenantId: data.tenantId,
-      donationAmount,
-      tickettoFee,
-      totalAmount,
+      amounts,
       sellerRecipientId,
       method: "credit_card",
+      cardBrand: data.brand,
       status: mapped,
       gatewayId,
       gatewayRequest: call.request,
@@ -438,9 +449,9 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
       ...ids,
       status: mapped,
       gatewayId,
-      donationAmount,
-      tickettoFee,
-      totalAmount,
+      donationAmount: amounts.donationAmount,
+      tickettoFee: amounts.tickettoFee,
+      totalAmount: amounts.totalAmount,
       acquirerMessage: charge?.last_transaction?.acquirer_message ?? null,
     };
   });

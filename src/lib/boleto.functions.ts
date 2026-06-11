@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import {
   buildSplitPayload,
-  calculateAmounts,
+  calculateBoletoAmounts,
   fetchSellerRecipientId,
 } from "./split.utils";
 import { buildPagarmeCustomer, resolveCustomer, validateDocument } from "./payments-customer";
@@ -36,7 +36,10 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
     if (!secretKey) throw new Error("PAGARME_SECRET_KEY não configurada");
 
     const sellerRecipientId = await fetchSellerRecipientId(data.tenantId);
-    const { donationAmount, tickettoFee, totalAmount } = calculateAmounts(data.donationAmount);
+    const amounts = calculateBoletoAmounts(data.donationAmount);
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[boleto] amounts", amounts, { sellerRecipientId });
+    }
     const platformRecipientId = process.env.PLATFORM_RECIPIENT_ID;
     const dueAt = addBusinessDays(new Date(), 3).toISOString();
 
@@ -50,7 +53,7 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
     const orderPayload = {
       items: [
         {
-          amount: totalAmount,
+          amount: amounts.totalAmount,
           description: "Contribuição",
           quantity: 1,
           code: "CONTRIB",
@@ -64,7 +67,7 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
             due_at: dueAt,
             instructions: "Obrigado pela sua contribuição!",
           },
-          split: buildSplitPayload(donationAmount, tickettoFee, sellerRecipientId),
+          split: buildSplitPayload(amounts, sellerRecipientId),
         },
       ],
     };
@@ -105,15 +108,18 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
       .from("payments")
       .insert({
         tenant_id: data.tenantId,
-        amount: totalAmount / 100,
+        amount: amounts.totalAmount / 100,
         method: "boleto",
         status: "pending",
         gateway_id: gatewayId,
         reference_type: "donation",
-        donation_amount: donationAmount,
-        ticketto_fee: tickettoFee,
-        split_platform_amount: tickettoFee,
-        split_seller_amount: donationAmount,
+        donation_amount: amounts.donationAmount,
+        ticketto_fee: amounts.tickettoFee,
+        pagarme_fee: amounts.pagarmeFee,
+        tk2_op_fee: amounts.tk2OpFee,
+        transacao_fee: amounts.transacaoFee,
+        split_platform_amount: amounts.splitPlatformAmount,
+        split_seller_amount: amounts.donationAmount,
         platform_recipient_id: platformRecipientId,
         seller_recipient_id: sellerRecipientId,
       } as any)
@@ -125,7 +131,7 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
       .from("donations")
       .insert({
         tenant_id: data.tenantId,
-        amount: donationAmount / 100,
+        amount: amounts.donationAmount / 100,
         payment_id: payment.id,
       })
       .select("id")
@@ -145,8 +151,8 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
       pdfUrl,
       dueAt,
       gatewayId,
-      donationAmount,
-      tickettoFee,
-      totalAmount,
+      donationAmount: amounts.donationAmount,
+      tickettoFee: amounts.tickettoFee,
+      totalAmount: amounts.totalAmount,
     };
   });
