@@ -168,20 +168,21 @@ export function calculateAmounts(
 }
 
 /**
- * Busca o pagarme_recipient_id de um tenant.
- * Lança erro caso não esteja configurado.
+ * Busca o recipient_id (ID do recebedor Pagar.me) de um tenant.
+ * O valor é armazenado em `tenants.recipient_id` e preenchido manualmente
+ * pelo admin no banco. Lança erro caso não esteja configurado.
  */
 export async function fetchSellerRecipientId(tenantId: string): Promise<string> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
-    .from("tenant_payment_settings")
-    .select("pagarme_recipient_id")
-    .eq("tenant_id", tenantId)
+    .from("tenants")
+    .select("recipient_id")
+    .eq("id", tenantId)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  const recipientId = (data as { pagarme_recipient_id?: string | null } | null)?.pagarme_recipient_id;
+  const recipientId = (data as { recipient_id?: string | null } | null)?.recipient_id;
   if (!recipientId) {
-    throw new Error("Esta instituição ainda não está habilitada para receber pagamentos.");
+    throw new Error("Tenant sem recipient_id configurado na Pagar.me");
   }
   return recipientId;
 }
