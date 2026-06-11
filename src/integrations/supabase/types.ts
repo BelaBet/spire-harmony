@@ -930,7 +930,12 @@ export type Database = {
       tenants: {
         Row: {
           accent_color: string | null
+          account_type: string | null
           active: boolean
+          bank_account: string | null
+          bank_account_dv: string | null
+          bank_agency: string | null
+          bank_code: string | null
           cover_photo_url: string | null
           created_at: string
           custom_domain: string | null
@@ -938,18 +943,28 @@ export type Database = {
           deleted_by: string | null
           document: string | null
           document_type: string | null
+          holder_document: string | null
+          holder_name: string | null
           id: string
+          legal_name: string | null
           logo_url: string | null
           name: string
           primary_color: string | null
+          recipient_error: string | null
           recipient_id: string | null
+          recipient_status: string | null
           secondary_color: string | null
           slug: string
           tagline: string | null
         }
         Insert: {
           accent_color?: string | null
+          account_type?: string | null
           active?: boolean
+          bank_account?: string | null
+          bank_account_dv?: string | null
+          bank_agency?: string | null
+          bank_code?: string | null
           cover_photo_url?: string | null
           created_at?: string
           custom_domain?: string | null
@@ -957,18 +972,28 @@ export type Database = {
           deleted_by?: string | null
           document?: string | null
           document_type?: string | null
+          holder_document?: string | null
+          holder_name?: string | null
           id?: string
+          legal_name?: string | null
           logo_url?: string | null
           name: string
           primary_color?: string | null
+          recipient_error?: string | null
           recipient_id?: string | null
+          recipient_status?: string | null
           secondary_color?: string | null
           slug: string
           tagline?: string | null
         }
         Update: {
           accent_color?: string | null
+          account_type?: string | null
           active?: boolean
+          bank_account?: string | null
+          bank_account_dv?: string | null
+          bank_agency?: string | null
+          bank_code?: string | null
           cover_photo_url?: string | null
           created_at?: string
           custom_domain?: string | null
@@ -976,11 +1001,16 @@ export type Database = {
           deleted_by?: string | null
           document?: string | null
           document_type?: string | null
+          holder_document?: string | null
+          holder_name?: string | null
           id?: string
+          legal_name?: string | null
           logo_url?: string | null
           name?: string
           primary_color?: string | null
+          recipient_error?: string | null
           recipient_id?: string | null
+          recipient_status?: string | null
           secondary_color?: string | null
           slug?: string
           tagline?: string | null

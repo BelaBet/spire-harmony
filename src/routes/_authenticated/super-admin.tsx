@@ -10,6 +10,7 @@ import { ShieldAlert, Crown, Users, Building2, CreditCard, Activity } from "luci
 import { initials } from "@/lib/utils";
 import { toast } from "sonner";
 import { translateError } from "@/lib/translate-error";
+import { RecipientsSection } from "@/components/superadmin/RecipientsSection";
 
 export const Route = createFileRoute("/_authenticated/super-admin")({
   component: SuperAdminPage,
@@ -127,6 +128,8 @@ function SuperAdminPage() {
           )}
         </CardContent>
       </Card>
+
+      <RecipientsSection />
 
       <Card>
         <CardHeader>
