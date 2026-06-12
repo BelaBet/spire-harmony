@@ -82,6 +82,12 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
       },
     };
 
+    const { data: tenantBankAccount } = await supabaseAdmin
+      .from("tenant_bank_account")
+      .select("bank_code")
+      .eq("tenant_id", data.tenantId)
+      .maybeSingle();
+
     const orderPayload = {
       items: [
         {
@@ -96,7 +102,7 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
         {
           payment_method: "boleto",
           boleto: {
-            bank: process.env.BOLETO_BANK_CODE ?? "033",
+            bank: tenantBankAccount?.bank_code ?? "077",
             due_at: dueAt,
             instructions: "Obrigado pela sua contribuição!",
             document_number: `CONTRIB-${Date.now()}`,
