@@ -259,7 +259,6 @@ export const createPixPayment = createServerFn({ method: "POST" })
               { name: "Contribuição", value: resolved.name ?? "Anônimo" },
             ],
           },
-          split: buildSplitPayload(amounts, sellerRecipientId),
         },
       ],
       metadata: {
