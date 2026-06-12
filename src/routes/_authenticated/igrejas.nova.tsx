@@ -699,7 +699,7 @@ function Step6() {
   );
 }
 
-function Step7({ s }: { s: WizardState }) {
+function Step7({ s, set }: { s: WizardState; set: SetFn }) {
   const Row = ({ k, v }: { k: string; v: string }) => (
     <div className="flex justify-between gap-4 py-1.5 text-sm">
       <span className="text-muted-foreground">{k}</span>
@@ -715,6 +715,46 @@ function Step7({ s }: { s: WizardState }) {
         <Row k="E-mail" v={s.institutional_email} />
         <Row k="Telefone" v={s.main_phone} />
       </section>
+      <section>
+        <h3 className="mb-2 text-sm font-semibold">Responsável</h3>
+        <Row k="Nome" v={s.resp_full_name} />
+        <Row k="CPF" v={s.resp_cpf} />
+        <Row k="Cargo" v={s.resp_role} />
+      </section>
+      <section>
+        <h3 className="mb-2 text-sm font-semibold">Endereço</h3>
+        <Row k="CEP" v={s.cep} />
+        <Row k="Cidade/UF" v={`${s.city}/${s.uf}`} />
+      </section>
+      <section>
+        <h3 className="mb-2 text-sm font-semibold">Bancário</h3>
+        <Row k="Banco" v={s.bank_code} />
+        <Row k="Agência" v={`${s.branch}${s.branch_digit ? "-" + s.branch_digit : ""}`} />
+        <Row k="Conta" v={`${s.account}-${s.account_digit}`} />
+      </section>
+      <section>
+        <h3 className="mb-2 text-sm font-semibold">Financeiro</h3>
+        <Row k="Pagar.me" v={s.use_pagarme ? "Ativado" : "Desativado"} />
+        <Row k="Recipient" v={s.pagarme_recipient_id} />
+        <Row k="Split Plataforma" v={`${s.split_platform_percent}%`} />
+      </section>
+      <section className="rounded-md border p-4">
+        <h3 className="mb-2 text-sm font-semibold">Administrador inicial (opcional)</h3>
+        <p className="mb-3 text-xs text-muted-foreground">
+          Se informado, enviaremos um convite por e-mail para acesso ao painel.
+        </p>
+        <div className="grid gap-3 md:grid-cols-2">
+          <Field label="E-mail do Admin">
+            <Input value={s.admin_email} onChange={(e) => set("admin_email", e.target.value)} />
+          </Field>
+          <Field label="Nome do Admin">
+            <Input value={s.admin_name} onChange={(e) => set("admin_name", e.target.value)} />
+          </Field>
+        </div>
+      </section>
+    </div>
+  );
+}
       <section>
         <h3 className="mb-2 text-sm font-semibold">Responsável</h3>
         <Row k="Nome" v={s.resp_full_name} />
