@@ -185,12 +185,19 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
       .from("donations")
       .insert({
         tenant_id: data.tenantId,
+        cost_center_id: (data as any).costCenterId ?? null,
         amount: amounts.donationAmount / 100,
         payment_id: payment.id,
-        donor_name: resolved.name ?? null,
-        donor_email: resolved.email ?? null,
+        donor_name: resolved.name?.trim() ?? null,
+        donor_email: resolved.email?.trim() ?? null,
         donor_document: resolved.document ? resolved.document.replace(/\D/g, "") : null,
         donor_phone: resolved.phone ? resolved.phone.replace(/\D/g, "") : null,
+        gross_amount: amounts.totalAmount,
+        admin_fee: amounts.tickettoFee,
+        net_amount: amounts.donationAmount,
+        payment_method: "boleto",
+        installments: 1,
+        gateway_id: gatewayId,
       } as any)
       .select("id")
       .single();
