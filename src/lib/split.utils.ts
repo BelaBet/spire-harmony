@@ -34,12 +34,16 @@ function assertPositiveInt(v: number, name: string) {
 }
 
 // ── PIX ──────────────────────────────────────────────────────
-export function calculatePixAmounts(ofertaEmCentavos: number): SplitAmounts {
+export function calculatePixAmounts(
+  ofertaEmCentavos: number,
+  splitOverridePercent?: number | null,
+): SplitAmounts {
   assertPositiveInt(ofertaEmCentavos, "donationAmount");
   const f = FEES.pix;
   const donationAmount = ofertaEmCentavos;
+  const admPercent = splitOverridePercent ?? f.adm_percent;
 
-  const tickettoFee = Math.round(donationAmount * f.adm_percent);
+  const tickettoFee = Math.round(donationAmount * admPercent);
   const pagarmeFee = f.adquirencia_fixa;
   const tk2OpFee = f.tk2_operacional_fixo;
   const transacaoFee = f.transacao_fixa;
@@ -63,13 +67,15 @@ export function calculateCardAmounts(
   ofertaEmCentavos: number,
   installments: number,
   brand: CardBrand,
+  splitOverridePercent?: number | null,
 ): SplitAmounts {
   assertPositiveInt(ofertaEmCentavos, "donationAmount");
   const f = brand === "master_visa" ? FEES.cartao_master_visa : FEES.cartao_ello_hiper_amex;
   const donationAmount = ofertaEmCentavos;
+  const admPercent = splitOverridePercent ?? f.adm_percent;
 
-  const tickettoFee = Math.round(donationAmount * f.adm_percent);
-  const tk2OpFee = Math.round(donationAmount * f.tk2_op_percent * f.adm_percent);
+  const tickettoFee = Math.round(donationAmount * admPercent);
+  const tk2OpFee = Math.round(donationAmount * f.tk2_op_percent * admPercent);
 
   const adquirenciaPercent =
     installments <= 1 ? f.adquirencia_avista_percent : f.adquirencia_2x_percent;
@@ -93,12 +99,16 @@ export function calculateCardAmounts(
 }
 
 // ── BOLETO ───────────────────────────────────────────────────
-export function calculateBoletoAmounts(ofertaEmCentavos: number): SplitAmounts {
+export function calculateBoletoAmounts(
+  ofertaEmCentavos: number,
+  splitOverridePercent?: number | null,
+): SplitAmounts {
   assertPositiveInt(ofertaEmCentavos, "donationAmount");
   const f = FEES.boleto;
   const donationAmount = ofertaEmCentavos;
+  const admPercent = splitOverridePercent ?? f.adm_percent;
 
-  const tickettoFee = Math.round(donationAmount * f.adm_percent);
+  const tickettoFee = Math.round(donationAmount * admPercent);
   const pagarmeFee = f.adquirencia_fixa;
   const tk2OpFee = f.tk2_operacional_fixo;
   const transacaoFee = f.transacao_fixa;
@@ -185,4 +195,35 @@ export async function fetchSellerRecipientId(tenantId: string): Promise<string> 
     throw new Error("Tenant sem recipient_id configurado na Pagar.me");
   }
   return recipientId;
+}
+
+export type CostCenterConfig = {
+  id: string;
+  tenant_id: string;
+  split_platform_percent: number;
+  allows_installments: boolean;
+  max_installments: number;
+  is_active: boolean;
+};
+
+/**
+ * Busca configuração de um centro de custo, validando que pertence ao tenant
+ * e está ativo. Lança erro caso contrário.
+ */
+export async function fetchCostCenter(
+  costCenterId: string,
+  tenantId: string,
+): Promise<CostCenterConfig> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("cost_centers")
+    .select("id, tenant_id, split_platform_percent, allows_installments, max_installments, is_active")
+    .eq("id", costCenterId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  const cc = data as CostCenterConfig | null;
+  if (!cc) throw new Error("Centro de custo não encontrado");
+  if (cc.tenant_id !== tenantId) throw new Error("Centro de custo não pertence a esta igreja");
+  if (!cc.is_active) throw new Error("Centro de custo está desativado");
+  return cc;
 }

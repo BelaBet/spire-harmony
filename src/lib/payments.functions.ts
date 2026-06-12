@@ -5,6 +5,7 @@ import {
   calculatePixAmounts,
   calculateCardAmounts,
   fetchSellerRecipientId,
+  fetchCostCenter,
   type CardBrand,
   type SplitAmounts,
 } from "./split.utils";
@@ -34,6 +35,7 @@ const DonationAmount = z.number().int().positive().max(100_000_000);
 const PixInput = z.object({
   tenantId: z.string().uuid(),
   donationAmount: DonationAmount,
+  costCenterId: z.string().uuid().optional().nullable(),
   ...OptionalCustomerSchema,
 });
 
@@ -42,6 +44,7 @@ const CardInput = z.object({
   donationAmount: DonationAmount,
   installments: z.number().int().min(1).max(12).default(1),
   brand: z.enum(["master_visa", "ello_hiper_amex"]).default("master_visa"),
+  costCenterId: z.string().uuid().optional().nullable(),
   card: z.object({
     number: z.string().min(13).max(19),
     holderName: z.string().min(2).max(120),
@@ -138,6 +141,7 @@ async function persistPayment(args: {
   status: "pending" | "confirmed" | "failed";
   gatewayId: string;
   cardBrand?: CardBrand | null;
+  costCenterId?: string | null;
   gatewayRequest?: any;
   gatewayResponse?: any;
   errorMessage?: string | null;
@@ -165,6 +169,7 @@ async function persistPayment(args: {
       platform_recipient_id: platformRecipientId,
       seller_recipient_id: args.sellerRecipientId,
       card_brand: args.cardBrand ?? null,
+      cost_center_id: args.costCenterId ?? null,
       gateway_request: args.gatewayRequest ?? null,
       gateway_response: args.gatewayResponse ?? null,
       error_message: args.errorMessage ?? null,
@@ -200,9 +205,13 @@ export const createPixPayment = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => PixInput.parse(data))
   .handler(async ({ data }) => {
     const sellerRecipientId = await fetchSellerRecipientId(data.tenantId);
-    const amounts = calculatePixAmounts(data.donationAmount);
+    const costCenter = data.costCenterId
+      ? await fetchCostCenter(data.costCenterId, data.tenantId)
+      : null;
+    const splitOverride = costCenter?.split_platform_percent ?? null;
+    const amounts = calculatePixAmounts(data.donationAmount, splitOverride);
     if (process.env.NODE_ENV !== "production") {
-      console.log("[pix] amounts", amounts, { sellerRecipientId });
+      console.log("[pix] amounts", amounts, { sellerRecipientId, costCenterId: data.costCenterId, splitOverride });
     }
     const expiresIn = 60 * 60;
 
@@ -241,6 +250,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
         method: "pix",
         status: "failed",
         gatewayId: "",
+        costCenterId: data.costCenterId ?? null,
         gatewayRequest: call.request,
         gatewayResponse: call.response,
         errorMessage: call.errorMessage,
@@ -265,6 +275,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
         method: "pix",
         status: "failed",
         gatewayId: "",
+        costCenterId: data.costCenterId ?? null,
         gatewayRequest: call.request,
         gatewayResponse: call.response,
         errorMessage: `Pagar.me não retornou identificador. Status: ${json?.status ?? "?"}`,
@@ -281,6 +292,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
       method: "pix",
       status: "pending",
       gatewayId,
+      costCenterId: data.costCenterId ?? null,
       gatewayRequest: call.request,
       gatewayResponse: call.response,
       errorMessage: null,
@@ -355,12 +367,26 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => CardInput.parse(data))
   .handler(async ({ data }) => {
     const sellerRecipientId = await fetchSellerRecipientId(data.tenantId);
-    const amounts = calculateCardAmounts(data.donationAmount, data.installments, data.brand);
+    const costCenter = data.costCenterId
+      ? await fetchCostCenter(data.costCenterId, data.tenantId)
+      : null;
+    if (costCenter) {
+      if (!costCenter.allows_installments && data.installments > 1) {
+        throw new Error("Este centro de custo não permite parcelamento.");
+      }
+      if (data.installments > costCenter.max_installments) {
+        throw new Error(`Este centro permite no máximo ${costCenter.max_installments}x.`);
+      }
+    }
+    const splitOverride = costCenter?.split_platform_percent ?? null;
+    const amounts = calculateCardAmounts(data.donationAmount, data.installments, data.brand, splitOverride);
     if (process.env.NODE_ENV !== "production") {
       console.log("[card] amounts", amounts, {
         sellerRecipientId,
         installments: data.installments,
         brand: data.brand,
+        costCenterId: data.costCenterId,
+        splitOverride,
       });
     }
 
@@ -411,6 +437,7 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
         sellerRecipientId,
         method: "credit_card",
         cardBrand: data.brand,
+        costCenterId: data.costCenterId ?? null,
         status: "failed",
         gatewayId: "",
         gatewayRequest: call.request,
@@ -438,6 +465,7 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
       sellerRecipientId,
       method: "credit_card",
       cardBrand: data.brand,
+      costCenterId: data.costCenterId ?? null,
       status: mapped,
       gatewayId,
       gatewayRequest: call.request,

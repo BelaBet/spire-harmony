@@ -17,11 +17,20 @@ export type ContribMethod = {
   label: string;
 };
 
+export type CostCenterOption = {
+  id: string;
+  name: string;
+  slug: string;
+  allows_installments: boolean;
+  max_installments: number;
+};
+
 type Props = {
   isOpen: boolean;
   onClose: () => void;
   onConfirm?: (valor: number) => void;
   method?: ContribMethod;
+  costCenter?: CostCenterOption | null;
 };
 
 const PRESETS = [10, 25, 50, 100, 200];
@@ -126,7 +135,7 @@ function isValidDoc(raw: string) {
   return false;
 }
 
-export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props) {
+export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCenter }: Props) {
   const { tenant } = useTenant();
   const createBoleto = useServerFn(createBoletoPayment);
   const createPix = useServerFn(createPixPayment);
@@ -363,6 +372,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
           data: {
             tenantId: tenant.id,
             donationAmount: Math.round(num * 100),
+            ...(costCenter?.id ? { costCenterId: costCenter.id } : {}),
             ...(payer.name ? { customerName: payer.name } : {}),
             ...(payer.email ? { customerEmail: payer.email } : {}),
             ...(payer.cpf ? { customerDocument: payer.cpf } : {}),
@@ -397,11 +407,15 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
         if (addrCity.trim().length < 2) return setError("Informe a cidade.");
         if (addrState.trim().length !== 2) return setError("UF inválida (2 letras).");
 
+        const allowsInst = costCenter ? costCenter.allows_installments : true;
+        const maxInst = costCenter ? Math.max(1, Math.min(12, costCenter.max_installments)) : 12;
+        const effInstallments = allowsInst ? Math.min(installments, maxInst) : 1;
         const result = await createCard({
           data: {
             tenantId: tenant.id,
             donationAmount: Math.round(num * 100),
-            installments,
+            installments: effInstallments,
+            ...(costCenter?.id ? { costCenterId: costCenter.id } : {}),
             customerName: payer.name,
             customerEmail: payer.email,
             customerDocument: payer.cpf,
@@ -1054,26 +1068,33 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method }: Props)
                     />
                   </div>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-[#6B7280]">Parcelas</label>
-                  <select
-                    value={installments}
-                    onChange={(e) => setInstallments(Number(e.target.value))}
-                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
-                  >
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => {
-                      const cents = Number(value || 0) > 0
-                        ? calculateAmounts(Math.round(Number(value) * 100)).totalAmount
-                        : 0;
-                      return (
-                        <option key={n} value={n}>
-                          {n}x de R$ {formatBRL(Math.round(cents / n))}
-                          {n === 1 ? " (à vista)" : ""}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
+                {(() => {
+                  const allowsInst = costCenter ? costCenter.allows_installments : true;
+                  const maxInst = costCenter ? Math.max(1, Math.min(12, costCenter.max_installments)) : 12;
+                  if (!allowsInst) return null;
+                  return (
+                    <div>
+                      <label className="text-xs font-medium text-[#6B7280]">Parcelas</label>
+                      <select
+                        value={Math.min(installments, maxInst)}
+                        onChange={(e) => setInstallments(Number(e.target.value))}
+                        className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                      >
+                        {Array.from({ length: maxInst }, (_, i) => i + 1).map((n) => {
+                          const cents = Number(value || 0) > 0
+                            ? calculateAmounts(Math.round(Number(value) * 100)).totalAmount
+                            : 0;
+                          return (
+                            <option key={n} value={n}>
+                              {n}x de R$ {formatBRL(Math.round(cents / n))}
+                              {n === 1 ? " (à vista)" : ""}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+                  );
+                })()}
 
                 <div className="pt-2 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
                   Endereço de cobrança

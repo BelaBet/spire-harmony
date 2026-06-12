@@ -449,7 +449,9 @@ const QUICK_ACTIONS: { key: ActionKey; label: string; icon: ComponentType<{ clas
   { key: "fatura", label: "Cartão de crédito", icon: CreditCard,     tint: "bg-violet-100 text-violet-700" },
 ];
 
-function PaymentsQuickActions({ primary, accent, pixKey }: { primary: string; accent: string; pixKey: string }) {
+type CostCenterOpt = { id: string; name: string; slug: string; allows_installments: boolean; max_installments: number } | null;
+
+function PaymentsQuickActions({ primary, accent, pixKey, costCenter }: { primary: string; accent: string; pixKey: string; costCenter?: CostCenterOpt }) {
   // contribKey = método cujo modal de valor está aberto
   // methodOpen = método cujo dialog específico (Pix/Boleto/...) está aberto, após confirmar o valor
   const [contribKey, setContribKey] = useState<ActionKey | null>(null);
@@ -491,6 +493,7 @@ function PaymentsQuickActions({ primary, accent, pixKey }: { primary: string; ac
         isOpen={contribKey !== null}
         onClose={() => setContribKey(null)}
         method={contribKey ? { key: contribKey, label: contribLabel } : undefined}
+        costCenter={costCenter ?? null}
         onConfirm={(valor) => {
           const k = contribKey;
           if (k === "boleto") {
@@ -732,6 +735,32 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
   });
 
   const tenant = tenantOverride ?? myTenant ?? ctxTenant;
+
+  // ── Prioridade 3: pré-seleção de centro de custo via ?cc=<slug> ──
+  const ccSlug =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search).get("cc")
+      : null;
+  const { data: selectedCostCenter } = useQuery({
+    queryKey: ["public-cost-center", tenant?.id, ccSlug],
+    enabled: !!tenant?.id && !!ccSlug,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("cost_centers_public")
+        .select("id, name, slug, allows_installments, max_installments")
+        .eq("tenant_id", tenant!.id)
+        .eq("slug", ccSlug!)
+        .maybeSingle();
+      return data as {
+        id: string;
+        name: string;
+        slug: string;
+        allows_installments: boolean;
+        max_installments: number;
+      } | null;
+    },
+  });
+
   const CHURCH = {
     name: tenant?.name ?? CHURCH_DEFAULTS.name,
     tagline: tenant?.tagline ?? CHURCH_DEFAULTS.tagline,
@@ -971,7 +1000,12 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
         </div>
 
         <div className="fade-up-2">
-          <PaymentsQuickActions primary={primary} accent={accent} pixKey={PIX_KEY} />
+          <PaymentsQuickActions primary={primary} accent={accent} pixKey={PIX_KEY} costCenter={selectedCostCenter ?? null} />
+          {selectedCostCenter && (
+            <p className="mt-2 text-center text-xs text-muted-foreground">
+              Doação direcionada para <strong>{selectedCostCenter.name}</strong>.
+            </p>
+          )}
         </div>
 
         <div
