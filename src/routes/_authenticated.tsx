@@ -26,7 +26,7 @@ function AuthLayout() {
     queryFn: async () => {
       const { data } = await supabase
         .from("tenants")
-        .select("id,name,logo_url,tagline")
+        .select("id,name,logo_url,tagline,slug")
         .eq("id", profile!.tenant_id)
         .maybeSingle();
       return data;
