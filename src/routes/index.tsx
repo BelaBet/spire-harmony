@@ -92,6 +92,9 @@ function TK2LandingPage() {
               </a>
             </div>
             <p className="mt-4 text-xs text-slate-500">Sem mensalidade inicial · Setup em minutos · Suporte humanizado</p>
+            <a href="/i/comunidade-graca" className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-slate-800 underline underline-offset-2">
+              Veja uma página de exemplo →
+            </a>
           </div>
           <div className="relative">
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
