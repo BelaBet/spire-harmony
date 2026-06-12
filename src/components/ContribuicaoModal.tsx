@@ -372,6 +372,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
           data: {
             tenantId: tenant.id,
             donationAmount: Math.round(num * 100),
+            ...(costCenter?.id ? { costCenterId: costCenter.id } : {}),
             ...(payer.name ? { customerName: payer.name } : {}),
             ...(payer.email ? { customerEmail: payer.email } : {}),
             ...(payer.cpf ? { customerDocument: payer.cpf } : {}),
@@ -411,6 +412,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
             tenantId: tenant.id,
             donationAmount: Math.round(num * 100),
             installments,
+            ...(costCenter?.id ? { costCenterId: costCenter.id } : {}),
             customerName: payer.name,
             customerEmail: payer.email,
             customerDocument: payer.cpf,
