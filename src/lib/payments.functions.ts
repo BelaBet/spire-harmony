@@ -514,6 +514,7 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
       method: "credit_card",
       cardBrand: data.brand,
       costCenterId: data.costCenterId ?? null,
+      installments: data.installments ?? 1,
       status: mapped,
       gatewayId,
       gatewayRequest: call.request,
