@@ -1065,26 +1065,33 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
                     />
                   </div>
                 </div>
-                <div>
-                  <label className="text-xs font-medium text-[#6B7280]">Parcelas</label>
-                  <select
-                    value={installments}
-                    onChange={(e) => setInstallments(Number(e.target.value))}
-                    className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
-                  >
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => {
-                      const cents = Number(value || 0) > 0
-                        ? calculateAmounts(Math.round(Number(value) * 100)).totalAmount
-                        : 0;
-                      return (
-                        <option key={n} value={n}>
-                          {n}x de R$ {formatBRL(Math.round(cents / n))}
-                          {n === 1 ? " (à vista)" : ""}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </div>
+                {(() => {
+                  const allowsInst = costCenter ? costCenter.allows_installments : true;
+                  const maxInst = costCenter ? Math.max(1, Math.min(12, costCenter.max_installments)) : 12;
+                  if (!allowsInst) return null;
+                  return (
+                    <div>
+                      <label className="text-xs font-medium text-[#6B7280]">Parcelas</label>
+                      <select
+                        value={Math.min(installments, maxInst)}
+                        onChange={(e) => setInstallments(Number(e.target.value))}
+                        className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
+                      >
+                        {Array.from({ length: maxInst }, (_, i) => i + 1).map((n) => {
+                          const cents = Number(value || 0) > 0
+                            ? calculateAmounts(Math.round(Number(value) * 100)).totalAmount
+                            : 0;
+                          return (
+                            <option key={n} value={n}>
+                              {n}x de R$ {formatBRL(Math.round(cents / n))}
+                              {n === 1 ? " (à vista)" : ""}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+                  );
+                })()}
 
                 <div className="pt-2 text-xs font-semibold uppercase tracking-wide text-[#6B7280]">
                   Endereço de cobrança
