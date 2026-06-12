@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { translateError } from "@/lib/translate-error";
 import { Loader2 } from "lucide-react";
+import { CostCentersAdminPanel } from "@/components/admin/CostCentersAdminPanel";
 
 export const Route = createFileRoute("/_authenticated/manage/settings")({
   component: SettingsPage,
@@ -162,6 +163,8 @@ function SettingsPage() {
           />
         </div>
       </Card>
+
+      <CostCentersAdminPanel />
 
       <div className="flex justify-end">
         <Button onClick={save} disabled={saving}>
