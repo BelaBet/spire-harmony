@@ -755,39 +755,3 @@ function Step7({ s, set }: { s: WizardState; set: SetFn }) {
     </div>
   );
 }
-      <section>
-        <h3 className="mb-2 text-sm font-semibold">Responsável</h3>
-        <Row k="Nome" v={s.resp_full_name} />
-        <Row k="CPF" v={s.resp_cpf} />
-        <Row k="Cargo" v={s.resp_role} />
-      </section>
-      <section>
-        <h3 className="mb-2 text-sm font-semibold">Endereço</h3>
-        <Row k="CEP" v={s.cep} />
-        <Row k="Cidade/UF" v={`${s.city}/${s.uf}`} />
-      </section>
-      <section>
-        <h3 className="mb-2 text-sm font-semibold">Bancário</h3>
-        <Row k="Banco" v={s.bank_code} />
-        <Row k="Agência" v={`${s.branch}${s.branch_digit ? "-" + s.branch_digit : ""}`} />
-        <Row k="Conta" v={`${s.account}-${s.account_digit}`} />
-      </section>
-      <section>
-        <h3 className="mb-2 text-sm font-semibold">Financeiro</h3>
-        <Row k="Pagar.me" v={s.use_pagarme ? "Ativado" : "Desativado"} />
-        <Row k="Recipient" v={s.pagarme_recipient_id} />
-        <Row k="Split Plataforma" v={`${s.split_platform_percent}%`} />
-      </section>
-      <section>
-        <h3 className="mb-2 text-sm font-semibold">Administrador inicial (opcional)</h3>
-        <Row k="E-mail" v={s.admin_email} />
-        <Row k="Nome" v={s.admin_name} />
-      </section>
-      <div className="grid gap-3 md:grid-cols-2">
-        <Field label="E-mail do Admin (convite)">
-          <Input value={s.admin_email} onChange={(e) => (s.admin_email = e.target.value)} />
-        </Field>
-      </div>
-    </div>
-  );
-}
