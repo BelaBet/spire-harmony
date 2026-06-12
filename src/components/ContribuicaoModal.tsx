@@ -688,11 +688,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
                 </p>
 
                 <div className="mt-5 rounded-xl border border-[#E5E7EB] bg-[#F9FAFB] p-4">
-                  <div className="text-xs font-medium uppercase tracking-wide text-[#6B7280]">Valor</div>
-                  <div className="mt-0.5 text-2xl font-bold text-[#111827]">
-                    R$ {pix.valor.toFixed(2).replace(".", ",")}
-                  </div>
-                  <div className="mt-3 text-xs font-medium uppercase tracking-wide text-[#6B7280]">Expira em</div>
+                  <div className="text-xs font-medium uppercase tracking-wide text-[#6B7280]">Expira em</div>
                   <div className="mt-0.5 text-sm font-semibold text-[#111827]">
                     {pix.expiresAt.toLocaleString("pt-BR")}
                   </div>
