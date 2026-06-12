@@ -52,7 +52,7 @@ function PendenciasPage() {
         .select("doc_type, label, required, status")
         .eq("tenant_id", tenantId!)
         .order("required", { ascending: false });
-      return (data ?? []) as Array<{
+      return (data ?? []) as unknown as Array<{
         doc_type: string;
         label: string;
         required: boolean;
