@@ -11,6 +11,7 @@ import { initials } from "@/lib/utils";
 import { toast } from "sonner";
 import { translateError } from "@/lib/translate-error";
 import { RecipientsSection } from "@/components/superadmin/RecipientsSection";
+import { CostCentersSection } from "@/components/superadmin/CostCentersSection";
 
 export const Route = createFileRoute("/_authenticated/super-admin")({
   component: SuperAdminPage,
@@ -130,6 +131,8 @@ function SuperAdminPage() {
       </Card>
 
       <RecipientsSection />
+
+      <CostCentersSection />
 
       <Card>
         <CardHeader>
