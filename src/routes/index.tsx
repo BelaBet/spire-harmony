@@ -830,12 +830,26 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
       >
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "14px 24px", display: "flex", alignItems: "center", gap: 10 }}>
           {CHURCH.logo && !logoError ? (
-            <img
-              src={CHURCH.logo}
-              alt={CHURCH.name}
-              onError={() => setLogoError(true)}
-              style={{ width: 32, height: 32, borderRadius: 999, objectFit: "cover", background: "#fff" }}
-            />
+            <div
+              style={{
+                width: 32,
+                height: 32,
+                borderRadius: 999,
+                background: "#fff",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                overflow: "hidden",
+                padding: 2,
+              }}
+            >
+              <img
+                src={CHURCH.logo}
+                alt={CHURCH.name}
+                onError={() => setLogoError(true)}
+                style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+              />
+            </div>
           ) : (
             <div
               style={{
