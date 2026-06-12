@@ -204,6 +204,8 @@ async function persistPayment(args: {
 export const createPixPayment = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => PixInput.parse(data))
   .handler(async ({ data }) => {
+    const { assertFinancialActive } = await import("@/lib/compliance");
+    await assertFinancialActive(data.tenantId);
     const sellerRecipientId = await fetchSellerRecipientId(data.tenantId);
     const costCenter = data.costCenterId
       ? await fetchCostCenter(data.costCenterId, data.tenantId)
