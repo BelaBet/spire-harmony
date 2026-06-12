@@ -23,6 +23,7 @@ export interface SplitPayload {
   options: {
     liable: boolean;
     charge_processing_fee: boolean;
+    charge_remainder_fee: boolean;
   };
 }
 
