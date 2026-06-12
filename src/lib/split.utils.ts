@@ -145,7 +145,6 @@ export function buildSplitPayload(
       recipient_id: platform,
       type: "flat",
       options: {
-        charge_remainder_fee: true,
         liable: true,
         charge_processing_fee: true,
       },
@@ -155,7 +154,6 @@ export function buildSplitPayload(
       recipient_id: sellerRecipientId,
       type: "flat",
       options: {
-        charge_remainder_fee: false,
         liable: false,
         charge_processing_fee: false,
       },
