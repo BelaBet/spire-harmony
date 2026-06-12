@@ -1,82 +1,114 @@
+# Centros de Custo (Cost Centers)
 
-# Revisão das áreas Manager e Admin
+Cada igreja terá múltiplos centros de custo (ex.: "Dízimo Online", "Oferta Presencial", "Totem Entrada"). O super admin cria; o admin da igreja só ativa/desativa.
 
-Objetivo: corrigir bugs reais, padronizar conteúdo PT-BR, alinhar visual e remover sobras de código antigo nas páginas autenticadas de gestão e plataforma.
+## 1. Banco de dados
 
----
+### Migration
 
-## 1. Bugs e correções funcionais (prioridade alta)
+**Tipo enum** `cost_center_type`: `online`, `presencial`, `totem`.
 
-**`/manage/members` — envio de mensagem em massa quebrado**
-- Hoje insere **uma única** linha em `messages` com `target_type: "individual"` e `target_id: null` — viola o RLS de leitura do membro (`target_id = auth.uid()`), então ninguém vê.
-- Corrigir: inserir **N mensagens** (uma por destinatário com `target_id = pid`) **ou** usar `target_type: "broadcast"` quando a seleção cobre todos. Vou seguir a 1ª opção (N inserts) para manter o registro individual.
-- Também: trocar o `<select>` nativo por `<Select>` do design system.
+**Tabela `cost_centers`**:
+| Coluna | Tipo | Notas |
+|---|---|---|
+| `id` | uuid PK | |
+| `tenant_id` | uuid FK tenants | |
+| `name` | text | Ex.: "Dízimo Online" |
+| `slug` | text | Único por tenant (`UNIQUE(tenant_id, slug)`) |
+| `type` | cost_center_type | |
+| `description` | text null | |
+| `split_platform_percent` | numeric(5,4) | 0..1 — só super admin altera |
+| `split_seller_percent` | numeric(5,4) | 0..1 — `platform+seller=1` (CHECK) |
+| `allows_installments` | boolean default true | |
+| `max_installments` | int default 1 | |
+| `is_active` | boolean default true | admin igreja alterna |
+| `qr_code_url` | text null | URL pública do PNG no storage |
+| `display_order` | int default 0 | ordem na página pública |
+| `created_at`, `updated_at` | timestamptz | trigger updated_at |
 
-**`/admin/tenants` — `prompt()`/`confirm()` nativos**
-- Substituir o `confirm("Excluir…")` por `<AlertDialog>` e o `prompt("Motivo…")` por `<Dialog>` com `<Textarea>`. Mantém UX consistente com o resto do app.
+GRANTs: `SELECT` para `anon` + `authenticated` (página pública precisa listar centros ativos); `INSERT/UPDATE/DELETE` para `authenticated` (controlado por RLS); `ALL` para `service_role`.
 
-**`/manage/settings` — placeholder ("…virão na fase 4")**
-- Implementar tela real de configurações do tenant, lendo/gravando em `tenants`:
-  - Nome, slug (read-only), tagline
-  - Logo URL, capa
-  - Cor primária e cor de destaque (color pickers, igual a `/admin/settings`)
-  - Chave PIX
-- Salva via `supabase.from("tenants").update(...).eq("id", profile.tenant_id)` (RLS já permite admin do tenant).
+**RLS**:
+- `select_active_public` — `anon`+`authenticated`: `is_active = true` (página pública lista).
+- `select_staff_all` — `authenticated`: `is_tenant_staff(auth.uid(), tenant_id) OR is_platform_admin(auth.uid())` (admin vê inativos também).
+- `super_admin_all` — `FOR ALL`: `is_platform_admin(auth.uid())` (cria/edita tudo, inclusive split).
+- `church_admin_toggle_active` — `FOR UPDATE`: `is_tenant_staff(auth.uid(), tenant_id)`; o **trigger** `prevent_non_admin_split_change` bloqueia alteração de `split_*`, `name`, `slug`, `type` por quem não é `is_platform_admin`.
 
----
+**View pública** `cost_centers_public` (somente colunas seguras: id, tenant_id, name, slug, type, description, allows_installments, max_installments, display_order). GRANT SELECT para `anon`.
 
-## 2. Conteúdo / textos PT-BR
+### QR Code
+QR gerado server-side ao criar centro de custo: aponta para `https://<host>/i/<tenant_slug>?cc=<cost_center_slug>` e é salvo no bucket público `cost-center-qrs`.
 
-- Títulos da aba (`<title>`) hoje começam com `"ERP — ..."`. Padronizar para o nome do produto (vou usar `"Painel — <página>"` para não vazar “ERP” pro usuário). Aplicar em `admin.dashboard`, `admin.audit`, `admin.tenants`, `admin.billing`, `admin.settings`.
-- `/admin/audit`: revisar copy ("Ações, alterações financeiras…"). Substituir por descrição mais curta e clara.
-- `/admin/billing`: mesma pegada — encurtar subtítulo.
-- `/manage/dashboard`: subtítulo "Visão geral da sua comunidade" → "Visão geral da sua igreja" (consistente com o restante do produto que usa “igreja”).
-- Status em `/admin/billing` (active/past_due/etc.) ainda aparecem em inglês na badge — traduzir.
+## 2. Server functions
 
----
+**`src/lib/cost-centers.functions.ts`**
 
-## 3. Visual / UX
+| Função | Auth | Descrição |
+|---|---|---|
+| `createCostCenter` | super admin | Valida Zod, gera slug único, persiste, gera QR (lib `qrcode` no handler), upload no bucket, atualiza `qr_code_url`. |
+| `updateCostCenterFull` | super admin | Edita tudo, inclusive split. |
+| `toggleCostCenterActive` | tenant staff | Apenas `is_active`. |
+| `regenerateCostCenterQr` | super admin | Re-gera QR PNG. |
+| `listCostCenters` | tenant staff / super admin | Inclui inativos. |
 
-- Padronizar `<EmptyState>`: hoje cada tabela usa textos diferentes ("Nenhum membro encontrado", "Nenhum registro.", "Nenhuma fatura ainda."). Criar um pequeno componente `EmptyRow` em `src/components/empty-row.tsx` e reutilizar nas 4 tabelas.
-- Padronizar `<LoadingRow>` (idem — hoje "Carregando…" repetido em vários estilos).
-- KPI cards: `admin.dashboard` e `manage.dashboard` definem `Kpi` localmente com layouts levemente diferentes. Extrair para `src/components/kpi-card.tsx` reutilizável.
-- Espaçamento mobile: `manage.tsx` e `admin.tsx` usam `-mx-6 -my-8` para sangrar a sidebar; em `390px` a área do `<main className="p-6">` aperta demais. Reduzir para `p-4 sm:p-6` e remover sangria horizontal só no mobile.
-- `/admin/tenants` e `/admin/billing`: tabelas largas — adicionar `min-w-[720px]` para forçar scroll horizontal limpo no mobile (em vez de quebrar colunas).
-- Tokens de cor: `manager-sidebar.tsx` usa `bg-primary` direto — ok. `admin-sidebar.tsx` usa `bg-zinc-950 text-zinc-100 bg-amber-500` hard-coded. Trocar por tokens semânticos (`bg-sidebar bg-accent`) para respeitar o tema.
+Cliente (página pública) consulta direto via `cost_centers_public` view.
 
----
+Dependência: `bun add qrcode @types/qrcode`. Importar `qrcode` dentro do handler para evitar bundle no client.
 
-## 4. Higiene de código
+## 3. Integração com pagamentos
 
-- `/manage/members` ainda tem comentários/imports remanescentes da remoção de grupos (`Group` type já saiu, mas confirmar que `getGroups` etc. foram limpos). Passar uma vassoura final.
-- `audit_logs` insere em todo login — manter, mas verificar se não está duplicando registros (1 chamada em `loadProfile` já cobre).
+`payments`: adicionar coluna `cost_center_id uuid null FK cost_centers`.
 
----
+Em `src/lib/split.utils.ts`:
+- Nova função `calculateAmountsForCostCenter(amount, method, costCenter)` que, **se o centro define `split_platform_percent`**, sobrescreve o cálculo de `tickettoFee` baseado em `adm_percent` por esse percentual customizado.
+- `buildSplitPayload` permanece igual (já usa amounts).
 
-## Detalhes técnicos
+`createPayment` (em `payments.functions.ts`): aceita `cost_center_id` opcional. Valida que pertence ao tenant, está ativo, e que o método solicitado é permitido (ex.: se `allows_installments=false` e `installments>1`, rejeita). Persiste na coluna nova.
 
-- `Bulk message`: trocar 1 insert por `await supabase.from("messages").insert(ids.map(pid => ({ ...base, target_id: pid })))` + manter as `notifications`.
-- `manage.settings`: form controlado com `useState`, carregar `tenants` por `id = profile.tenant_id`, salvar com `update`. Disparar `refresh()` do `useAuth` ao salvar para atualizar o branding (TenantThemeBridge já reativo).
-- Não tocar em `src/integrations/supabase/*`, nem na sidebar mobile do `_authenticated.tsx` (já ajustada na rodada anterior).
+## 4. UI
 
----
+### Super Admin (`/super-admin`)
+Nova seção `CostCentersSection.tsx` (logo após `RecipientsSection`):
+- Seletor de igreja → tabela de centros (`name`, `type`, `split %`, `ativo`, ações).
+- Modal `CostCenterFormModal.tsx`: nome, tipo, descrição, split platform/seller %, allows_installments, max_installments, ordem.
+- Botão "Baixar QR Code" (abre `qr_code_url`).
+- Botão "Regenerar QR".
 
-## Arquivos afetados
+### Admin da Igreja (`/admin/settings` ou nova rota `/admin/cost-centers`)
+`CostCentersAdminPanel.tsx`:
+- Lista centros (read-only nas configs sensíveis).
+- Toggle `is_active`.
+- Botão "Baixar QR" para cada centro.
+- Aviso: "Para criar novos centros ou alterar taxas, contate o suporte."
 
-```text
-src/routes/_authenticated/manage.members.tsx     (bug + Select)
-src/routes/_authenticated/manage.settings.tsx    (implementar)
-src/routes/_authenticated/manage.dashboard.tsx   (KPI compartilhado, copy)
-src/routes/_authenticated/admin.dashboard.tsx    (KPI compartilhado, head title)
-src/routes/_authenticated/admin.tenants.tsx      (AlertDialog, Dialog, head title)
-src/routes/_authenticated/admin.billing.tsx      (status PT-BR, head title, min-w)
-src/routes/_authenticated/admin.audit.tsx        (copy, head title)
-src/routes/_authenticated/admin.settings.tsx     (head title)
-src/routes/_authenticated/admin.tsx              (padding mobile)
-src/routes/_authenticated/manage.tsx             (padding mobile)
-src/components/admin-sidebar.tsx                 (tokens de cor)
-src/components/kpi-card.tsx                      (NOVO)
-src/components/empty-row.tsx                     (NOVO)
-```
+### Página pública (`src/routes/i.$slug.tsx` + `src/routes/index.tsx`)
+`ChurchPageView` carrega `cost_centers_public` do tenant ativo (ordenado por `display_order`). Para cada centro: seção com nome/descrição. O `ContribuicaoModal` recebe `costCenter` selecionado e:
+- Esconde campo "parcelas" se `allows_installments=false`.
+- Envia `cost_center_id` em `createPayment`.
+- Query param `?cc=<slug>` pré-seleciona o centro (vindo do QR).
 
-Sem migrations. Sem mudanças em RLS. Apenas frontend + correção de payload de mensagens.
+## 5. Arquivos
+
+**Migração**: 1 arquivo com enum, tabela, view, RLS, trigger, GRANTs, bucket.
+
+**Criar**:
+- `src/lib/cost-centers.functions.ts`
+- `src/components/superadmin/CostCentersSection.tsx`
+- `src/components/superadmin/CostCenterFormModal.tsx`
+- `src/components/admin/CostCentersAdminPanel.tsx`
+- `src/components/CostCenterSelector.tsx` (página pública)
+
+**Editar**:
+- `src/lib/split.utils.ts` — split por centro
+- `src/lib/payments.functions.ts` — aceitar `cost_center_id`
+- `src/components/ContribuicaoModal.tsx` — usar centro
+- `src/routes/index.tsx` + `src/routes/i.$slug.tsx` — listar centros
+- `src/routes/_authenticated/super-admin.tsx` — injetar seção
+- `src/routes/_authenticated/admin.settings.tsx` — painel da igreja
+
+## Perguntas antes de implementar
+
+1. **Split obrigatório por centro?** Os centros sempre sobrescrevem as taxas globais de `fee_rules`/`fees.config.ts`, ou o split do centro é só para a divisão Pagar.me (plataforma vs igreja) e as taxas continuam vindo da config global? Sua descrição cita `split_platform_percent/split_seller_percent` — entendi como % do valor total que vai para cada recipient. Confirma?
+2. **`max_installments` é necessário** ou basta `allows_installments` booleano (com máximo padrão definido em `fees.config.ts`)?
+3. **QR Code**: gerar PNG via lib `qrcode` server-side e salvar no Storage está OK, ou prefere gerar on-demand no client (sem persistir)?
+4. **Página pública**: cada centro vira uma **seção** scrollável na mesma página (como descrito), com um único modal de doação que muda conforme o centro selecionado — correto?
