@@ -34,12 +34,16 @@ function assertPositiveInt(v: number, name: string) {
 }
 
 // ── PIX ──────────────────────────────────────────────────────
-export function calculatePixAmounts(ofertaEmCentavos: number): SplitAmounts {
+export function calculatePixAmounts(
+  ofertaEmCentavos: number,
+  splitOverridePercent?: number | null,
+): SplitAmounts {
   assertPositiveInt(ofertaEmCentavos, "donationAmount");
   const f = FEES.pix;
   const donationAmount = ofertaEmCentavos;
+  const admPercent = splitOverridePercent ?? f.adm_percent;
 
-  const tickettoFee = Math.round(donationAmount * f.adm_percent);
+  const tickettoFee = Math.round(donationAmount * admPercent);
   const pagarmeFee = f.adquirencia_fixa;
   const tk2OpFee = f.tk2_operacional_fixo;
   const transacaoFee = f.transacao_fixa;
@@ -63,13 +67,15 @@ export function calculateCardAmounts(
   ofertaEmCentavos: number,
   installments: number,
   brand: CardBrand,
+  splitOverridePercent?: number | null,
 ): SplitAmounts {
   assertPositiveInt(ofertaEmCentavos, "donationAmount");
   const f = brand === "master_visa" ? FEES.cartao_master_visa : FEES.cartao_ello_hiper_amex;
   const donationAmount = ofertaEmCentavos;
+  const admPercent = splitOverridePercent ?? f.adm_percent;
 
-  const tickettoFee = Math.round(donationAmount * f.adm_percent);
-  const tk2OpFee = Math.round(donationAmount * f.tk2_op_percent * f.adm_percent);
+  const tickettoFee = Math.round(donationAmount * admPercent);
+  const tk2OpFee = Math.round(donationAmount * f.tk2_op_percent * admPercent);
 
   const adquirenciaPercent =
     installments <= 1 ? f.adquirencia_avista_percent : f.adquirencia_2x_percent;
