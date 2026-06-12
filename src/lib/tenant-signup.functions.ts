@@ -1,29 +1,98 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-// Onboarding completo de um tenant (igreja).
-// Aceita campos mínimos (compatível com self-signup) e campos completos
-// para provisionamento via super admin / fluxo administrativo.
+// =====================================================================
+// provisionTenant — server function única para os dois fluxos de onboarding
+// (Super Admin completo + auto-cadastro mínimo). Aceita objeto rico, mas
+// só exige a identidade básica (church_name + document).
+// =====================================================================
+
+const HEX = /^#[0-9A-Fa-f]{6}$/;
 
 const BrandingSchema = z
   .object({
     logo_url: z.string().url().max(500).optional(),
     cover_photo_url: z.string().url().max(500).optional(),
-    primary_color: z
-      .string()
-      .regex(/^#[0-9A-Fa-f]{6}$/, "Cor primária deve ser HEX #RRGGBB")
-      .optional(),
-    secondary_color: z
-      .string()
-      .regex(/^#[0-9A-Fa-f]{6}$/, "Cor secundária deve ser HEX #RRGGBB")
-      .optional(),
-    accent_color: z
-      .string()
-      .regex(/^#[0-9A-Fa-f]{6}$/, "Cor de destaque deve ser HEX #RRGGBB")
-      .optional(),
+    primary_color: z.string().regex(HEX).optional(),
+    secondary_color: z.string().regex(HEX).optional(),
+    accent_color: z.string().regex(HEX).optional(),
     tagline: z.string().trim().max(200).optional(),
   })
   .partial();
+
+const InstitutionSchema = z
+  .object({
+    trade_name: z.string().trim().max(160).optional(),
+    legal_name: z.string().trim().max(200).optional(),
+    institutional_email: z.string().trim().email().max(200).optional(),
+    main_phone: z.string().trim().max(20).optional(),
+    website: z.string().url().max(300).optional(),
+    description: z.string().trim().max(2000).optional(),
+  })
+  .partial();
+
+const LegalResponsibleSchema = z
+  .object({
+    full_name: z.string().trim().min(2).max(160),
+    cpf: z.string().trim().min(11).max(14),
+    email: z.string().trim().email().max(200).optional(),
+    birth_date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    mother_name: z.string().trim().max(160).optional(),
+    role: z.string().trim().max(80).optional(),
+    monthly_revenue: z.number().nonnegative().optional(),
+  })
+  .optional();
+
+const AddressSchema = z
+  .object({
+    cep: z.string().regex(/^\d{5}-?\d{3}$/),
+    street: z.string().trim().min(2).max(200),
+    number: z.string().trim().max(20).optional(),
+    no_number: z.boolean().optional(),
+    complement: z.string().trim().max(120).optional(),
+    neighborhood: z.string().trim().min(2).max(120),
+    city: z.string().trim().min(2).max(120),
+    state: z.string().trim().min(2).max(60),
+    uf: z.string().trim().length(2),
+    reference_point: z.string().trim().max(200).optional(),
+  })
+  .optional();
+
+const PhoneSchema = z.object({
+  phone_type: z.enum(["mobile", "landline", "whatsapp"]),
+  ddd: z.string().regex(/^\d{2}$/),
+  number: z.string().regex(/^\d{8,9}$/),
+});
+
+const BankSchema = z
+  .object({
+    bank_code: z.string().regex(/^\d{3}$/),
+    branch: z.string().regex(/^\d{1,5}$/),
+    branch_digit: z.string().regex(/^[0-9Xx]$/).optional(),
+    account: z.string().regex(/^\d{1,12}$/),
+    account_digit: z.string().regex(/^[0-9Xx]$/),
+    account_type: z.enum(["checking", "checking_joint", "savings", "savings_joint"]),
+    holder_name: z.string().trim().min(2).max(160),
+    holder_document: z.string().trim().min(11).max(20),
+  })
+  .optional();
+
+const FinancialSchema = z
+  .object({
+    receiver_type: z.enum(["pf", "pj"]).optional(),
+    use_pagarme: z.boolean().optional(),
+    pagarme_recipient_id: z
+      .string()
+      .regex(/^rp_[A-Za-z0-9]+$/, "pagarme_recipient_id inválido")
+      .optional(),
+    split_platform_percent: z.number().min(0).max(1).optional(),
+    auto_anticipation: z.boolean().optional(),
+    anticipation_model: z.string().max(40).optional(),
+    anticipation_days: z.number().int().min(1).max(31).optional(),
+    auto_transfer: z.boolean().optional(),
+    transfer_frequency: z.enum(["daily", "weekly", "monthly"]).optional(),
+  })
+  .optional();
 
 const AdminSchema = z
   .object({
@@ -38,22 +107,13 @@ const InputSchema = z.object({
   document: z.string().trim().min(11).max(20),
   document_type: z.enum(["cnpj", "cpf"]),
 
-  // Pagar.me
-  pagarme_recipient_id: z
-    .string()
-    .trim()
-    .regex(/^rp_[A-Za-z0-9]+$/, "pagarme_recipient_id inválido")
-    .optional(),
-  split_platform_percent: z
-    .number()
-    .min(0)
-    .max(1)
-    .optional(), // ex.: 0.0415 = 4,15%
-
-  // Branding
+  institution: InstitutionSchema.optional(),
   branding: BrandingSchema.optional(),
-
-  // Admin (opcional — quando provisionado via super admin)
+  legal_responsible: LegalResponsibleSchema,
+  address: AddressSchema,
+  phones: z.array(PhoneSchema).max(5).optional(),
+  bank: BankSchema,
+  financial: FinancialSchema,
   admin: AdminSchema,
 });
 
@@ -69,23 +129,20 @@ function slugify(s: string) {
     .slice(0, 48);
 }
 
-async function validatePagarmeRecipient(recipientId: string): Promise<void> {
+type PagarmeLookup = { status: string | null; found: boolean };
+
+async function lookupPagarmeRecipient(recipientId: string): Promise<PagarmeLookup> {
   const key = process.env.PAGARME_SECRET_KEY;
-  if (!key) throw new Error("PAGARME_SECRET_KEY não configurada");
+  if (!key) return { status: null, found: false };
   const auth = "Basic " + Buffer.from(`${key}:`).toString("base64");
-  const res = await fetch(`https://api.pagar.me/core/v5/recipients/${encodeURIComponent(recipientId)}`, {
-    headers: { Authorization: auth },
-  });
-  if (res.status === 404) throw new Error("pagarme_recipient_id não encontrado na Pagar.me");
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Falha ao validar recipient na Pagar.me (${res.status}): ${body.slice(0, 200)}`);
-  }
+  const res = await fetch(
+    `https://api.pagar.me/core/v5/recipients/${encodeURIComponent(recipientId)}`,
+    { headers: { Authorization: auth } },
+  );
+  if (res.status === 404) return { status: null, found: false };
+  if (!res.ok) return { status: null, found: false };
   const json: any = await res.json().catch(() => null);
-  const status: string = json?.status ?? "";
-  if (status && status !== "registered" && status !== "active" && status !== "approved") {
-    throw new Error(`Recipient com status inválido na Pagar.me: ${status}`);
-  }
+  return { status: json?.status ?? null, found: true };
 }
 
 async function generateQrDataUrl(url: string): Promise<string> {
@@ -98,26 +155,25 @@ async function generateQrDataUrl(url: string): Promise<string> {
   });
 }
 
-export const reserveTenantForSignup = createServerFn({ method: "POST" })
+export const provisionTenant = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => InputSchema.parse(d))
   .handler(async ({ data }: { data: Input }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const warnings: string[] = [];
 
-    const onlyDigits = data.document.replace(/\D/g, "");
+    const onlyDigitsDoc = data.document.replace(/\D/g, "");
 
     // 0. Documento já cadastrado?
     const { data: existing, error: exErr } = await supabaseAdmin
       .from("tenants")
       .select("id")
-      .eq("document", onlyDigits)
+      .eq("document", onlyDigitsDoc)
       .is("deleted_at", null)
       .maybeSingle();
     if (exErr) throw new Error(exErr.message);
-    if (existing) {
-      throw new Error("Esta instituição já está cadastrada. Peça um convite ao administrador.");
-    }
+    if (existing) throw new Error("Esta instituição já está cadastrada.");
 
-    // 1+2. Slug único a partir do nome
+    // 1. Slug único
     const base = slugify(data.church_name) || `igreja-${Date.now()}`;
     let slug = base;
     for (let i = 1; i < 50; i++) {
@@ -130,51 +186,131 @@ export const reserveTenantForSignup = createServerFn({ method: "POST" })
       slug = `${base}-${i}`;
     }
 
-    // 5 (pré-criação). Validar Pagar.me recipient ANTES de gravar nada
-    if (data.pagarme_recipient_id) {
-      await validatePagarmeRecipient(data.pagarme_recipient_id);
-    }
-
-    // 3+4. Criar tenant com branding
-    const branding = data.branding ?? {};
+    // 2. Insert tenant (identidade + branding + institucional)
+    const inst = data.institution ?? {};
+    const br = data.branding ?? {};
     const tenantInsert: Record<string, unknown> = {
       name: data.church_name,
       slug,
-      document: onlyDigits,
+      document: onlyDigitsDoc,
       document_type: data.document_type,
       active: true,
+      compliance_status: "pending_documents",
+      financial_active: false,
     };
-    if (branding.logo_url) tenantInsert.logo_url = branding.logo_url;
-    if (branding.cover_photo_url) tenantInsert.cover_photo_url = branding.cover_photo_url;
-    if (branding.primary_color) tenantInsert.primary_color = branding.primary_color;
-    if (branding.secondary_color) tenantInsert.secondary_color = branding.secondary_color;
-    if (branding.accent_color) tenantInsert.accent_color = branding.accent_color;
-    if (branding.tagline) tenantInsert.tagline = branding.tagline;
+    if (inst.trade_name) tenantInsert.trade_name = inst.trade_name;
+    if (inst.legal_name) tenantInsert.legal_name = inst.legal_name;
+    if (inst.institutional_email) tenantInsert.institutional_email = inst.institutional_email;
+    if (inst.main_phone) tenantInsert.main_phone = inst.main_phone;
+    if (inst.website) tenantInsert.website = inst.website;
+    if (inst.description) tenantInsert.description = inst.description;
+    if (br.logo_url) tenantInsert.logo_url = br.logo_url;
+    if (br.cover_photo_url) tenantInsert.cover_photo_url = br.cover_photo_url;
+    if (br.primary_color) tenantInsert.primary_color = br.primary_color;
+    if (br.secondary_color) tenantInsert.secondary_color = br.secondary_color;
+    if (br.accent_color) tenantInsert.accent_color = br.accent_color;
+    if (br.tagline) tenantInsert.tagline = br.tagline;
 
     const { data: created, error: cErr } = await supabaseAdmin
       .from("tenants")
       .insert(tenantInsert as any)
       .select("id")
       .single();
-    if (cErr || !created) {
-      throw new Error(cErr?.message || "Falha ao criar a instituição.");
-    }
+    if (cErr || !created) throw new Error(cErr?.message || "Falha ao criar a instituição.");
     const tenantId = created.id as string;
 
-    // 5. Salvar pagarme_recipient_id em tenant_payment_settings
-    if (data.pagarme_recipient_id) {
-      const { error: pErr } = await supabaseAdmin
-        .from("tenant_payment_settings")
-        .upsert(
-          { tenant_id: tenantId, pagarme_recipient_id: data.pagarme_recipient_id },
-          { onConflict: "tenant_id" },
+    // 3. Sementes de pendências (3 obrigatórios + 3 opcionais)
+    await supabaseAdmin.rpc("seed_tenant_pending_documents" as any, { _tenant_id: tenantId });
+
+    // 4. Blocos auxiliares (todos opcionais)
+    if (data.legal_responsible) {
+      const lr = data.legal_responsible;
+      const { error } = await supabaseAdmin
+        .from("tenant_legal_responsible" as any)
+        .insert({
+          tenant_id: tenantId,
+          full_name: lr.full_name,
+          cpf: lr.cpf.replace(/\D/g, ""),
+          email: lr.email,
+          birth_date: lr.birth_date,
+          mother_name: lr.mother_name,
+          role: lr.role,
+          monthly_revenue: lr.monthly_revenue,
+        });
+      if (error) warnings.push(`responsável legal: ${error.message}`);
+    }
+
+    if (data.address) {
+      const ad = data.address;
+      const { error } = await supabaseAdmin.from("tenant_address" as any).insert({
+        tenant_id: tenantId,
+        cep: ad.cep.replace(/\D/g, ""),
+        street: ad.street,
+        number: ad.number,
+        no_number: ad.no_number ?? false,
+        complement: ad.complement,
+        neighborhood: ad.neighborhood,
+        city: ad.city,
+        state: ad.state,
+        uf: ad.uf.toUpperCase(),
+        reference_point: ad.reference_point,
+      });
+      if (error) warnings.push(`endereço: ${error.message}`);
+    }
+
+    if (data.phones?.length) {
+      const { error } = await supabaseAdmin.from("tenant_contact_phone" as any).insert(
+        data.phones.map((p) => ({ tenant_id: tenantId, ...p })),
+      );
+      if (error) warnings.push(`telefones: ${error.message}`);
+    }
+
+    if (data.bank) {
+      const { error } = await supabaseAdmin.from("tenant_bank_account" as any).insert({
+        tenant_id: tenantId,
+        ...data.bank,
+        holder_document: data.bank.holder_document.replace(/\D/g, ""),
+      });
+      if (error) warnings.push(`banco: ${error.message}`);
+    }
+
+    // 5. Pagar.me: estratégia híbrida — apenas localizar/validar, nunca criar.
+    const fin = data.financial ?? {};
+    const usePagarme = fin.use_pagarme !== false;
+    let recipientStatus: string | null = null;
+    if (usePagarme && fin.pagarme_recipient_id) {
+      const lookup = await lookupPagarmeRecipient(fin.pagarme_recipient_id);
+      if (!lookup.found) {
+        warnings.push(
+          "Não encontramos um recebedor aprovado na Pagar.me para este cadastro. Finalize primeiro a aprovação financeira.",
         );
-      if (pErr) throw new Error(`Falha ao salvar Pagar.me: ${pErr.message}`);
+      } else if (!["registered", "active", "approved"].includes(lookup.status ?? "")) {
+        warnings.push(`Recipient encontrado mas com status "${lookup.status}".`);
+      } else {
+        recipientStatus = lookup.status;
+      }
+    }
+
+    const splitPlatform = typeof fin.split_platform_percent === "number" ? fin.split_platform_percent : 0.0415;
+
+    {
+      const { error } = await supabaseAdmin.from("tenant_financial_config" as any).insert({
+        tenant_id: tenantId,
+        receiver_type: fin.receiver_type ?? (data.document_type === "cpf" ? "pf" : "pj"),
+        use_pagarme: usePagarme,
+        pagarme_recipient_id: fin.pagarme_recipient_id ?? null,
+        pagarme_recipient_status: recipientStatus,
+        split_platform_percent: splitPlatform,
+        auto_anticipation: fin.auto_anticipation ?? false,
+        anticipation_model: fin.anticipation_model ?? null,
+        anticipation_days: fin.anticipation_days ?? null,
+        auto_transfer: fin.auto_transfer ?? false,
+        transfer_frequency: fin.transfer_frequency ?? null,
+      });
+      if (error) warnings.push(`config financeira: ${error.message}`);
     }
 
     // 6. Cost center "Online" padrão
-    const splitPlatform =
-      typeof data.split_platform_percent === "number" ? data.split_platform_percent : 0.0415;
     const splitSeller = Number((1 - splitPlatform).toFixed(6));
     const { data: cc, error: ccErr } = await supabaseAdmin
       .from("cost_centers")
@@ -191,29 +327,21 @@ export const reserveTenantForSignup = createServerFn({ method: "POST" })
       } as any)
       .select("id")
       .single();
-    if (ccErr || !cc) {
-      throw new Error(`Falha ao criar centro de custo padrão: ${ccErr?.message ?? "?"}`);
-    }
+    if (ccErr || !cc) throw new Error(`Falha ao criar centro de custo padrão: ${ccErr?.message ?? "?"}`);
     const costCenterId = cc.id as string;
 
-    // 7+8. Gerar QR Code para /i/{slug} e salvar em tenants.cover/qr
+    // 7. QR Code para /i/{slug}
     const origin = process.env.PUBLIC_SITE_URL || "https://tk2projeto1.lovable.app";
     const publicUrl = `${origin}/i/${slug}`;
     let qrCodeUrl: string | null = null;
     try {
       qrCodeUrl = await generateQrDataUrl(publicUrl);
-      // Reaproveita cover_photo_url somente se branding não veio — caso contrário,
-      // armazena o QR no próprio centro de custo "Online" (qr_code_url existe lá)
-      await supabaseAdmin
-        .from("cost_centers")
-        .update({ qr_code_url: qrCodeUrl })
-        .eq("id", costCenterId);
+      await supabaseAdmin.from("cost_centers").update({ qr_code_url: qrCodeUrl }).eq("id", costCenterId);
     } catch (e) {
-      // QR não é bloqueante — segue o onboarding
       console.warn("[onboarding] falha ao gerar QR:", e);
     }
 
-    // 9+10. Criar administrador e enviar convite (opcional)
+    // 8. Admin (opcional)
     if (data.admin) {
       const { data: invited, error: invErr } = await supabaseAdmin.auth.admin.inviteUserByEmail(
         data.admin.email,
@@ -229,10 +357,8 @@ export const reserveTenantForSignup = createServerFn({ method: "POST" })
         },
       );
       if (invErr) {
-        console.warn("[onboarding] falha ao convidar admin:", invErr);
+        warnings.push(`convite admin: ${invErr.message}`);
       } else if (invited?.user?.id) {
-        // Trigger handle_new_user já cria profile + role admin pelo metadata.
-        // Garantia adicional caso o trigger não rode (ex.: usuário já existia).
         await supabaseAdmin
           .from("user_roles")
           .upsert(
@@ -242,12 +368,22 @@ export const reserveTenantForSignup = createServerFn({ method: "POST" })
       }
     }
 
-    // 11. Retorno
+    // 9. Recompute compliance (triggers já cuidam, mas garantimos o estado final)
+    const { data: status } = await supabaseAdmin.rpc(
+      "recompute_tenant_compliance" as any,
+      { _tenant_id: tenantId },
+    );
+
     return {
       tenant_id: tenantId,
       slug,
       public_url: publicUrl,
       qr_code_url: qrCodeUrl,
       cost_center_id: costCenterId,
+      compliance_status: (status as string) ?? "pending_documents",
+      warnings,
     };
   });
+
+// Alias retrocompatível para o auto-cadastro público.
+export const reserveTenantForSignup = provisionTenant;

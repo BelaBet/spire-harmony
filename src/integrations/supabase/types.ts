@@ -938,6 +938,246 @@ export type Database = {
         }
         Relationships: []
       }
+      tenant_address: {
+        Row: {
+          cep: string
+          city: string
+          complement: string | null
+          created_at: string
+          id: string
+          neighborhood: string
+          no_number: boolean
+          number: string | null
+          reference_point: string | null
+          state: string
+          street: string
+          tenant_id: string
+          uf: string
+          updated_at: string
+        }
+        Insert: {
+          cep: string
+          city: string
+          complement?: string | null
+          created_at?: string
+          id?: string
+          neighborhood: string
+          no_number?: boolean
+          number?: string | null
+          reference_point?: string | null
+          state: string
+          street: string
+          tenant_id: string
+          uf: string
+          updated_at?: string
+        }
+        Update: {
+          cep?: string
+          city?: string
+          complement?: string | null
+          created_at?: string
+          id?: string
+          neighborhood?: string
+          no_number?: boolean
+          number?: string | null
+          reference_point?: string | null
+          state?: string
+          street?: string
+          tenant_id?: string
+          uf?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_address_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_address_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_bank_account: {
+        Row: {
+          account: string
+          account_digit: string
+          account_type: Database["public"]["Enums"]["tenant_bank_account_type"]
+          bank_code: string
+          branch: string
+          branch_digit: string | null
+          created_at: string
+          holder_document: string
+          holder_name: string
+          id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          account: string
+          account_digit: string
+          account_type: Database["public"]["Enums"]["tenant_bank_account_type"]
+          bank_code: string
+          branch: string
+          branch_digit?: string | null
+          created_at?: string
+          holder_document: string
+          holder_name: string
+          id?: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          account?: string
+          account_digit?: string
+          account_type?: Database["public"]["Enums"]["tenant_bank_account_type"]
+          bank_code?: string
+          branch?: string
+          branch_digit?: string | null
+          created_at?: string
+          holder_document?: string
+          holder_name?: string
+          id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_bank_account_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_bank_account_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_contact_phone: {
+        Row: {
+          created_at: string
+          ddd: string
+          id: string
+          number: string
+          phone_type: string
+          tenant_id: string
+        }
+        Insert: {
+          created_at?: string
+          ddd: string
+          id?: string
+          number: string
+          phone_type: string
+          tenant_id: string
+        }
+        Update: {
+          created_at?: string
+          ddd?: string
+          id?: string
+          number?: string
+          phone_type?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_contact_phone_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_contact_phone_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_financial_config: {
+        Row: {
+          anticipation_days: number | null
+          anticipation_model: string | null
+          auto_anticipation: boolean
+          auto_transfer: boolean
+          created_at: string
+          id: string
+          pagarme_recipient_id: string | null
+          pagarme_recipient_status: string | null
+          receiver_type: Database["public"]["Enums"]["tenant_receiver_type"]
+          split_platform_percent: number
+          tenant_id: string
+          transfer_frequency:
+            | Database["public"]["Enums"]["tenant_transfer_frequency"]
+            | null
+          updated_at: string
+          use_pagarme: boolean
+        }
+        Insert: {
+          anticipation_days?: number | null
+          anticipation_model?: string | null
+          auto_anticipation?: boolean
+          auto_transfer?: boolean
+          created_at?: string
+          id?: string
+          pagarme_recipient_id?: string | null
+          pagarme_recipient_status?: string | null
+          receiver_type?: Database["public"]["Enums"]["tenant_receiver_type"]
+          split_platform_percent?: number
+          tenant_id: string
+          transfer_frequency?:
+            | Database["public"]["Enums"]["tenant_transfer_frequency"]
+            | null
+          updated_at?: string
+          use_pagarme?: boolean
+        }
+        Update: {
+          anticipation_days?: number | null
+          anticipation_model?: string | null
+          auto_anticipation?: boolean
+          auto_transfer?: boolean
+          created_at?: string
+          id?: string
+          pagarme_recipient_id?: string | null
+          pagarme_recipient_status?: string | null
+          receiver_type?: Database["public"]["Enums"]["tenant_receiver_type"]
+          split_platform_percent?: number
+          tenant_id?: string
+          transfer_frequency?:
+            | Database["public"]["Enums"]["tenant_transfer_frequency"]
+            | null
+          updated_at?: string
+          use_pagarme?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_financial_config_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_financial_config_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tenant_invoices: {
         Row: {
           amount: number
@@ -990,6 +1230,63 @@ export type Database = {
             columns: ["subscription_id"]
             isOneToOne: false
             referencedRelation: "tenant_subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tenant_legal_responsible: {
+        Row: {
+          birth_date: string | null
+          cpf: string
+          created_at: string
+          email: string | null
+          full_name: string
+          id: string
+          monthly_revenue: number | null
+          mother_name: string | null
+          role: string | null
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          birth_date?: string | null
+          cpf: string
+          created_at?: string
+          email?: string | null
+          full_name: string
+          id?: string
+          monthly_revenue?: number | null
+          mother_name?: string | null
+          role?: string | null
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          birth_date?: string | null
+          cpf?: string
+          created_at?: string
+          email?: string | null
+          full_name?: string
+          id?: string
+          monthly_revenue?: number | null
+          mother_name?: string | null
+          role?: string | null
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_legal_responsible_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_legal_responsible_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: true
+            referencedRelation: "tenants_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1047,6 +1344,57 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      tenant_pending_documents: {
+        Row: {
+          created_at: string
+          doc_type: string
+          id: string
+          label: string
+          notes: string | null
+          required: boolean
+          status: Database["public"]["Enums"]["tenant_doc_status"]
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          doc_type: string
+          id?: string
+          label: string
+          notes?: string | null
+          required?: boolean
+          status?: Database["public"]["Enums"]["tenant_doc_status"]
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          doc_type?: string
+          id?: string
+          label?: string
+          notes?: string | null
+          required?: boolean
+          status?: Database["public"]["Enums"]["tenant_doc_status"]
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tenant_pending_documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tenant_pending_documents_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tenant_subscriptions: {
         Row: {
@@ -1120,18 +1468,23 @@ export type Database = {
           bank_account_dv: string | null
           bank_agency: string | null
           bank_code: string | null
+          compliance_status: Database["public"]["Enums"]["tenant_compliance_status"]
           cover_photo_url: string | null
           created_at: string
           custom_domain: string | null
           deleted_at: string | null
           deleted_by: string | null
+          description: string | null
           document: string | null
           document_type: string | null
+          financial_active: boolean
           holder_document: string | null
           holder_name: string | null
           id: string
+          institutional_email: string | null
           legal_name: string | null
           logo_url: string | null
+          main_phone: string | null
           name: string
           primary_color: string | null
           recipient_error: string | null
@@ -1140,6 +1493,9 @@ export type Database = {
           secondary_color: string | null
           slug: string
           tagline: string | null
+          trade_name: string | null
+          updated_at: string
+          website: string | null
         }
         Insert: {
           accent_color?: string | null
@@ -1149,18 +1505,23 @@ export type Database = {
           bank_account_dv?: string | null
           bank_agency?: string | null
           bank_code?: string | null
+          compliance_status?: Database["public"]["Enums"]["tenant_compliance_status"]
           cover_photo_url?: string | null
           created_at?: string
           custom_domain?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          description?: string | null
           document?: string | null
           document_type?: string | null
+          financial_active?: boolean
           holder_document?: string | null
           holder_name?: string | null
           id?: string
+          institutional_email?: string | null
           legal_name?: string | null
           logo_url?: string | null
+          main_phone?: string | null
           name: string
           primary_color?: string | null
           recipient_error?: string | null
@@ -1169,6 +1530,9 @@ export type Database = {
           secondary_color?: string | null
           slug: string
           tagline?: string | null
+          trade_name?: string | null
+          updated_at?: string
+          website?: string | null
         }
         Update: {
           accent_color?: string | null
@@ -1178,18 +1542,23 @@ export type Database = {
           bank_account_dv?: string | null
           bank_agency?: string | null
           bank_code?: string | null
+          compliance_status?: Database["public"]["Enums"]["tenant_compliance_status"]
           cover_photo_url?: string | null
           created_at?: string
           custom_domain?: string | null
           deleted_at?: string | null
           deleted_by?: string | null
+          description?: string | null
           document?: string | null
           document_type?: string | null
+          financial_active?: boolean
           holder_document?: string | null
           holder_name?: string | null
           id?: string
+          institutional_email?: string | null
           legal_name?: string | null
           logo_url?: string | null
+          main_phone?: string | null
           name?: string
           primary_color?: string | null
           recipient_error?: string | null
@@ -1198,6 +1567,9 @@ export type Database = {
           secondary_color?: string | null
           slug?: string
           tagline?: string | null
+          trade_name?: string | null
+          updated_at?: string
+          website?: string | null
         }
         Relationships: []
       }
@@ -1446,6 +1818,14 @@ export type Database = {
         Args: { _tenant_id: string; _user_id: string }
         Returns: boolean
       }
+      recompute_tenant_compliance: {
+        Args: { _tenant_id: string }
+        Returns: Database["public"]["Enums"]["tenant_compliance_status"]
+      }
+      seed_tenant_pending_documents: {
+        Args: { _tenant_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       api_service: "sms" | "whatsapp" | "payments"
@@ -1474,6 +1854,19 @@ export type Database = {
         | "past_due"
         | "canceled"
         | "suspended"
+      tenant_bank_account_type:
+        | "checking"
+        | "checking_joint"
+        | "savings"
+        | "savings_joint"
+      tenant_compliance_status:
+        | "pending_documents"
+        | "pending_financial_setup"
+        | "active"
+        | "blocked"
+      tenant_doc_status: "pending" | "submitted" | "approved" | "rejected"
+      tenant_receiver_type: "pf" | "pj"
+      tenant_transfer_frequency: "daily" | "weekly" | "monthly"
       ticket_status: "active" | "used" | "cancelled"
     }
     CompositeTypes: {
@@ -1630,6 +2023,21 @@ export const Constants = {
         "canceled",
         "suspended",
       ],
+      tenant_bank_account_type: [
+        "checking",
+        "checking_joint",
+        "savings",
+        "savings_joint",
+      ],
+      tenant_compliance_status: [
+        "pending_documents",
+        "pending_financial_setup",
+        "active",
+        "blocked",
+      ],
+      tenant_doc_status: ["pending", "submitted", "approved", "rejected"],
+      tenant_receiver_type: ["pf", "pj"],
+      tenant_transfer_frequency: ["daily", "weekly", "monthly"],
       ticket_status: ["active", "used", "cancelled"],
     },
   },

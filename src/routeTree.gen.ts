@@ -37,6 +37,7 @@ import { Route as AuthenticatedIgrejasOnboardingRouteImport } from './routes/_au
 import { Route as AuthenticatedDashboardFinanceiroRouteImport } from './routes/_authenticated/dashboard.financeiro'
 import { Route as AuthenticatedAdminTenantsRouteImport } from './routes/_authenticated/admin.tenants'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
+import { Route as AuthenticatedAdminPendenciasRouteImport } from './routes/_authenticated/admin.pendencias'
 import { Route as AuthenticatedAdminFinanceiroRouteImport } from './routes/_authenticated/admin.financeiro'
 import { Route as AuthenticatedAdminDashboardRouteImport } from './routes/_authenticated/admin.dashboard'
 import { Route as AuthenticatedAdminBillingRouteImport } from './routes/_authenticated/admin.billing'
@@ -193,6 +194,12 @@ const AuthenticatedAdminSettingsRoute =
     path: '/settings',
     getParentRoute: () => AuthenticatedAdminRoute,
   } as any)
+const AuthenticatedAdminPendenciasRoute =
+  AuthenticatedAdminPendenciasRouteImport.update({
+    id: '/pendencias',
+    path: '/pendencias',
+    getParentRoute: () => AuthenticatedAdminRoute,
+  } as any)
 const AuthenticatedAdminFinanceiroRoute =
   AuthenticatedAdminFinanceiroRouteImport.update({
     id: '/financeiro',
@@ -243,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/admin/billing': typeof AuthenticatedAdminBillingRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
+  '/admin/pendencias': typeof AuthenticatedAdminPendenciasRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/tenants': typeof AuthenticatedAdminTenantsRoute
   '/dashboard/financeiro': typeof AuthenticatedDashboardFinanceiroRoute
@@ -275,6 +283,7 @@ export interface FileRoutesByTo {
   '/admin/billing': typeof AuthenticatedAdminBillingRoute
   '/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
+  '/admin/pendencias': typeof AuthenticatedAdminPendenciasRoute
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/tenants': typeof AuthenticatedAdminTenantsRoute
   '/dashboard/financeiro': typeof AuthenticatedDashboardFinanceiroRoute
@@ -311,6 +320,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/billing': typeof AuthenticatedAdminBillingRoute
   '/_authenticated/admin/dashboard': typeof AuthenticatedAdminDashboardRoute
   '/_authenticated/admin/financeiro': typeof AuthenticatedAdminFinanceiroRoute
+  '/_authenticated/admin/pendencias': typeof AuthenticatedAdminPendenciasRoute
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/tenants': typeof AuthenticatedAdminTenantsRoute
   '/_authenticated/dashboard/financeiro': typeof AuthenticatedDashboardFinanceiroRoute
@@ -347,6 +357,7 @@ export interface FileRouteTypes {
     | '/admin/billing'
     | '/admin/dashboard'
     | '/admin/financeiro'
+    | '/admin/pendencias'
     | '/admin/settings'
     | '/admin/tenants'
     | '/dashboard/financeiro'
@@ -379,6 +390,7 @@ export interface FileRouteTypes {
     | '/admin/billing'
     | '/admin/dashboard'
     | '/admin/financeiro'
+    | '/admin/pendencias'
     | '/admin/settings'
     | '/admin/tenants'
     | '/dashboard/financeiro'
@@ -414,6 +426,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/billing'
     | '/_authenticated/admin/dashboard'
     | '/_authenticated/admin/financeiro'
+    | '/_authenticated/admin/pendencias'
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/tenants'
     | '/_authenticated/dashboard/financeiro'
@@ -640,6 +653,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAdminSettingsRouteImport
       parentRoute: typeof AuthenticatedAdminRoute
     }
+    '/_authenticated/admin/pendencias': {
+      id: '/_authenticated/admin/pendencias'
+      path: '/pendencias'
+      fullPath: '/admin/pendencias'
+      preLoaderRoute: typeof AuthenticatedAdminPendenciasRouteImport
+      parentRoute: typeof AuthenticatedAdminRoute
+    }
     '/_authenticated/admin/financeiro': {
       id: '/_authenticated/admin/financeiro'
       path: '/financeiro'
@@ -683,6 +703,7 @@ interface AuthenticatedAdminRouteChildren {
   AuthenticatedAdminBillingRoute: typeof AuthenticatedAdminBillingRoute
   AuthenticatedAdminDashboardRoute: typeof AuthenticatedAdminDashboardRoute
   AuthenticatedAdminFinanceiroRoute: typeof AuthenticatedAdminFinanceiroRoute
+  AuthenticatedAdminPendenciasRoute: typeof AuthenticatedAdminPendenciasRoute
   AuthenticatedAdminSettingsRoute: typeof AuthenticatedAdminSettingsRoute
   AuthenticatedAdminTenantsRoute: typeof AuthenticatedAdminTenantsRoute
   AuthenticatedAdminIndexRoute: typeof AuthenticatedAdminIndexRoute
@@ -693,6 +714,7 @@ const AuthenticatedAdminRouteChildren: AuthenticatedAdminRouteChildren = {
   AuthenticatedAdminBillingRoute: AuthenticatedAdminBillingRoute,
   AuthenticatedAdminDashboardRoute: AuthenticatedAdminDashboardRoute,
   AuthenticatedAdminFinanceiroRoute: AuthenticatedAdminFinanceiroRoute,
+  AuthenticatedAdminPendenciasRoute: AuthenticatedAdminPendenciasRoute,
   AuthenticatedAdminSettingsRoute: AuthenticatedAdminSettingsRoute,
   AuthenticatedAdminTenantsRoute: AuthenticatedAdminTenantsRoute,
   AuthenticatedAdminIndexRoute: AuthenticatedAdminIndexRoute,

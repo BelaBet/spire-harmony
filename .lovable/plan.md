@@ -1,114 +1,107 @@
-# Centros de Custo (Cost Centers)
+## Padronização dos dois fluxos de onboarding
 
-Cada igreja terá múltiplos centros de custo (ex.: "Dízimo Online", "Oferta Presencial", "Totem Entrada"). O super admin cria; o admin da igreja só ativa/desativa.
+Entrega em **4 fases**. Cada fase é revisável separadamente. Sem upload de arquivos nesta rodada.
 
-## 1. Banco de dados
+---
 
-### Migration
+### Fase 1 — Schema + status de compliance + server fn unificada (esta entrega)
 
-**Tipo enum** `cost_center_type`: `online`, `presencial`, `totem`.
+**1.1 Migração de banco**
 
-**Tabela `cost_centers`**:
-| Coluna | Tipo | Notas |
-|---|---|---|
-| `id` | uuid PK | |
-| `tenant_id` | uuid FK tenants | |
-| `name` | text | Ex.: "Dízimo Online" |
-| `slug` | text | Único por tenant (`UNIQUE(tenant_id, slug)`) |
-| `type` | cost_center_type | |
-| `description` | text null | |
-| `split_platform_percent` | numeric(5,4) | 0..1 — só super admin altera |
-| `split_seller_percent` | numeric(5,4) | 0..1 — `platform+seller=1` (CHECK) |
-| `allows_installments` | boolean default true | |
-| `max_installments` | int default 1 | |
-| `is_active` | boolean default true | admin igreja alterna |
-| `qr_code_url` | text null | URL pública do PNG no storage |
-| `display_order` | int default 0 | ordem na página pública |
-| `created_at`, `updated_at` | timestamptz | trigger updated_at |
+Estender `tenants` com identidade institucional:
+- `trade_name` (nome fantasia), `legal_name` (razão social)
+- `institutional_email`, `main_phone`, `website`, `description`
+- `compliance_status` enum: `pending_documents | pending_financial_setup | active | blocked` (default `pending_documents`)
+- `financial_active` boolean (default false) — gate para PIX/cartão/boleto/transferências/split
 
-GRANTs: `SELECT` para `anon` + `authenticated` (página pública precisa listar centros ativos); `INSERT/UPDATE/DELETE` para `authenticated` (controlado por RLS); `ALL` para `service_role`.
+Novas tabelas (1:1 com tenant, todas com RLS por tenant + service_role):
+- `tenant_legal_responsible` — full_name, cpf, email, birth_date, mother_name, role, monthly_revenue
+- `tenant_contact_phone` — phone_type, ddd, number
+- `tenant_address` — cep, street, number, no_number bool, complement, neighborhood, city, state, uf, reference_point
+- `tenant_bank_account` — bank_code, branch, branch_digit, account, account_digit, account_type enum (`checking | checking_joint | savings | savings_joint`), holder_name, holder_document
+- `tenant_financial_config` — receiver_type (`pf|pj`), use_pagarme bool, pagarme_recipient_id, split_platform_percent, auto_anticipation bool, anticipation_model, anticipation_days, auto_transfer bool, transfer_frequency (`daily|weekly|monthly`)
+- `tenant_pending_documents` — doc_type, required bool, status (`pending|submitted|approved|rejected`), seed automático dos 3 obrigatórios + 3 opcionais
 
-**RLS**:
-- `select_active_public` — `anon`+`authenticated`: `is_active = true` (página pública lista).
-- `select_staff_all` — `authenticated`: `is_tenant_staff(auth.uid(), tenant_id) OR is_platform_admin(auth.uid())` (admin vê inativos também).
-- `super_admin_all` — `FOR ALL`: `is_platform_admin(auth.uid())` (cria/edita tudo, inclusive split).
-- `church_admin_toggle_active` — `FOR UPDATE`: `is_tenant_staff(auth.uid(), tenant_id)`; o **trigger** `prevent_non_admin_split_change` bloqueia alteração de `split_*`, `name`, `slug`, `type` por quem não é `is_platform_admin`.
+Migração já com `GRANT` + RLS escopado por `tenant_id` (staff lê do próprio tenant; super_admin lê tudo; service_role full).
 
-**View pública** `cost_centers_public` (somente colunas seguras: id, tenant_id, name, slug, type, description, allows_installments, max_installments, display_order). GRANT SELECT para `anon`.
+**1.2 Server function única: `provisionTenant`**
 
-### QR Code
-QR gerado server-side ao criar centro de custo: aponta para `https://<host>/i/<tenant_slug>?cc=<cost_center_slug>` e é salvo no bucket público `cost-center-qrs`.
+Substitui `reserveTenantForSignup`. Aceita objeto completo com todas as seções; tudo opcional **exceto** `church_name + document + document_type`. Mesma fn usada pelo Super Admin (objeto cheio) e pelo `/signup` (objeto mínimo).
 
-## 2. Server functions
+Fluxo interno:
+1. Validar CPF/CNPJ/CEP/e-mail/telefone server-side (zod + cpf-cnpj-validator).
+2. Gerar slug único.
+3. Inserir tenant com `compliance_status='pending_documents'`, `financial_active=false`.
+4. Inserir cada bloco fornecido nas suas tabelas (responsável, endereço, banco, contato, financeiro).
+5. Seed de `tenant_pending_documents` (3 obrigatórios + 3 opcionais).
+6. Se `use_pagarme=true` e `pagarme_recipient_id` informado: consultar Pagar.me, validar status `registered/active/approved`, salvar. Se ausente/reprovado: gravar pendência financeira e retornar aviso (não bloqueia criação).
+7. Criar cost_center "Online" (slug `online`, ativo, até 2x, split conforme onboarding).
+8. Gerar QR para `/i/{slug}`.
+9. Convidar admin (se informado).
+10. Retornar `{ tenant_id, slug, public_url, qr_code_url, cost_center_id, compliance_status, warnings[] }`.
 
-**`src/lib/cost-centers.functions.ts`**
+**1.3 Validações locais (zod helpers compartilhados)**
 
-| Função | Auth | Descrição |
-|---|---|---|
-| `createCostCenter` | super admin | Valida Zod, gera slug único, persiste, gera QR (lib `qrcode` no handler), upload no bucket, atualiza `qr_code_url`. |
-| `updateCostCenterFull` | super admin | Edita tudo, inclusive split. |
-| `toggleCostCenterActive` | tenant staff | Apenas `is_active`. |
-| `regenerateCostCenterQr` | super admin | Re-gera QR PNG. |
-| `listCostCenters` | tenant staff / super admin | Inclui inativos. |
+`src/lib/validators/` ganha: `bank.ts`, `cep.ts`, `phone.ts`. CPF/CNPJ já existem. Usados pelo server fn E pelos formulários (mesmo schema).
 
-Cliente (página pública) consulta direto via `cost_centers_public` view.
+**1.4 Gate financeiro**
 
-Dependência: `bun add qrcode @types/qrcode`. Importar `qrcode` dentro do handler para evitar bundle no client.
+Helper `assertFinancialActive(tenant_id)` chamado em `create-donation`, payments, antecipações e transferências. Bloqueia com mensagem clara enquanto `financial_active=false`.
 
-## 3. Integração com pagamentos
+**1.5 Tela "Pendências de Cadastro"**
 
-`payments`: adicionar coluna `cost_center_id uuid null FK cost_centers`.
+Rota `_authenticated/admin.pendencias.tsx`: lista documentos pendentes e status financeiro, com CTA "completar dados". Banner discreto no dashboard quando `compliance_status != 'active'`.
 
-Em `src/lib/split.utils.ts`:
-- Nova função `calculateAmountsForCostCenter(amount, method, costCenter)` que, **se o centro define `split_platform_percent`**, sobrescreve o cálculo de `tickettoFee` baseado em `adm_percent` por esse percentual customizado.
-- `buildSplitPayload` permanece igual (já usa amounts).
+---
 
-`createPayment` (em `payments.functions.ts`): aceita `cost_center_id` opcional. Valida que pertence ao tenant, está ativo, e que o método solicitado é permitido (ex.: se `allows_installments=false` e `installments>1`, rejeita). Persiste na coluna nova.
+### Fase 2 — UI Super Admin completa (próxima)
 
-## 4. UI
+Refazer `igrejas.onboarding.tsx` como wizard multi-step com todas as seções, consumindo `provisionTenant`. Validações inline reaproveitando os helpers da Fase 1.
 
-### Super Admin (`/super-admin`)
-Nova seção `CostCentersSection.tsx` (logo após `RecipientsSection`):
-- Seletor de igreja → tabela de centros (`name`, `type`, `split %`, `ativo`, ações).
-- Modal `CostCenterFormModal.tsx`: nome, tipo, descrição, split platform/seller %, allows_installments, max_installments, ordem.
-- Botão "Baixar QR Code" (abre `qr_code_url`).
-- Botão "Regenerar QR".
+### Fase 3 — UI auto-cadastro + "Completar Cadastro"
 
-### Admin da Igreja (`/admin/settings` ou nova rota `/admin/cost-centers`)
-`CostCentersAdminPanel.tsx`:
-- Lista centros (read-only nas configs sensíveis).
-- Toggle `is_active`.
-- Botão "Baixar QR" para cada centro.
-- Aviso: "Para criar novos centros ou alterar taxas, contate o suporte."
+`/signup` permanece mínimo (igreja + admin). Após login, se `compliance_status != 'active'`, redireciona para wizard `/admin/completar-cadastro` (mesmas seções da Fase 2).
 
-### Página pública (`src/routes/i.$slug.tsx` + `src/routes/index.tsx`)
-`ChurchPageView` carrega `cost_centers_public` do tenant ativo (ordenado por `display_order`). Para cada centro: seção com nome/descrição. O `ContribuicaoModal` recebe `costCenter` selecionado e:
-- Esconde campo "parcelas" se `allows_installments=false`.
-- Envia `cost_center_id` em `createPayment`.
-- Query param `?cc=<slug>` pré-seleciona o centro (vindo do QR).
+### Fase 4 — Integrações externas
 
-## 5. Arquivos
+- ViaCEP no preenchimento de endereço (autocomplete).
+- Busca de recipient Pagar.me por CNPJ quando `use_pagarme` marcado (encontra recipient já aprovado e vincula).
+- Upload de documentos (bucket privado `tenant-documents`) — só depois que essa fase for aprovada.
 
-**Migração**: 1 arquivo com enum, tabela, view, RLS, trigger, GRANTs, bucket.
+---
 
-**Criar**:
-- `src/lib/cost-centers.functions.ts`
-- `src/components/superadmin/CostCentersSection.tsx`
-- `src/components/superadmin/CostCenterFormModal.tsx`
-- `src/components/admin/CostCentersAdminPanel.tsx`
-- `src/components/CostCenterSelector.tsx` (página pública)
+### Detalhes técnicos (Fase 1)
 
-**Editar**:
-- `src/lib/split.utils.ts` — split por centro
-- `src/lib/payments.functions.ts` — aceitar `cost_center_id`
-- `src/components/ContribuicaoModal.tsx` — usar centro
-- `src/routes/index.tsx` + `src/routes/i.$slug.tsx` — listar centros
-- `src/routes/_authenticated/super-admin.tsx` — injetar seção
-- `src/routes/_authenticated/admin.settings.tsx` — painel da igreja
+```text
+tenants (+colunas)
+  ├── tenant_legal_responsible (1:1)
+  ├── tenant_address (1:1)
+  ├── tenant_bank_account (1:1)
+  ├── tenant_contact_phone (1:N)
+  ├── tenant_financial_config (1:1)
+  └── tenant_pending_documents (1:N)
+```
 
-## Perguntas antes de implementar
+- Todas as novas tabelas têm `tenant_id uuid REFERENCES tenants(id) ON DELETE CASCADE`.
+- RLS: staff do tenant lê/edita o próprio; super_admin lê/edita tudo; sem acesso anon.
+- `tenant_bank_account` e `tenant_financial_config`: `REVOKE SELECT` em colunas sensíveis para `authenticated`, mantendo só `service_role` (alinhado com a política atual de `tenants` banking fields).
+- `compliance_status` recalculado por trigger quando responsável/endereço/banco/financeiro forem preenchidos e documentos obrigatórios aprovados.
+- `financial_active` só vira `true` quando `compliance_status='active'` E recipient Pagar.me validado.
 
-1. **Split obrigatório por centro?** Os centros sempre sobrescrevem as taxas globais de `fee_rules`/`fees.config.ts`, ou o split do centro é só para a divisão Pagar.me (plataforma vs igreja) e as taxas continuam vindo da config global? Sua descrição cita `split_platform_percent/split_seller_percent` — entendi como % do valor total que vai para cada recipient. Confirma?
-2. **`max_installments` é necessário** ou basta `allows_installments` booleano (com máximo padrão definido em `fees.config.ts`)?
-3. **QR Code**: gerar PNG via lib `qrcode` server-side e salvar no Storage está OK, ou prefere gerar on-demand no client (sem persistir)?
-4. **Página pública**: cada centro vira uma **seção** scrollável na mesma página (como descrito), com um único modal de doação que muda conforme o centro selecionado — correto?
+### Arquivos afetados na Fase 1
+
+- **Migração nova** com toda a estrutura acima.
+- `src/lib/tenant-signup.functions.ts` → renomear/expandir para `provisionTenant` (mantém export antigo como alias para não quebrar `/signup`).
+- `src/lib/validators/{bank,cep,phone}.ts` novos.
+- `src/lib/compliance.ts` novo (helper `assertFinancialActive`).
+- `src/routes/_authenticated/admin.pendencias.tsx` novo.
+- Banner de pendência no `_authenticated.tsx`.
+- Atualizar Security Memory com as novas tabelas sensíveis.
+
+### Fora do escopo desta entrega
+
+- UI nova do Super Admin (Fase 2).
+- Wizard de completar cadastro do admin (Fase 3).
+- Upload de arquivos / ViaCEP / busca automática de recipient (Fase 4).
+
+Confirma que posso iniciar a Fase 1?
