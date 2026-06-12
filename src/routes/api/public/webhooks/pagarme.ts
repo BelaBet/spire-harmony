@@ -113,11 +113,72 @@ export const Route = createFileRoute('/api/public/webhooks/pagarme')({
           return new Response('DB error', { status: 500 });
         }
 
+        // For order.paid, also persist a donation record from the order metadata.
+        let donationInserted = false;
+        if (eventType === 'order.paid') {
+          const order = payload?.data ?? {};
+          const meta = order?.metadata ?? {};
+          const charge = order?.charges?.[0];
+          const tx = charge?.last_transaction;
+          const gatewayId: string | null = order?.id ?? charge?.id ?? null;
+          const tenantId: string | null = meta.tenant_id ?? null;
+
+          if (!gatewayId || !tenantId) {
+            console.warn('[pagarme-webhook] order.paid missing tenant_id/gateway_id', { gatewayId, tenantId });
+          } else {
+            // Idempotency: skip if already inserted for this gateway_id.
+            const { data: existing } = await supabaseAdmin
+              .from('donations')
+              .select('id')
+              .eq('gateway_id', gatewayId)
+              .maybeSingle();
+
+            if (!existing) {
+              const grossAmount = Number(meta.gross_amount ?? 0);
+              const adminFee = Number(meta.admin_fee ?? 0);
+              const netAmount = Number(meta.net_amount ?? 0);
+              const installments = Number(meta.installments ?? 1);
+              const paymentMethod: string =
+                charge?.payment_method ?? order?.payment_method ?? null;
+
+              const donationRecord = {
+                tenant_id: tenantId,
+                cost_center_id: meta.cost_center_id ?? null,
+                amount: netAmount / 100, // numeric(10,2) em reais
+                gross_amount: grossAmount,
+                admin_fee: adminFee,
+                net_amount: netAmount,
+                payment_method: paymentMethod,
+                installments,
+                card_brand: tx?.card?.brand ?? null,
+                card_last_four: tx?.card?.last_four_digits ?? null,
+                gateway_id: gatewayId,
+                donor_name: order?.customer?.name ?? null,
+                donor_document: order?.customer?.document ?? null,
+                donor_phone: order?.customer?.phones?.mobile_phone?.number ?? null,
+                donor_email: order?.customer?.email ?? null,
+                created_at: order?.created_at ?? new Date().toISOString(),
+              };
+
+              const { error: insErr } = await supabaseAdmin
+                .from('donations')
+                .insert(donationRecord as any);
+
+              if (insErr) {
+                console.error('[pagarme-webhook] donation insert error', insErr, { gatewayId });
+                return new Response('Donation insert error', { status: 500 });
+              }
+              donationInserted = true;
+            }
+          }
+        }
+
         return Response.json({
           ok: true,
           event: eventType,
           status: newStatus,
           updated: updated?.length ?? 0,
+          donationInserted,
         });
       },
     },
