@@ -438,6 +438,14 @@ export const createCreditCardPayment = createServerFn({ method: "POST" })
           split: buildSplitPayload(amounts, sellerRecipientId),
         },
       ],
+      metadata: {
+        tenant_id: data.tenantId,
+        cost_center_id: data.costCenterId ?? null,
+        gross_amount: amounts.totalAmount,
+        admin_fee: amounts.tickettoFee,
+        net_amount: amounts.donationAmount,
+        installments: data.installments ?? 1,
+      },
     };
 
     const call = await pagarmeOrderCall(requestBody);
