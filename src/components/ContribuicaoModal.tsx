@@ -990,6 +990,7 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
                     placeholder="(00) 00000-0000"
                     className="mt-1 h-11 w-full rounded-xl border border-[#E5E7EB] bg-white px-3 text-sm text-[#111827] outline-none focus:border-[#7C3AED]"
                   />
+                  <p className="mt-1 text-[11px] text-[#6B7280]">Obrigatório para confirmação do pagamento</p>
                 </div>
               </div>
             )}
