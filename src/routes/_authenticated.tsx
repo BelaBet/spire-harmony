@@ -74,15 +74,26 @@ function AuthLayout() {
   const tenant = myTenant ?? urlTenant;
   const name = tenant?.name ?? "Comunidade";
   const tagline = tenant?.tagline;
+  const logoUrl = (tenant as { logo_url?: string | null } | null | undefined)?.logo_url ?? null;
 
   return (
-    <div className="min-h-screen pb-20 md:pb-0">
+    <div className="flex min-h-screen flex-col pb-20 md:pb-0">
       <header className="border-b bg-card/80 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-3">
           <Link to="/dashboard" className="flex items-center gap-3 min-w-0">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-display text-sm">
-              {initials(name)}
-            </div>
+            {logoUrl ? (
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-white overflow-hidden p-1 border">
+                <img
+                  src={logoUrl}
+                  alt={name}
+                  style={{ maxWidth: "100%", maxHeight: "100%", objectFit: "contain" }}
+                />
+              </div>
+            ) : (
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary text-primary-foreground font-display text-sm">
+                {initials(name)}
+              </div>
+            )}
             <div className="flex flex-col min-w-0 leading-tight">
               <span className="font-display text-base truncate">{name}</span>
               {tagline && (
@@ -108,9 +119,14 @@ function AuthLayout() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl px-6 py-8">
+      <main className="mx-auto w-full max-w-6xl flex-1 px-6 py-8">
         <Outlet />
       </main>
+
+      {/* Powered by TK2 — discreet platform attribution */}
+      <footer className="hidden border-t bg-card/40 py-3 text-center text-xs text-muted-foreground md:block">
+        Powered by <span className="font-medium">TK2 EMPREENDIMENTOS</span>
+      </footer>
 
       {/* Mobile bottom nav */}
       <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-4 border-t bg-card md:hidden">
