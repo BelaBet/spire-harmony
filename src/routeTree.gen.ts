@@ -34,6 +34,7 @@ import { Route as AuthenticatedManageSettingsRouteImport } from './routes/_authe
 import { Route as AuthenticatedManageMembersRouteImport } from './routes/_authenticated/manage.members'
 import { Route as AuthenticatedManageDashboardRouteImport } from './routes/_authenticated/manage.dashboard'
 import { Route as AuthenticatedIgrejasOnboardingRouteImport } from './routes/_authenticated/igrejas.onboarding'
+import { Route as AuthenticatedIgrejasNovaRouteImport } from './routes/_authenticated/igrejas.nova'
 import { Route as AuthenticatedDashboardFinanceiroRouteImport } from './routes/_authenticated/dashboard.financeiro'
 import { Route as AuthenticatedAdminTenantsRouteImport } from './routes/_authenticated/admin.tenants'
 import { Route as AuthenticatedAdminSettingsRouteImport } from './routes/_authenticated/admin.settings'
@@ -176,6 +177,12 @@ const AuthenticatedIgrejasOnboardingRoute =
     path: '/igrejas/onboarding',
     getParentRoute: () => AuthenticatedRoute,
   } as any)
+const AuthenticatedIgrejasNovaRoute =
+  AuthenticatedIgrejasNovaRouteImport.update({
+    id: '/igrejas/nova',
+    path: '/igrejas/nova',
+    getParentRoute: () => AuthenticatedRoute,
+  } as any)
 const AuthenticatedDashboardFinanceiroRoute =
   AuthenticatedDashboardFinanceiroRouteImport.update({
     id: '/dashboard/financeiro',
@@ -254,6 +261,7 @@ export interface FileRoutesByFullPath {
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/tenants': typeof AuthenticatedAdminTenantsRoute
   '/dashboard/financeiro': typeof AuthenticatedDashboardFinanceiroRoute
+  '/igrejas/nova': typeof AuthenticatedIgrejasNovaRoute
   '/igrejas/onboarding': typeof AuthenticatedIgrejasOnboardingRoute
   '/manage/dashboard': typeof AuthenticatedManageDashboardRoute
   '/manage/members': typeof AuthenticatedManageMembersRoute
@@ -287,6 +295,7 @@ export interface FileRoutesByTo {
   '/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/admin/tenants': typeof AuthenticatedAdminTenantsRoute
   '/dashboard/financeiro': typeof AuthenticatedDashboardFinanceiroRoute
+  '/igrejas/nova': typeof AuthenticatedIgrejasNovaRoute
   '/igrejas/onboarding': typeof AuthenticatedIgrejasOnboardingRoute
   '/manage/dashboard': typeof AuthenticatedManageDashboardRoute
   '/manage/members': typeof AuthenticatedManageMembersRoute
@@ -324,6 +333,7 @@ export interface FileRoutesById {
   '/_authenticated/admin/settings': typeof AuthenticatedAdminSettingsRoute
   '/_authenticated/admin/tenants': typeof AuthenticatedAdminTenantsRoute
   '/_authenticated/dashboard/financeiro': typeof AuthenticatedDashboardFinanceiroRoute
+  '/_authenticated/igrejas/nova': typeof AuthenticatedIgrejasNovaRoute
   '/_authenticated/igrejas/onboarding': typeof AuthenticatedIgrejasOnboardingRoute
   '/_authenticated/manage/dashboard': typeof AuthenticatedManageDashboardRoute
   '/_authenticated/manage/members': typeof AuthenticatedManageMembersRoute
@@ -361,6 +371,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/tenants'
     | '/dashboard/financeiro'
+    | '/igrejas/nova'
     | '/igrejas/onboarding'
     | '/manage/dashboard'
     | '/manage/members'
@@ -394,6 +405,7 @@ export interface FileRouteTypes {
     | '/admin/settings'
     | '/admin/tenants'
     | '/dashboard/financeiro'
+    | '/igrejas/nova'
     | '/igrejas/onboarding'
     | '/manage/dashboard'
     | '/manage/members'
@@ -430,6 +442,7 @@ export interface FileRouteTypes {
     | '/_authenticated/admin/settings'
     | '/_authenticated/admin/tenants'
     | '/_authenticated/dashboard/financeiro'
+    | '/_authenticated/igrejas/nova'
     | '/_authenticated/igrejas/onboarding'
     | '/_authenticated/manage/dashboard'
     | '/_authenticated/manage/members'
@@ -632,6 +645,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedIgrejasOnboardingRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
+    '/_authenticated/igrejas/nova': {
+      id: '/_authenticated/igrejas/nova'
+      path: '/igrejas/nova'
+      fullPath: '/igrejas/nova'
+      preLoaderRoute: typeof AuthenticatedIgrejasNovaRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
     '/_authenticated/dashboard/financeiro': {
       id: '/_authenticated/dashboard/financeiro'
       path: '/dashboard/financeiro'
@@ -750,6 +770,7 @@ interface AuthenticatedRouteChildren {
   AuthenticatedSuperAdminRoute: typeof AuthenticatedSuperAdminRoute
   AuthenticatedTicketsRoute: typeof AuthenticatedTicketsRoute
   AuthenticatedDashboardFinanceiroRoute: typeof AuthenticatedDashboardFinanceiroRoute
+  AuthenticatedIgrejasNovaRoute: typeof AuthenticatedIgrejasNovaRoute
   AuthenticatedIgrejasOnboardingRoute: typeof AuthenticatedIgrejasOnboardingRoute
   AuthenticatedDashboardIndexRoute: typeof AuthenticatedDashboardIndexRoute
   AuthenticatedIgrejasIndexRoute: typeof AuthenticatedIgrejasIndexRoute
@@ -765,6 +786,7 @@ const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
   AuthenticatedSuperAdminRoute: AuthenticatedSuperAdminRoute,
   AuthenticatedTicketsRoute: AuthenticatedTicketsRoute,
   AuthenticatedDashboardFinanceiroRoute: AuthenticatedDashboardFinanceiroRoute,
+  AuthenticatedIgrejasNovaRoute: AuthenticatedIgrejasNovaRoute,
   AuthenticatedIgrejasOnboardingRoute: AuthenticatedIgrejasOnboardingRoute,
   AuthenticatedDashboardIndexRoute: AuthenticatedDashboardIndexRoute,
   AuthenticatedIgrejasIndexRoute: AuthenticatedIgrejasIndexRoute,

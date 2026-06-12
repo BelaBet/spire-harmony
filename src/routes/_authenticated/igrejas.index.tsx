@@ -16,7 +16,7 @@ function IgrejasList() {
           <p className="text-sm text-muted-foreground">Gerencie as igrejas cadastradas na plataforma.</p>
         </div>
         <Button asChild>
-          <Link to="/igrejas/onboarding">
+          <Link to="/igrejas/nova">
             <Plus className="h-4 w-4" /> Nova igreja
           </Link>
         </Button>

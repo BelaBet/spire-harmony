@@ -127,12 +127,18 @@ export const Route = createFileRoute('/api/public/create-donation')({
         // 1. Tenant
         const { data: tenant, error: tErr } = await supabaseAdmin
           .from('tenants')
-          .select('id, slug, active, name')
+          .select('id, slug, active, name, financial_active, compliance_status')
           .eq('slug', payload.tenant_slug)
           .maybeSingle();
         if (tErr) return json({ error: 'Erro ao buscar igreja' }, 500);
         if (!tenant) return json({ error: 'Igreja não encontrada' }, 404);
         if (!tenant.active) return json({ error: 'Igreja inativa' }, 403);
+        if (!(tenant as { financial_active?: boolean }).financial_active) {
+          return json(
+            { error: 'Recebimentos indisponíveis: cadastro da igreja pendente.' },
+            403,
+          );
+        }
 
         // 2. Cost center
         const { data: cc, error: ccErr } = await supabaseAdmin

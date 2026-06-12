@@ -31,6 +31,8 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => InputSchema.parse(data))
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { assertFinancialActive } = await import("@/lib/compliance");
+    await assertFinancialActive(data.tenantId);
 
     const secretKey = process.env.PAGARME_SECRET_KEY;
     if (!secretKey) throw new Error("PAGARME_SECRET_KEY não configurada");
