@@ -185,16 +185,32 @@ export function calculateAmounts(
 export async function fetchSellerRecipientId(tenantId: string): Promise<string> {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
-    .from("tenants")
-    .select("recipient_id")
-    .eq("id", tenantId)
+    .from("tenant_financial_config")
+    .select("pagarme_recipient_id, use_pagarme")
+    .eq("tenant_id", tenantId)
     .maybeSingle();
   if (error) throw new Error(error.message);
-  const recipientId = (data as { recipient_id?: string | null } | null)?.recipient_id;
-  if (!recipientId) {
+  const row = data as { pagarme_recipient_id?: string | null; use_pagarme?: boolean | null } | null;
+  const recipientId = row?.pagarme_recipient_id;
+  if (!recipientId || !row?.use_pagarme) {
     throw new Error("Tenant sem recipient_id configurado na Pagar.me");
   }
   return recipientId;
+}
+
+/** Garante que o tenant está habilitado para receber pagamentos. */
+export async function assertTenantFinancialActive(tenantId: string): Promise<void> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data, error } = await supabaseAdmin
+    .from("tenants")
+    .select("financial_active, compliance_status")
+    .eq("id", tenantId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  const row = data as { financial_active?: boolean | null; compliance_status?: string | null } | null;
+  if (!row?.financial_active) {
+    throw new Error("Igreja não habilitada para receber pagamentos");
+  }
 }
 
 export type CostCenterConfig = {
