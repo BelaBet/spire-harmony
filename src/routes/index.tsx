@@ -37,14 +37,204 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/")({
-  component: ChurchPage,
+  component: TK2LandingPage,
   head: () => ({
     meta: [
-      { title: "Igreja Comunidade da Graça" },
-      { name: "description", content: "Um lugar de fé, amor e comunidade." },
+      { title: "TK2 EMPREENDIMENTOS — Plataforma de gestão e doações para igrejas" },
+      { name: "description", content: "Plataforma completa para igrejas: doações por PIX, cartão e boleto, gestão financeira, eventos e comunidade. Comece grátis." },
+      { property: "og:title", content: "TK2 EMPREENDIMENTOS — Plataforma para igrejas" },
+      { property: "og:description", content: "Receba doações, gerencie sua igreja e cresça sua comunidade." },
     ],
   }),
 });
+
+function TK2LandingPage() {
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-slate-50 to-white text-slate-900">
+      <header className="sticky top-0 z-50 border-b border-slate-200/60 bg-white/80 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-2">
+            <div className="grid h-9 w-9 place-items-center rounded-lg bg-slate-900 text-sm font-bold text-white">TK2</div>
+            <span className="text-sm font-semibold tracking-tight">TK2 EMPREENDIMENTOS</span>
+          </div>
+          <nav className="hidden items-center gap-7 text-sm text-slate-600 md:flex">
+            <a href="#recursos" className="hover:text-slate-900">Recursos</a>
+            <a href="#beneficios" className="hover:text-slate-900">Benefícios</a>
+            <a href="#planos" className="hover:text-slate-900">Planos</a>
+          </nav>
+          <div className="flex items-center gap-2">
+            <a href="/login" className="hidden rounded-md px-3 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 sm:inline-block">Entrar</a>
+            <a href="/signup" className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">Cadastrar igreja</a>
+          </div>
+        </div>
+      </header>
+
+      <section className="mx-auto max-w-6xl px-6 pb-20 pt-16 sm:pt-24">
+        <div className="grid items-center gap-12 lg:grid-cols-2">
+          <div>
+            <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-600">
+              Plataforma SaaS para igrejas
+            </span>
+            <h1 className="mt-5 font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+              A plataforma completa para a sua igreja{" "}
+              <span className="bg-gradient-to-r from-amber-500 to-rose-500 bg-clip-text text-transparent">crescer</span>.
+            </h1>
+            <p className="mt-5 max-w-xl text-lg text-slate-600">
+              Receba dízimos e ofertas por PIX, cartão e boleto. Gerencie membros, eventos e financeiro
+              em um único lugar — com a sua marca, no seu domínio.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
+              <a href="/signup" className="rounded-md bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-slate-800">
+                Cadastrar minha igreja grátis
+              </a>
+              <a href="/login" className="rounded-md border border-slate-300 bg-white px-5 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                Já tenho conta
+              </a>
+            </div>
+            <p className="mt-4 text-xs text-slate-500">Sem mensalidade inicial · Setup em minutos · Suporte humanizado</p>
+          </div>
+          <div className="relative">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-xl">
+              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-gradient-to-br from-amber-400 to-rose-500" />
+                  <div>
+                    <div className="text-sm font-semibold">Sua Igreja</div>
+                    <div className="text-xs text-slate-500">tk2.com.br/i/sua-igreja</div>
+                  </div>
+                </div>
+                <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">Ao vivo</span>
+              </div>
+              <div className="mt-5 grid grid-cols-3 gap-3 text-center">
+                {[
+                  { l: "Doações (mês)", v: "R$ 48.320" },
+                  { l: "Doadores", v: "312" },
+                  { l: "Eventos", v: "7" },
+                ].map((k) => (
+                  <div key={k.l} className="rounded-lg bg-slate-50 p-3">
+                    <div className="text-[10px] uppercase tracking-wider text-slate-500">{k.l}</div>
+                    <div className="mt-1 text-sm font-bold text-slate-900">{k.v}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-5 space-y-2">
+                {[
+                  ["PIX recebido", "R$ 250,00", "agora"],
+                  ["Cartão (3x)", "R$ 600,00", "5 min"],
+                  ["Boleto pago", "R$ 100,00", "1h"],
+                ].map(([t, v, w]) => (
+                  <div key={t} className="flex items-center justify-between rounded-md border border-slate-100 px-3 py-2 text-sm">
+                    <span className="text-slate-700">{t}</span>
+                    <span className="font-semibold text-slate-900">{v}</span>
+                    <span className="text-xs text-slate-400">{w}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="recursos" className="border-t border-slate-200 bg-white py-20">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="mx-auto max-w-2xl text-center">
+            <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">Tudo o que sua igreja precisa</h2>
+            <p className="mt-3 text-slate-600">Recursos pensados para o dia a dia da gestão eclesiástica.</p>
+          </div>
+          <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {[
+              { t: "Doações online", d: "PIX, cartão e boleto com split automático e taxas transparentes." },
+              { t: "Gestão financeira", d: "Centros de custo, conciliação, antecipação e transferências." },
+              { t: "Membros e comunidade", d: "Cadastro, comunicação, segmentação e histórico." },
+              { t: "Eventos com TicketTO", d: "Divulgue e venda ingressos integrado à TicketTO." },
+              { t: "Sua marca, sua página", d: "Página pública personalizada com logo, cores e domínio próprio." },
+              { t: "QR Code de doação", d: "Imprima, projete na tela e receba contribuições em segundos." },
+            ].map((f) => (
+              <div key={f.t} className="rounded-xl border border-slate-200 bg-slate-50/40 p-6 transition hover:border-slate-300 hover:shadow-sm">
+                <div className="h-10 w-10 rounded-lg bg-gradient-to-br from-amber-400 to-rose-500" />
+                <h3 className="mt-4 text-base font-semibold">{f.t}</h3>
+                <p className="mt-1 text-sm text-slate-600">{f.d}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section id="beneficios" className="bg-slate-900 py-20 text-white">
+        <div className="mx-auto max-w-6xl px-6">
+          <div className="grid items-center gap-12 lg:grid-cols-2">
+            <div>
+              <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">Mais doações, menos burocracia.</h2>
+              <p className="mt-4 text-slate-300">
+                Sua igreja foca na missão. Nós cuidamos da infraestrutura, do pagamento e da
+                conformidade financeira.
+              </p>
+              <div className="mt-8 grid gap-4 sm:grid-cols-2">
+                {[
+                  ["+38%", "doações em média"],
+                  ["3 min", "para começar a receber"],
+                  ["100%", "transparência financeira"],
+                  ["24/7", "disponibilidade"],
+                ].map(([n, l]) => (
+                  <div key={l} className="rounded-lg border border-white/10 bg-white/5 p-4">
+                    <div className="text-2xl font-bold">{n}</div>
+                    <div className="text-sm text-slate-300">{l}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-8">
+              <ul className="space-y-4 text-sm">
+                {[
+                  "Onboarding completo guiado",
+                  "Split automático com a igreja",
+                  "Compliance financeiro integrado",
+                  "Comprovantes e recibos automáticos",
+                  "Dashboard em tempo real",
+                  "Acesso multi-usuário com permissões",
+                ].map((b) => (
+                  <li key={b} className="flex items-start gap-3">
+                    <span className="mt-0.5 grid h-5 w-5 place-items-center rounded-full bg-emerald-400/20 text-emerald-300">✓</span>
+                    <span className="text-slate-200">{b}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="planos" className="bg-white py-20">
+        <div className="mx-auto max-w-3xl px-6 text-center">
+          <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">
+            Comece grátis. Cresça com a TK2.
+          </h2>
+          <p className="mt-3 text-slate-600">
+            Cadastre sua igreja em minutos e comece a receber doações ainda hoje.
+          </p>
+          <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+            <a href="/signup" className="rounded-md bg-slate-900 px-6 py-3 text-sm font-semibold text-white shadow-sm hover:bg-slate-800">
+              Cadastrar minha igreja
+            </a>
+            <a href="/login" className="rounded-md border border-slate-300 bg-white px-6 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+              Entrar
+            </a>
+          </div>
+        </div>
+      </section>
+
+      <footer className="border-t border-slate-200 bg-slate-50 py-10">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-6 text-sm text-slate-500 sm:flex-row">
+          <div>© {new Date().getFullYear()} TK2 EMPREENDIMENTOS. Todos os direitos reservados.</div>
+          <div className="flex items-center gap-5">
+            <a href="/login" className="hover:text-slate-900">Entrar</a>
+            <a href="/signup" className="hover:text-slate-900">Cadastrar</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
 
 
 // ── Fallback data (sobrescrita pelos dados do tenant carregados via useTenant) ─
