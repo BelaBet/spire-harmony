@@ -44,10 +44,21 @@ function Dashboard() {
       <DonationsSummary />
 
       {isStaff && (
-        <div className="mt-6">
+        <div className="mt-6 flex flex-wrap gap-3">
           <Link to="/dashboard/financeiro" className="inline-flex items-center gap-2 rounded-lg border bg-card px-4 py-2 text-sm hover:bg-accent">
             Ver financeiro →
           </Link>
+          {myTenant?.slug && (
+            <a
+              href={`/i/${myTenant.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 rounded-lg border bg-card px-4 py-2 text-sm hover:bg-accent"
+            >
+              <ExternalLink className="h-4 w-4" />
+              Página de doação
+            </a>
+          )}
         </div>
       )}
 
