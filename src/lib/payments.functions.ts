@@ -368,6 +368,8 @@ export const pollPixCharge = createServerFn({ method: "POST" })
 export const createCreditCardPayment = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => CardInput.parse(data))
   .handler(async ({ data }) => {
+    const { assertFinancialActive } = await import("@/lib/compliance");
+    await assertFinancialActive(data.tenantId);
     const sellerRecipientId = await fetchSellerRecipientId(data.tenantId);
     const costCenter = data.costCenterId
       ? await fetchCostCenter(data.costCenterId, data.tenantId)
