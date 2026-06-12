@@ -207,7 +207,6 @@ export const Route = createFileRoute('/api/public/create-donation')({
             recipient_id: sellerRecipientId,
             type: 'flat',
             options: {
-              charge_remainder_fee: false,
               liable: false,
               charge_processing_fee: false,
             },
@@ -217,7 +216,6 @@ export const Route = createFileRoute('/api/public/create-donation')({
             recipient_id: platformRecipientId,
             type: 'flat',
             options: {
-              charge_remainder_fee: true,
               liable: true,
               charge_processing_fee: true,
             },
