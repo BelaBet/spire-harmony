@@ -80,8 +80,8 @@ export function calculateCardAmounts(
   const pagarmeFee = 0;
   const transacaoFee = f.transacao_fixa;
 
-  const splitPlatformAmount = tickettoFee + tk2OpFee;
-  const totalAmount = donationAmount + splitPlatformAmount + adquirenciaValor;
+  const splitPlatformAmount = tickettoFee + tk2OpFee + adquirenciaValor;
+  const totalAmount = donationAmount + splitPlatformAmount;
 
   return {
     donationAmount,
