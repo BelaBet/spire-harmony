@@ -241,10 +241,37 @@ export const listTenantsWithRecipientStatus = createServerFn({ method: "POST" })
     const { data, error } = await supabaseAdmin
       .from("tenants")
       .select(
-        "id, name, document, document_type, recipient_id, recipient_status, recipient_error, bank_code, bank_agency, bank_account, bank_account_dv, account_type, legal_name, holder_name, holder_document, active, created_at",
+        "id, name, document, document_type, recipient_id, recipient_status, recipient_error, legal_name, active, created_at",
       )
       .is("deleted_at", null)
       .order("created_at", { ascending: false });
     if (error) throw new Error(error.message);
-    return (data ?? []) as unknown as TenantRecipientRow[];
+
+    const tenants = (data ?? []) as Array<Record<string, unknown>>;
+    const ids = tenants.map((t) => t.id as string);
+
+    let bankByTenant: Record<string, Record<string, unknown>> = {};
+    if (ids.length > 0) {
+      const { data: banks } = await supabaseAdmin
+        .from("tenant_bank_account")
+        .select("tenant_id, bank_code, branch, account, account_digit, account_type, holder_name, holder_document")
+        .in("tenant_id", ids);
+      bankByTenant = Object.fromEntries(
+        ((banks ?? []) as Array<Record<string, unknown>>).map((b) => [b.tenant_id as string, b]),
+      );
+    }
+
+    return tenants.map((t) => {
+      const b = bankByTenant[t.id as string] ?? {};
+      return {
+        ...t,
+        bank_code: (b.bank_code as string | undefined) ?? null,
+        bank_agency: (b.branch as string | undefined) ?? null,
+        bank_account: (b.account as string | undefined) ?? null,
+        bank_account_dv: (b.account_digit as string | undefined) ?? null,
+        account_type: (b.account_type as string | undefined) ?? null,
+        holder_name: (b.holder_name as string | undefined) ?? null,
+        holder_document: (b.holder_document as string | undefined) ?? null,
+      };
+    }) as unknown as TenantRecipientRow[];
   });
