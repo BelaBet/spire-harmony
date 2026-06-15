@@ -1284,6 +1284,52 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
     },
   });
 
+  // ── Eventos reais do tenant (públicos, não-draft) ──
+  const { data: publicEvents } = useQuery({
+    queryKey: ["public-events", tenant?.id],
+    enabled: !!tenant?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("events")
+        .select("id,title,date,location,description,banner_url,external_url,status")
+        .eq("tenant_id", tenant!.id)
+        .neq("status", "draft")
+        .order("date", { ascending: true, nullsFirst: false });
+      return (data ?? []) as Array<{
+        id: string;
+        title: string;
+        date: string | null;
+        location: string | null;
+        description: string | null;
+        banner_url: string | null;
+        external_url: string | null;
+        status: string;
+      }>;
+    },
+  });
+
+  const eventsToRender: EventItem[] = (publicEvents ?? []).map((e, idx) => {
+    const d = e.date ? new Date(e.date) : null;
+    const iso = d ? d.toISOString().slice(0, 10) : "";
+    const time = d
+      ? d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+      : "";
+    return {
+      id: idx,
+      title: e.title,
+      date: iso,
+      time,
+      location: e.location ?? "",
+      description: e.description ?? "",
+      image:
+        e.banner_url ||
+        "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=600&q=80",
+      ticketUrl: e.external_url || "https://ticketto.com.br",
+      free: true,
+      spots: 0,
+    };
+  });
+
   const CHURCH = {
     name: tenant?.name ?? CHURCH_DEFAULTS.name,
     tagline: tenant?.tagline ?? CHURCH_DEFAULTS.tagline,
