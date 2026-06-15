@@ -455,11 +455,17 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
         const allowsInst = costCenter ? costCenter.allows_installments : true;
         const maxInst = costCenter ? Math.max(1, Math.min(12, costCenter.max_installments)) : 12;
         const effInstallments = allowsInst ? Math.min(installments, maxInst) : 1;
+        const detectedBrand = detectCardBrand(cardNumber);
+        const brand: "master_visa" | "ello_hiper_amex" =
+          detectedBrand === "elo" || detectedBrand === "hiper" || detectedBrand === "amex"
+            ? "ello_hiper_amex"
+            : "master_visa";
         const result = await createCard({
           data: {
             tenantId: tenant.id,
             donationAmount: Math.round(num * 100),
             installments: effInstallments,
+            brand,
             ...(costCenter?.id ? { costCenterId: costCenter.id } : {}),
             customerName: payer.name,
             customerEmail: payer.email,
