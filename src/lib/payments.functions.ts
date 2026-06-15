@@ -401,7 +401,14 @@ export const pollPixCharge = createServerFn({ method: "POST" })
   });
 
 export const createCreditCardPayment = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => CardInput.parse(data))
+  .inputValidator((data: unknown) => {
+    const result = CardInput.safeParse(data);
+    if (!result.success) {
+      console.error("[card] zod validation failed", JSON.stringify(result.error.issues, null, 2));
+      throw new Error("The request is invalid. " + JSON.stringify(result.error.issues));
+    }
+    return result.data;
+  })
   .handler(async ({ data }) => {
     const { assertFinancialActive } = await import("@/lib/compliance");
     await assertFinancialActive(data.tenantId);
