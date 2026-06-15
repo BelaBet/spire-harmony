@@ -1284,6 +1284,52 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
     },
   });
 
+  // ── Eventos reais do tenant (públicos, não-draft) ──
+  const { data: publicEvents } = useQuery({
+    queryKey: ["public-events", tenant?.id],
+    enabled: !!tenant?.id,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("events")
+        .select("id,title,date,location,description,banner_url,external_url,status")
+        .eq("tenant_id", tenant!.id)
+        .neq("status", "draft")
+        .order("date", { ascending: true, nullsFirst: false });
+      return (data ?? []) as Array<{
+        id: string;
+        title: string;
+        date: string | null;
+        location: string | null;
+        description: string | null;
+        banner_url: string | null;
+        external_url: string | null;
+        status: string;
+      }>;
+    },
+  });
+
+  const eventsToRender: EventItem[] = (publicEvents ?? []).map((e, idx) => {
+    const d = e.date ? new Date(e.date) : null;
+    const iso = d ? d.toISOString().slice(0, 10) : "";
+    const time = d
+      ? d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+      : "";
+    return {
+      id: idx,
+      title: e.title,
+      date: iso,
+      time,
+      location: e.location ?? "",
+      description: e.description ?? "",
+      image:
+        e.banner_url ||
+        "https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=600&q=80",
+      ticketUrl: e.external_url || "https://ticketto.com.br",
+      free: true,
+      spots: 0,
+    };
+  });
+
   const CHURCH = {
     name: tenant?.name ?? CHURCH_DEFAULTS.name,
     tagline: tenant?.tagline ?? CHURCH_DEFAULTS.tagline,
@@ -1698,32 +1744,34 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
       </section>
 
       {/* ── EVENTS SECTION ─────────────────────────────────────────────── */}
-      <section style={{ padding: "80px 24px", background: "#fff" }}>
-        <div className="fade-up-3" style={{ maxWidth: 1200, margin: "0 auto" }}>
-          {/* Section Header */}
-          <div style={{ textAlign: "center", marginBottom: 48 }}>
-            <span style={{ fontSize: 12, letterSpacing: 3, color: accent, fontWeight: 600 }}>✦ AGENDA</span>
-            <h2
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: "clamp(1.8rem, 4vw, 2.5rem)",
-                margin: "12px 0 8px",
-                color: primary,
-              }}
-            >
-              Próximos Eventos
-            </h2>
-            <p style={{ color: "#666", margin: 0 }}>Clique em qualquer evento para garantir sua participação.</p>
-          </div>
+      {eventsToRender.length > 0 && (
+        <section style={{ padding: "80px 24px", background: "#fff" }}>
+          <div className="fade-up-3" style={{ maxWidth: 1200, margin: "0 auto" }}>
+            {/* Section Header */}
+            <div style={{ textAlign: "center", marginBottom: 48 }}>
+              <span style={{ fontSize: 12, letterSpacing: 3, color: accent, fontWeight: 600 }}>✦ AGENDA</span>
+              <h2
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: "clamp(1.8rem, 4vw, 2.5rem)",
+                  margin: "12px 0 8px",
+                  color: primary,
+                }}
+              >
+                Próximos Eventos
+              </h2>
+              <p style={{ color: "#666", margin: 0 }}>Clique em qualquer evento para garantir sua participação.</p>
+            </div>
 
-          {/* Events Grid */}
-          <div style={{ display: "grid", gap: 24, gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
-            {EVENTS.map((event) => (
-              <EventCard key={event.id} event={event} accent={accent} primary={primary} />
-            ))}
+            {/* Events Grid */}
+            <div style={{ display: "grid", gap: 24, gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
+              {eventsToRender.map((event) => (
+                <EventCard key={event.id} event={event} accent={accent} primary={primary} />
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ── FOOTER ─────────────────────────────────────────────────────── */}
       <footer style={{ padding: "48px 24px", textAlign: "center", background: "#fafaf7", borderTop: "1px solid #eee" }}>
