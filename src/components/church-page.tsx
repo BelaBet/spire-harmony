@@ -1238,6 +1238,7 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
   const { tenant: ctxTenant } = useTenant();
   const { profile } = useAuth();
   const { theme } = useChurchTheme();
+  const qrRef = useRef<HTMLDivElement>(null);
 
   // Quando o usuário está autenticado, prioriza o tenant do próprio perfil
   // (lendo sempre da tabela `tenants`, sem cache stale) para refletir mudanças
@@ -1589,6 +1590,110 @@ export function ChurchPageView({ tenantOverride }: { tenantOverride?: Tenant | n
         >
           <Lock size={16} strokeWidth={2.2} style={{ color: "#7C3AED", flexShrink: 0 }} />
           <span>Pagamento 100% seguro · Dados criptografados · Confirmação por SMS</span>
+        </div>
+      </section>
+
+      {/* ── QR CODE SECTION ─────────────────────────────────────────────── */}
+      <section style={{ padding: "60px 24px", background: "#fff", borderTop: "1px solid #f0f0f0" }}>
+        <div style={{ maxWidth: 480, margin: "0 auto", textAlign: "center" }}>
+          {/* Header */}
+          <span style={{ fontSize: 12, letterSpacing: "0.18em", color: accent, fontWeight: 600 }}>
+            ✦ QR CODE
+          </span>
+          <h2
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: "clamp(1.4rem, 3vw, 2rem)",
+              margin: "8px 0 4px",
+              color: primary,
+            }}
+          >
+            Doe pelo QR Code
+          </h2>
+          <p style={{ color: "#666", fontSize: 14, marginBottom: 32 }}>
+            Escaneie com a câmera do celular e contribua de onde estiver
+          </p>
+
+          {/* QR Code */}
+          <div
+            style={{
+              display: "inline-flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 16,
+              background: "#fafaf7",
+              border: `1px solid ${primary}22`,
+              borderRadius: 20,
+              padding: 32,
+            }}
+          >
+            <div
+              ref={qrRef}
+              style={{
+                background: "#fff",
+                padding: 16,
+                borderRadius: 12,
+                boxShadow: "0 4px 24px rgba(0,0,0,0.08)",
+              }}
+            >
+              <QRCodeCanvas
+                value={typeof window !== "undefined" ? `${window.location.origin}/i/${tenant?.slug ?? ""}` : ""}
+                size={200}
+                level="M"
+                includeMargin={false}
+                fgColor={primary}
+              />
+            </div>
+
+            {/* URL abaixo do QR */}
+            <p style={{ fontSize: 12, color: "#999", margin: 0 }}>
+              {typeof window !== "undefined" ? `${window.location.origin}/i/${tenant?.slug ?? ""}` : ""}
+            </p>
+
+            {/* Botão download */}
+            <button
+              type="button"
+              onClick={() => {
+                const canvas = qrRef.current?.querySelector("canvas");
+                if (!canvas) return;
+                const link = document.createElement("a");
+                link.download = `qrcode-${tenant?.slug ?? "doacao"}.png`;
+                link.href = (canvas as HTMLCanvasElement).toDataURL("image/png");
+                link.click();
+                toast.success("QR Code baixado!");
+              }}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                padding: "10px 20px",
+                borderRadius: 999,
+                border: `1.5px solid ${primary}`,
+                background: "transparent",
+                color: primary,
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+              }}
+            >
+              ⬇ Baixar QR Code
+            </button>
+          </div>
+
+          {/* Badge segurança */}
+          <p
+            style={{
+              marginTop: 16,
+              fontSize: 12,
+              color: "#999",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6,
+            }}
+          >
+            🔒 Página segura · Powered by TK2
+          </p>
         </div>
       </section>
 
