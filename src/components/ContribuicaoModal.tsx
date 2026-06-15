@@ -363,6 +363,30 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
     setError(null);
     try {
       if (isBoleto) {
+        const addrLineTrim = boletoAddrLine.trim();
+        const addrZipDigits = boletoAddrZip.replace(/\D/g, "");
+        const addrCityTrim = boletoAddrCity.trim();
+        const addrStateTrim = boletoAddrState.trim().toUpperCase();
+        if (addrLineTrim.length < 3) {
+          setError("Informe a rua e número (mín. 3 caracteres).");
+          setSubmitting(false);
+          return;
+        }
+        if (addrZipDigits.length !== 8) {
+          setError("Informe um CEP válido com 8 dígitos.");
+          setSubmitting(false);
+          return;
+        }
+        if (addrCityTrim.length < 2) {
+          setError("Informe a cidade.");
+          setSubmitting(false);
+          return;
+        }
+        if (!/^[A-Z]{2}$/.test(addrStateTrim)) {
+          setError("Informe a UF com 2 letras (ex.: SP).");
+          setSubmitting(false);
+          return;
+        }
         const result = await createBoleto({
           data: {
             tenantId: tenant.id,
@@ -371,6 +395,11 @@ export function ContribuicaoModal({ isOpen, onClose, onConfirm, method, costCent
             customerEmail: payer.email,
             customerDocument: payer.cpf,
             customerPhone: payer.phone,
+            customerAddressLine1: addrLineTrim,
+            customerAddressZip: addrZipDigits,
+            customerAddressCity: addrCityTrim,
+            customerAddressState: addrStateTrim,
+            customerAddressNeighborhood: boletoAddrNeighborhood.trim() || undefined,
           },
         });
         const due = result.dueAt ? new Date(result.dueAt) : addBusinessDays(new Date(), 3);
