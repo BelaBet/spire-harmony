@@ -216,11 +216,11 @@ export const provisionTenant = createServerFn({ method: "POST" })
       const qrCodeUrl = (cc as { qr_code_url?: string | null } | null)?.qr_code_url ?? "";
 
       return {
-        tenant_id: existing.id as string,
+        tenant_id: existingRow.id,
         slug,
         public_url: publicUrl,
         qr_code_url: qrCodeUrl,
-        cost_center_id: (cc as any)?.id ?? null,
+        cost_center_id: (cc as { id?: string } | null)?.id ?? null,
         compliance_status: status ?? "pending_documents",
         warnings: [],
       };
