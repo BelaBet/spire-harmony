@@ -163,15 +163,47 @@ export const provisionTenant = createServerFn({ method: "POST" })
 
     const onlyDigitsDoc = data.document.replace(/\D/g, "");
 
-    // 0. Documento já cadastrado?
-    const { data: existing, error: exErr } = await supabaseAdmin
-      .from("tenants")
-      .select("id")
-      .eq("document", onlyDigitsDoc)
-      .is("deleted_at", null)
-      .maybeSingle();
-    if (exErr) throw new Error(exErr.message);
-    if (existing) throw new Error("Esta instituição já está cadastrada.");
+    // 0. Documento já cadastrado? Reutilizar se ainda não tem usuário vinculado.
+    async function findReusableTenant(): Promise<string | null> {
+      const { data: existing, error: exErr } = await supabaseAdmin
+        .from("tenants")
+        .select("id, compliance_status")
+        .eq("document", onlyDigitsDoc)
+        .is("deleted_at", null)
+        .maybeSingle();
+      if (exErr) throw new Error(exErr.message);
+      if (!existing) return null;
+
+      const status = (existing as { compliance_status: string | null }).compliance_status;
+      const reusableStatus =
+        status === "pending_documents" ||
+        status === "pending" ||
+        status === "onboarding" ||
+        status === "pending_financial_setup";
+
+      const { count } = await supabaseAdmin
+        .from("user_roles")
+        .select("user_id", { count: "exact", head: true })
+        .eq("tenant_id", existing.id);
+
+      if (reusableStatus && (count ?? 0) === 0) {
+        return existing.id as string;
+      }
+      throw new Error("Esta instituição já possui cadastro ativo.");
+    }
+
+    const reusableId = await findReusableTenant();
+    if (reusableId) {
+      return {
+        tenant_id: reusableId,
+        slug: "",
+        public_url: "",
+        qr_code_url: "",
+        cost_center_id: null,
+        compliance_status: "pending_documents",
+        warnings: [],
+      };
+    }
 
     // 1. Slug único
     const base = slugify(data.church_name) || `igreja-${Date.now()}`;
@@ -216,7 +248,24 @@ export const provisionTenant = createServerFn({ method: "POST" })
       .insert(tenantInsert as any)
       .select("id")
       .single();
-    if (cErr || !created) throw new Error(cErr?.message || "Falha ao criar a instituição.");
+    if (cErr || !created) {
+      // Race condition: documento inserido entre o check e o insert
+      if ((cErr as { code?: string } | null)?.code === "23505") {
+        const reusedId = await findReusableTenant();
+        if (reusedId) {
+          return {
+            tenant_id: reusedId,
+            slug: "",
+            public_url: "",
+            qr_code_url: "",
+            cost_center_id: null,
+            compliance_status: "pending_documents",
+            warnings: [],
+          };
+        }
+      }
+      throw new Error(cErr?.message || "Falha ao criar a instituição.");
+    }
     const tenantId = created.id as string;
 
     // 3. Sementes de pendências (3 obrigatórios + 3 opcionais)
