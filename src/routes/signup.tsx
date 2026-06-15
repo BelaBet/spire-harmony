@@ -140,8 +140,13 @@ function SignupPage() {
       });
       tenantId = res.tenant_id;
     } catch (err) {
+      const msg = err instanceof Error ? err.message : "";
+      const isAlreadyActive = msg.includes("já possui cadastro ativo");
       setLoading(false);
-      return toast.error(err instanceof Error ? err.message : "Falha ao criar instituição.");
+      if (isAlreadyActive) {
+        return toast.error("Esta instituição já possui cadastro. Use o login para acessar.");
+      }
+      return toast.error(msg || "Falha ao criar instituição.");
     }
 
     // 3) signUp anexando tenant_id e marcando como fundador (admin aprovado)
