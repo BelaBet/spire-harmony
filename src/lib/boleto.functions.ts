@@ -62,14 +62,17 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
       uf?: string | null;
       estado?: string | null;
     } | null;
-
+    const zipCode = (addrRow?.cep ?? "").replace(/\D/g, "");
+    if (!zipCode || zipCode === "00000000") {
+      throw new Error("Endereço do tenant incompleto. Cadastre o CEP antes de emitir boleto.");
+    }
     const customer = {
       ...buildPagarmeCustomer(resolved),
       address: {
         line_1: addrRow?.rua
           ? `${addrRow.numero ?? "s/n"}, ${addrRow.rua}, ${addrRow.neighborhood ?? ""}`.trim()
           : "Endereço não informado",
-        zip_code: (addrRow?.cep ?? "").replace(/\D/g, "") || "00000000",
+        zip_code: zipCode,
         city: addrRow?.city ?? "São Paulo",
         state: (addrRow?.uf ?? addrRow?.estado ?? "SP").slice(0, 2).toUpperCase(),
         country: "BR",
