@@ -80,7 +80,7 @@ export const createBoletoPayment = createServerFn({ method: "POST" })
           boleto: {
             due_at: dueAt,
             instructions: "Obrigado pela sua contribuição!",
-            document_number: `C${Date.now().toString(36).toUpperCase()}`,,
+            document_number: `C${Date.now().toString(36).toUpperCase()}`.slice(0, 16),
           },
           split: buildSplitPayload(amounts, sellerRecipientId),
         },
