@@ -175,7 +175,7 @@ export const provisionTenant = createServerFn({ method: "POST" })
     } | null> {
       const { data: existing, error: exErr } = await supabaseAdmin
         .from("tenants")
-        .select("id, slug, qr_code_url, compliance_status")
+        .select("id, slug, compliance_status")
         .eq("document", onlyDigitsDoc)
         .is("deleted_at", null)
         .maybeSingle();
@@ -183,7 +183,8 @@ export const provisionTenant = createServerFn({ method: "POST" })
       if (exErr) throw new Error(exErr.message);
       if (!existing) return null;
 
-      const status = (existing as any).compliance_status as string | null;
+      const existingRow = existing as { id: string; slug: string | null; compliance_status: string | null };
+      const status = existingRow.compliance_status;
       const reusableStatus =
         status === "pending_documents" ||
         status === "pending" ||
@@ -193,7 +194,7 @@ export const provisionTenant = createServerFn({ method: "POST" })
       const { count } = await supabaseAdmin
         .from("user_roles")
         .select("user_id", { count: "exact", head: true })
-        .eq("tenant_id", existing.id);
+        .eq("tenant_id", existingRow.id);
 
       if (!reusableStatus || (count ?? 0) > 0) {
         // Tenant ativo com usuário → erro real de duplicidade
@@ -201,17 +202,18 @@ export const provisionTenant = createServerFn({ method: "POST" })
       }
 
       // Tenant reutilizável — buscar dados reais
-      const slug = (existing as any).slug ?? "";
+      const slug = existingRow.slug ?? "";
       const publicUrl = slug ? `${origin}/i/${slug}` : "";
-      const qrCodeUrl = (existing as any).qr_code_url ?? "";
 
-      // Buscar cost_center existente
+      // Buscar cost_center existente (qr_code_url vive em cost_centers)
       const { data: cc } = await supabaseAdmin
         .from("cost_centers")
-        .select("id")
-        .eq("tenant_id", existing.id)
+        .select("id, qr_code_url")
+        .eq("tenant_id", existingRow.id)
         .eq("slug", "online")
         .maybeSingle();
+
+      const qrCodeUrl = (cc as { qr_code_url?: string | null } | null)?.qr_code_url ?? "";
 
       return {
         tenant_id: existing.id as string,
