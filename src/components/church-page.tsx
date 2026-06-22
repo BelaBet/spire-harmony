@@ -868,7 +868,7 @@ function PaymentsQuickActions({
         onConfirm={(valor) => {
           const k = contribKey;
           setSelectedAmount(String(valor));
-          if (k === "boleto") {
+          - if (k === "boleto") { + if (k === "boleto" || k === "pix") {
             // O próprio ContribuicaoModal já exibe o boleto gerado — sem 2º modal.
             toast.success(`Valor selecionado: R$${valor}`);
             return;
