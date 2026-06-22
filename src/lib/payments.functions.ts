@@ -249,6 +249,7 @@ export const createPixPayment = createServerFn({ method: "POST" })
             expires_in: expiresIn,
             additional_information: [{ name: "Contribuição", value: resolved.name ?? "Anônimo" }],
           },
+          split: buildSplitPayload(amounts, sellerRecipientId),
         },
       ],
       metadata: {
