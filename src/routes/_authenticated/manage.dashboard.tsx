@@ -67,7 +67,7 @@ function ManagerDashboard() {
       }));
       setAttendance(att);
 
-      setActivity(auditRes.data ?? []);
+      
       setLoading(false);
     })();
   }, []);
