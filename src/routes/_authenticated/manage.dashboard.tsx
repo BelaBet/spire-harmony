@@ -29,14 +29,13 @@ function ManagerDashboard() {
       const startMonth = startOfMonth(new Date()).toISOString();
       const endMonthIso = endOfMonth(new Date()).toISOString();
 
-      const [profilesRes, donationsAllRes, donationsMonthRes, eventsMonthRes, ticketsMonthRes, eventsAttRes, auditRes] = await Promise.all([
+      const [profilesRes, donationsAllRes, donationsMonthRes, eventsMonthRes, ticketsMonthRes, eventsAttRes] = await Promise.all([
         supabase.from("profiles").select("id, status, created_at"),
         supabase.from("donations").select("amount, created_at"),
         supabase.from("donations").select("amount").gte("created_at", startMonth).lte("created_at", endMonthIso),
         supabase.from("events").select("id").gte("date", startMonth).lte("date", endMonthIso),
         supabase.from("tickets").select("id").gte("created_at", startMonth).lte("created_at", endMonthIso),
         supabase.from("events").select("id, title, tickets(count)").order("date", { ascending: false }).limit(8),
-        supabase.from("audit_logs").select("id, action, entity, created_at").order("created_at", { ascending: false }).limit(10),
       ]);
 
       const profiles = profilesRes.data ?? [];
