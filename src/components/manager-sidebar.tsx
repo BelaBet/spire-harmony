@@ -9,7 +9,7 @@ import { initials } from "@/lib/utils";
 
 const items = [
   { title: "Dashboard", url: "/manage/dashboard", icon: LayoutDashboard },
-  { title: "Membros", url: "/manage/members", icon: Users },
+  { title: "Instituições", url: "/manage/members", icon: Users },
   { title: "Eventos", url: "/manage/events", icon: Calendar },
   { title: "Mensagens", url: "/messages", icon: Megaphone },
   { title: "Configurações", url: "/manage/settings", icon: Settings },
