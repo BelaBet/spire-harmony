@@ -138,8 +138,30 @@ function ManageEventsPage() {
                   onChange={(e) => setForm({ ...form, description: e.target.value })} />
               </div>
               <div>
-                <Label htmlFor="banner_url">Banner (URL da imagem)</Label>
-                <Input id="banner_url" type="url" placeholder="https://…/banner.jpg"
+                <div>
+  <Label>Banner do Evento</Label>
+
+  <Input
+    type="file"
+    accept="image/*"
+    onChange={handleBannerUpload}
+    disabled={uploading}
+  />
+
+  {uploading && (
+    <p className="mt-2 text-sm text-muted-foreground">
+      Enviando imagem...
+    </p>
+  )}
+
+  {form.banner_url && (
+    <img
+      src={form.banner_url}
+      alt="Banner"
+      className="mt-3 h-48 w-full rounded-lg border object-cover"
+    />
+  )}
+</div>"
                   value={form.banner_url}
                   onChange={(e) => setForm({ ...form, banner_url: e.target.value })} />
               </div>
