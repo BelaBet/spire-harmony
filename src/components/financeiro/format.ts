@@ -25,6 +25,17 @@ export const fmtDate = (iso: string | null | undefined) =>
       })
     : "—";
 
+export const fmtDateTime = (iso: string | null | undefined) =>
+  iso
+    ? new Date(iso).toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "short",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "—";
+
 export const METHOD_PT: Record<string, string> = {
   pix: "Pix",
   credit_card: "Cartão de crédito",

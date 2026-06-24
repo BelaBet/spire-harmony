@@ -1,14 +1,32 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
-  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarHeader,
+  SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Users, Megaphone, Calendar, Settings, ArrowLeft } from "lucide-react";
+import {
+  LayoutDashboard,
+  Users,
+  Megaphone,
+  Calendar,
+  Settings,
+  ArrowLeft,
+  HeartHandshake,
+} from "lucide-react";
 import { useTenant } from "@/lib/tenant-context";
 import { initials } from "@/lib/utils";
 
 const items = [
   { title: "Dashboard", url: "/manage/dashboard", icon: LayoutDashboard },
+  { title: "Doações", url: "/manage/donations", icon: HeartHandshake },
   { title: "Instituições", url: "/manage/members", icon: Users },
   { title: "Eventos", url: "/manage/events", icon: Calendar },
   { title: "Mensagens", url: "/messages", icon: Megaphone },

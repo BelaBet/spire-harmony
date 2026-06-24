@@ -1,17 +1,37 @@
 import { Link, useRouterState } from "@tanstack/react-router";
 import {
-  Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel,
-  SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter, useSidebar,
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarHeader,
+  SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
-import { LayoutDashboard, Building2, CreditCard, ScrollText, Settings, ShieldAlert, ArrowLeft, Wallet } from "lucide-react";
+import {
+  LayoutDashboard,
+  Building2,
+  CreditCard,
+  ScrollText,
+  Settings,
+  ShieldAlert,
+  ArrowLeft,
+  Wallet,
+  HeartHandshake,
+} from "lucide-react";
 
 const items = [
   { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
-  { title: "Igrejas",   url: "/admin/tenants",   icon: Building2 },
-  { title: "Financeiro",url: "/admin/financeiro",icon: Wallet },
-  { title: "Billing",   url: "/admin/billing",   icon: CreditCard },
-  { title: "Auditoria", url: "/admin/audit",     icon: ScrollText },
-  { title: "Plataforma",url: "/admin/settings",  icon: Settings },
+  { title: "Igrejas", url: "/admin/tenants", icon: Building2 },
+  { title: "Doações", url: "/admin/donations", icon: HeartHandshake },
+  { title: "Financeiro", url: "/admin/financeiro", icon: Wallet },
+  { title: "Billing", url: "/admin/billing", icon: CreditCard },
+  { title: "Auditoria", url: "/admin/audit", icon: ScrollText },
+  { title: "Plataforma", url: "/admin/settings", icon: Settings },
 ];
 
 export function AdminSidebar() {
