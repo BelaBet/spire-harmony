@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { ManagerSidebar } from "@/components/manager-sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
 import { useAuth } from "@/lib/auth-context";
 import { Card } from "@/components/ui/card";
 
@@ -19,7 +19,7 @@ function ManageLayout() {
   return (
     <SidebarProvider className="min-h-0">
       <div className="relative flex min-h-[calc(100vh-4rem)] w-full -mx-6 -my-8 [transform:translateZ(0)]">
-        <ManagerSidebar />
+        <AppSidebar />
         <div className="flex flex-1 flex-col">
           <header className="flex h-12 items-center border-b bg-card/60 backdrop-blur">
             <SidebarTrigger className="ml-2" />

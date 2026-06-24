@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { AdminSidebar } from "@/components/admin-sidebar";
+import { AppSidebar } from "@/components/app-sidebar";
 import { TenantSwitcher } from "@/components/tenant-switcher";
 import { useAuth } from "@/lib/auth-context";
 import { Card } from "@/components/ui/card";
@@ -24,7 +24,7 @@ function AdminLayout() {
   return (
     <SidebarProvider className="min-h-0">
       <div className="relative flex min-h-[calc(100vh-4rem)] w-full -mx-6 -my-8 [transform:translateZ(0)]">
-        <AdminSidebar />
+        <AppSidebar />
         <div className="flex flex-1 flex-col">
           <header className="flex h-12 items-center justify-between gap-3 border-b bg-card/60 px-3 backdrop-blur">
             <div className="flex items-center gap-2">
