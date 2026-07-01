@@ -54,12 +54,22 @@ export const updateChurchIdentity = createServerFn({ method: "POST" })
     if (tErr) throw new Error(`Não foi possível atualizar a igreja: ${tErr.message}`);
 
     // Promove o usuário a admin do tenant para futuras edições via cliente.
-    await supabaseAdmin
+    // Regra de negócio: o vínculo de um usuário com uma instituição/seller é
+    // sempre único e sempre "admin" — nunca deve coexistir com outro papel
+    // (ex: "member") para o mesmo tenant. Por isso removemos qualquer papel
+    // anterior antes de inserir o admin, em vez de fazer upsert aditivo
+    // (que antes deixava "member" e "admin" coexistindo para o mesmo tenant).
+    const { error: delRoleErr } = await supabaseAdmin
       .from("user_roles")
-      .upsert(
-        { user_id: userId, tenant_id: tenantId, role: "admin" },
-        { onConflict: "user_id,tenant_id,role" },
-      );
+      .delete()
+      .eq("user_id", userId)
+      .eq("tenant_id", tenantId);
+    if (delRoleErr) throw new Error(`Falha ao atualizar papel do usuário: ${delRoleErr.message}`);
+
+    const { error: roleErr } = await supabaseAdmin
+      .from("user_roles")
+      .insert({ user_id: userId, tenant_id: tenantId, role: "admin" });
+    if (roleErr) throw new Error(`Falha ao promover usuário a admin: ${roleErr.message}`);
 
     return { tenantId, logoUrl };
   });

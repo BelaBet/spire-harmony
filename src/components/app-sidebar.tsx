@@ -67,16 +67,7 @@ export function AppSidebar() {
     <Sidebar collapsible="icon">
       <SidebarHeader className="border-b">
         <div className="flex items-center gap-2 px-2 py-1">
-          {isStaff ? (
-            <>
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-medium">
-                {initials(tenant?.name ?? "Gestão")}
-              </div>
-              {!collapsed && (
-                <span className="font-display text-sm">{tenant?.name ?? "Gestão"}</span>
-              )}
-            </>
-          ) : (
+          {isPlatformAdmin ? (
             <>
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-accent text-accent-foreground">
                 <ShieldAlert className="h-4 w-4" />
@@ -90,7 +81,16 @@ export function AppSidebar() {
                 </div>
               )}
             </>
-          )}
+          ) : isStaff ? (
+            <>
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground text-[10px] font-medium">
+                {initials(tenant?.name ?? "Gestão")}
+              </div>
+              {!collapsed && (
+                <span className="font-display text-sm">{tenant?.name ?? "Gestão"}</span>
+              )}
+            </>
+          ) : null}
         </div>
       </SidebarHeader>
       <SidebarContent>
